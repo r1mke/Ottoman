@@ -366,4 +366,179 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get slotTaken => 'Termin je upravo zauzet. Odaberite drugi.';
+
+  @override
+  String get cart => 'Korpa';
+
+  @override
+  String get addToCart => 'Dodaj u korpu';
+
+  @override
+  String get outOfStock => 'Nema na zalihi';
+
+  @override
+  String get lowStock => 'Niska zaliha';
+
+  @override
+  String get stock => 'Zaliha';
+
+  @override
+  String inStockCount(int count) {
+    return 'Na zalihi: $count';
+  }
+
+  @override
+  String get allCategories => 'Sve kategorije';
+
+  @override
+  String get sortBy => 'Sortiraj';
+
+  @override
+  String get sortName => 'Naziv';
+
+  @override
+  String get sortPriceAsc => 'Cijena: manja prvo';
+
+  @override
+  String get sortPriceDesc => 'Cijena: veća prvo';
+
+  @override
+  String get sortNewest => 'Najnovije';
+
+  @override
+  String get cartEmpty => 'Korpa je prazna';
+
+  @override
+  String get limitReached => 'Nema više komada na zalihi.';
+
+  @override
+  String get checkout => 'Naplata';
+
+  @override
+  String get pickup => 'Preuzimanje u salonu';
+
+  @override
+  String get delivery => 'Dostava';
+
+  @override
+  String get deliveryAddress => 'Adresa za dostavu';
+
+  @override
+  String get payByCard => 'Karticom';
+
+  @override
+  String get payOnReceipt => 'Pri preuzimanju';
+
+  @override
+  String get placeOrder => 'Naruči';
+
+  @override
+  String get orderPlaced => 'Narudžba je zaprimljena.';
+
+  @override
+  String get orderAwaitsPayment => 'Narudžba čeka plaćanje.';
+
+  @override
+  String get cardUnavailable =>
+      'Plaćanje karticom trenutno nije dostupno u ovoj aplikaciji. Odaberite plaćanje pri preuzimanju.';
+
+  @override
+  String get payNow => 'Plati';
+
+  @override
+  String get myOrders => 'Moje narudžbe';
+
+  @override
+  String get noOrders => 'Nema narudžbi';
+
+  @override
+  String get orders => 'Narudžbe';
+
+  @override
+  String orderNumber(int id) {
+    return 'Narudžba #$id';
+  }
+
+  @override
+  String get orderStatusPendingPayment => 'Čeka plaćanje';
+
+  @override
+  String get orderStatusPlaced => 'Zaprimljena';
+
+  @override
+  String get orderStatusFulfilled => 'Preuzeta';
+
+  @override
+  String get orderStatusCancelled => 'Otkazana';
+
+  @override
+  String get orderStatusExpired => 'Istekla';
+
+  @override
+  String get cancelOrder => 'Otkaži narudžbu';
+
+  @override
+  String get cancelOrderQuestion => 'Da li sigurno želite otkazati narudžbu?';
+
+  @override
+  String get markFulfilled => 'Preuzeta / isporučena';
+
+  @override
+  String get restock => 'Dopuni zalihu';
+
+  @override
+  String get stockChange => 'Promjena zalihe (npr. 5 ili -2)';
+
+  @override
+  String get brand => 'Brend';
+
+  @override
+  String get brands => 'Brendovi';
+
+  @override
+  String get category => 'Kategorija';
+
+  @override
+  String get categories => 'Kategorije';
+
+  @override
+  String get lowStockOnly => 'Samo niska zaliha';
+
+  @override
+  String get newProduct => 'Novi proizvod';
+
+  @override
+  String get lowStockThreshold => 'Prag niske zalihe';
+
+  @override
+  String get initialStock => 'Početna zaliha';
+
+  @override
+  String get manage => 'Upravljaj';
+
+  @override
+  String get allStatuses => 'Svi statusi';
+
+  @override
+  String productsCount(int count) {
+    return '$count proizvoda';
+  }
+
+  @override
+  String get payment => 'Plaćanje';
+
+  @override
+  String get paymentStatusPending => 'Čeka uplatu';
+
+  @override
+  String get paymentStatusSucceeded => 'Plaćeno';
+
+  @override
+  String get paymentStatusFailed => 'Neuspjelo';
+
+  @override
+  String get paymentStatusRefunded => 'Vraćeno';
+
+  @override
+  String get none => 'Bez';
 }

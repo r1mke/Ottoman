@@ -367,4 +367,179 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get slotTaken => 'That time was just taken. Please pick another.';
+
+  @override
+  String get cart => 'Cart';
+
+  @override
+  String get addToCart => 'Add to cart';
+
+  @override
+  String get outOfStock => 'Out of stock';
+
+  @override
+  String get lowStock => 'Low stock';
+
+  @override
+  String get stock => 'Stock';
+
+  @override
+  String inStockCount(int count) {
+    return 'In stock: $count';
+  }
+
+  @override
+  String get allCategories => 'All categories';
+
+  @override
+  String get sortBy => 'Sort';
+
+  @override
+  String get sortName => 'Name';
+
+  @override
+  String get sortPriceAsc => 'Price: low to high';
+
+  @override
+  String get sortPriceDesc => 'Price: high to low';
+
+  @override
+  String get sortNewest => 'Newest';
+
+  @override
+  String get cartEmpty => 'Your cart is empty';
+
+  @override
+  String get limitReached => 'No more pieces in stock.';
+
+  @override
+  String get checkout => 'Checkout';
+
+  @override
+  String get pickup => 'Pick up at the salon';
+
+  @override
+  String get delivery => 'Delivery';
+
+  @override
+  String get deliveryAddress => 'Delivery address';
+
+  @override
+  String get payByCard => 'By card';
+
+  @override
+  String get payOnReceipt => 'On receipt';
+
+  @override
+  String get placeOrder => 'Place order';
+
+  @override
+  String get orderPlaced => 'Your order has been received.';
+
+  @override
+  String get orderAwaitsPayment => 'The order is waiting for payment.';
+
+  @override
+  String get cardUnavailable =>
+      'Card payment is not available in this app yet. Choose to pay on receipt.';
+
+  @override
+  String get payNow => 'Pay now';
+
+  @override
+  String get myOrders => 'My orders';
+
+  @override
+  String get noOrders => 'No orders';
+
+  @override
+  String get orders => 'Orders';
+
+  @override
+  String orderNumber(int id) {
+    return 'Order #$id';
+  }
+
+  @override
+  String get orderStatusPendingPayment => 'Awaiting payment';
+
+  @override
+  String get orderStatusPlaced => 'Received';
+
+  @override
+  String get orderStatusFulfilled => 'Picked up';
+
+  @override
+  String get orderStatusCancelled => 'Cancelled';
+
+  @override
+  String get orderStatusExpired => 'Expired';
+
+  @override
+  String get cancelOrder => 'Cancel order';
+
+  @override
+  String get cancelOrderQuestion => 'Do you really want to cancel this order?';
+
+  @override
+  String get markFulfilled => 'Picked up / delivered';
+
+  @override
+  String get restock => 'Adjust stock';
+
+  @override
+  String get stockChange => 'Stock change (e.g. 5 or -2)';
+
+  @override
+  String get brand => 'Brand';
+
+  @override
+  String get brands => 'Brands';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get categories => 'Categories';
+
+  @override
+  String get lowStockOnly => 'Low stock only';
+
+  @override
+  String get newProduct => 'New product';
+
+  @override
+  String get lowStockThreshold => 'Low stock threshold';
+
+  @override
+  String get initialStock => 'Initial stock';
+
+  @override
+  String get manage => 'Manage';
+
+  @override
+  String get allStatuses => 'All statuses';
+
+  @override
+  String productsCount(int count) {
+    return '$count products';
+  }
+
+  @override
+  String get payment => 'Payment';
+
+  @override
+  String get paymentStatusPending => 'Awaiting payment';
+
+  @override
+  String get paymentStatusSucceeded => 'Paid';
+
+  @override
+  String get paymentStatusFailed => 'Failed';
+
+  @override
+  String get paymentStatusRefunded => 'Refunded';
+
+  @override
+  String get none => 'None';
 }

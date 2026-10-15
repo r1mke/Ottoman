@@ -799,6 +799,342 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Termin je upravo zauzet. Odaberite drugi.'**
   String get slotTaken;
+
+  /// No description provided for @cart.
+  ///
+  /// In bs, this message translates to:
+  /// **'Korpa'**
+  String get cart;
+
+  /// No description provided for @addToCart.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodaj u korpu'**
+  String get addToCart;
+
+  /// No description provided for @outOfStock.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema na zalihi'**
+  String get outOfStock;
+
+  /// No description provided for @lowStock.
+  ///
+  /// In bs, this message translates to:
+  /// **'Niska zaliha'**
+  String get lowStock;
+
+  /// No description provided for @stock.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zaliha'**
+  String get stock;
+
+  /// No description provided for @inStockCount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Na zalihi: {count}'**
+  String inStockCount(int count);
+
+  /// No description provided for @allCategories.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sve kategorije'**
+  String get allCategories;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sortiraj'**
+  String get sortBy;
+
+  /// No description provided for @sortName.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naziv'**
+  String get sortName;
+
+  /// No description provided for @sortPriceAsc.
+  ///
+  /// In bs, this message translates to:
+  /// **'Cijena: manja prvo'**
+  String get sortPriceAsc;
+
+  /// No description provided for @sortPriceDesc.
+  ///
+  /// In bs, this message translates to:
+  /// **'Cijena: veća prvo'**
+  String get sortPriceDesc;
+
+  /// No description provided for @sortNewest.
+  ///
+  /// In bs, this message translates to:
+  /// **'Najnovije'**
+  String get sortNewest;
+
+  /// No description provided for @cartEmpty.
+  ///
+  /// In bs, this message translates to:
+  /// **'Korpa je prazna'**
+  String get cartEmpty;
+
+  /// No description provided for @limitReached.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema više komada na zalihi.'**
+  String get limitReached;
+
+  /// No description provided for @checkout.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naplata'**
+  String get checkout;
+
+  /// No description provided for @pickup.
+  ///
+  /// In bs, this message translates to:
+  /// **'Preuzimanje u salonu'**
+  String get pickup;
+
+  /// No description provided for @delivery.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dostava'**
+  String get delivery;
+
+  /// No description provided for @deliveryAddress.
+  ///
+  /// In bs, this message translates to:
+  /// **'Adresa za dostavu'**
+  String get deliveryAddress;
+
+  /// No description provided for @payByCard.
+  ///
+  /// In bs, this message translates to:
+  /// **'Karticom'**
+  String get payByCard;
+
+  /// No description provided for @payOnReceipt.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pri preuzimanju'**
+  String get payOnReceipt;
+
+  /// No description provided for @placeOrder.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naruči'**
+  String get placeOrder;
+
+  /// No description provided for @orderPlaced.
+  ///
+  /// In bs, this message translates to:
+  /// **'Narudžba je zaprimljena.'**
+  String get orderPlaced;
+
+  /// No description provided for @orderAwaitsPayment.
+  ///
+  /// In bs, this message translates to:
+  /// **'Narudžba čeka plaćanje.'**
+  String get orderAwaitsPayment;
+
+  /// No description provided for @cardUnavailable.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plaćanje karticom trenutno nije dostupno u ovoj aplikaciji. Odaberite plaćanje pri preuzimanju.'**
+  String get cardUnavailable;
+
+  /// No description provided for @payNow.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plati'**
+  String get payNow;
+
+  /// No description provided for @myOrders.
+  ///
+  /// In bs, this message translates to:
+  /// **'Moje narudžbe'**
+  String get myOrders;
+
+  /// No description provided for @noOrders.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema narudžbi'**
+  String get noOrders;
+
+  /// No description provided for @orders.
+  ///
+  /// In bs, this message translates to:
+  /// **'Narudžbe'**
+  String get orders;
+
+  /// No description provided for @orderNumber.
+  ///
+  /// In bs, this message translates to:
+  /// **'Narudžba #{id}'**
+  String orderNumber(int id);
+
+  /// No description provided for @orderStatusPendingPayment.
+  ///
+  /// In bs, this message translates to:
+  /// **'Čeka plaćanje'**
+  String get orderStatusPendingPayment;
+
+  /// No description provided for @orderStatusPlaced.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zaprimljena'**
+  String get orderStatusPlaced;
+
+  /// No description provided for @orderStatusFulfilled.
+  ///
+  /// In bs, this message translates to:
+  /// **'Preuzeta'**
+  String get orderStatusFulfilled;
+
+  /// No description provided for @orderStatusCancelled.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkazana'**
+  String get orderStatusCancelled;
+
+  /// No description provided for @orderStatusExpired.
+  ///
+  /// In bs, this message translates to:
+  /// **'Istekla'**
+  String get orderStatusExpired;
+
+  /// No description provided for @cancelOrder.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkaži narudžbu'**
+  String get cancelOrder;
+
+  /// No description provided for @cancelOrderQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Da li sigurno želite otkazati narudžbu?'**
+  String get cancelOrderQuestion;
+
+  /// No description provided for @markFulfilled.
+  ///
+  /// In bs, this message translates to:
+  /// **'Preuzeta / isporučena'**
+  String get markFulfilled;
+
+  /// No description provided for @restock.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dopuni zalihu'**
+  String get restock;
+
+  /// No description provided for @stockChange.
+  ///
+  /// In bs, this message translates to:
+  /// **'Promjena zalihe (npr. 5 ili -2)'**
+  String get stockChange;
+
+  /// No description provided for @brand.
+  ///
+  /// In bs, this message translates to:
+  /// **'Brend'**
+  String get brand;
+
+  /// No description provided for @brands.
+  ///
+  /// In bs, this message translates to:
+  /// **'Brendovi'**
+  String get brands;
+
+  /// No description provided for @category.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kategorija'**
+  String get category;
+
+  /// No description provided for @categories.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kategorije'**
+  String get categories;
+
+  /// No description provided for @lowStockOnly.
+  ///
+  /// In bs, this message translates to:
+  /// **'Samo niska zaliha'**
+  String get lowStockOnly;
+
+  /// No description provided for @newProduct.
+  ///
+  /// In bs, this message translates to:
+  /// **'Novi proizvod'**
+  String get newProduct;
+
+  /// No description provided for @lowStockThreshold.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prag niske zalihe'**
+  String get lowStockThreshold;
+
+  /// No description provided for @initialStock.
+  ///
+  /// In bs, this message translates to:
+  /// **'Početna zaliha'**
+  String get initialStock;
+
+  /// No description provided for @manage.
+  ///
+  /// In bs, this message translates to:
+  /// **'Upravljaj'**
+  String get manage;
+
+  /// No description provided for @allStatuses.
+  ///
+  /// In bs, this message translates to:
+  /// **'Svi statusi'**
+  String get allStatuses;
+
+  /// No description provided for @productsCount.
+  ///
+  /// In bs, this message translates to:
+  /// **'{count} proizvoda'**
+  String productsCount(int count);
+
+  /// No description provided for @payment.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plaćanje'**
+  String get payment;
+
+  /// No description provided for @paymentStatusPending.
+  ///
+  /// In bs, this message translates to:
+  /// **'Čeka uplatu'**
+  String get paymentStatusPending;
+
+  /// No description provided for @paymentStatusSucceeded.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plaćeno'**
+  String get paymentStatusSucceeded;
+
+  /// No description provided for @paymentStatusFailed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Neuspjelo'**
+  String get paymentStatusFailed;
+
+  /// No description provided for @paymentStatusRefunded.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vraćeno'**
+  String get paymentStatusRefunded;
+
+  /// No description provided for @none.
+  ///
+  /// In bs, this message translates to:
+  /// **'Bez'**
+  String get none;
 }
 
 class _AppLocalizationsDelegate

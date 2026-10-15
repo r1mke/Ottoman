@@ -15,3 +15,8 @@ export 'widgets/async_view.dart';
 export 'reservations/reservation_models.dart';
 export 'reservations/reservations_api.dart';
 export 'widgets/slot_selector.dart';
+export 'shop/shop_models.dart';
+export 'shop/shop_api.dart';
+export 'shop/cart_controller.dart';
+export 'shop/card_payment_launcher.dart';
+export 'shop/shop_labels.dart';

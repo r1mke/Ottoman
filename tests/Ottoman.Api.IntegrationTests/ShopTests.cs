@@ -77,6 +77,18 @@ public class ShopTests(ApiFixture api)
         return await http.SendAsync(req);
     }
 
+    [Fact]
+    public async Task Enums_travel_as_names_not_numbers_so_the_apps_can_read_them()
+    {
+        var p = await NewProduct();
+        var (_, client) = await NewClient();
+        var res = await client.PostAsJsonAsync("/api/v1/orders", new { items = new[] { new { productId = p.Id, quantity = 1 } }, fulfilment = "Pickup", paymentMethod = "OnReceipt" });
+
+        res.StatusCode.Should().Be(HttpStatusCode.Created);
+        var raw = await res.Content.ReadAsStringAsync();
+        raw.Should().Contain("\"status\":\"Placed\"").And.Contain("\"paymentMethod\":\"OnReceipt\"").And.Contain("\"fulfilment\":\"Pickup\"");
+    }
+
     // ------------------------------------------------------------------ catalogue
 
     [Fact]
