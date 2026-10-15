@@ -20,6 +20,7 @@ public static class Policies
     public const string RegisterLimit = "register";
     public const string ForgotLimit = "forgot";
     public const string RefreshLimit = "refresh";
+    public const string OrderLimit = "orders";
 }
 
 public class RateLimitOptions
@@ -30,6 +31,7 @@ public class RateLimitOptions
     public int RegisterPerHour { get; set; } = 5;
     public int ForgotPerHour { get; set; } = 5;
     public int RefreshPerMinute { get; set; } = 30;
+    public int OrdersPerHour { get; set; } = 30;
 }
 
 public static class ClaimsExtensions
@@ -114,6 +116,7 @@ public static class AuthSetup
             Add(Policies.RegisterLimit, o => (o.RegisterPerHour, TimeSpan.FromHours(1)));
             Add(Policies.ForgotLimit, o => (o.ForgotPerHour, TimeSpan.FromHours(1)));
             Add(Policies.RefreshLimit, o => (o.RefreshPerMinute, TimeSpan.FromMinutes(1)));
+            Add(Policies.OrderLimit, o => (o.OrdersPerHour, TimeSpan.FromHours(1)));
         });
 
         return services;

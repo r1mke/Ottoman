@@ -8,19 +8,25 @@ using Ottoman.Application.Catalog;
 using Ottoman.Application.Clients;
 using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
+using Ottoman.Application.Orders;
+using Ottoman.Application.Payments;
 using Ottoman.Application.Reservations;
 using Ottoman.Application.Scheduling;
 using Ottoman.Application.Settings;
+using Ottoman.Application.Shop;
 using Ottoman.Infrastructure.Auth;
 using Ottoman.Infrastructure.Catalog;
 using Ottoman.Infrastructure.Employees;
 using Ottoman.Infrastructure.Identity;
+using Ottoman.Infrastructure.Orders;
 using Ottoman.Infrastructure.Outbox;
+using Ottoman.Infrastructure.Payments;
 using Ottoman.Infrastructure.Persistence;
 using Ottoman.Infrastructure.Reservations;
 using Ottoman.Infrastructure.Scheduling;
 using Ottoman.Infrastructure.Seeding;
 using Ottoman.Infrastructure.Settings;
+using Ottoman.Infrastructure.Shop;
 
 namespace Ottoman.Infrastructure;
 
@@ -66,6 +72,22 @@ public static class DependencyInjection
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<ISalonSettingsService, SalonSettingsService>();
+
+        services.AddOptions<PaymentOptions>().Bind(config.GetSection(PaymentOptions.Section));
+        services.AddScoped<IProductCatalog, ProductCatalog>();
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IPaymentWebhookHandler, PaymentWebhookHandler>();
+        if (string.IsNullOrWhiteSpace(config[$"{PaymentOptions.Section}:SecretKey"]))
+        {
+            // No processor configured: nothing is ever charged, and orders only become paid via a signed webhook.
+            services.AddSingleton<FakePaymentGateway>();
+            services.AddSingleton<IPaymentGateway>(sp => sp.GetRequiredService<FakePaymentGateway>());
+        }
+        else
+        {
+            services.AddHttpClient<IPaymentGateway, StripeGateway>(c => c.BaseAddress = StripeGateway.BaseAddress);
+        }
+        services.AddHostedService<OrderExpiryService>();
 
         services.Configure<SeedOptions>(config.GetSection(SeedOptions.Section));
         services.AddScoped<DatabaseSeeder>();

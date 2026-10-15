@@ -9,6 +9,30 @@ public enum ReservationStatus
     NoShow = 4,
 }
 
+public enum OrderStatus
+{
+    /// <summary>Card order waiting for the payment; stock is held until <c>ExpiresUtc</c>.</summary>
+    PendingPayment = 0,
+    /// <summary>Paid by card, or accepted for payment at pickup/delivery.</summary>
+    Placed = 1,
+    Fulfilled = 2,
+    Cancelled = 3,
+    /// <summary>Card payment never arrived in time; stock was released.</summary>
+    Expired = 4,
+}
+
+public enum FulfilmentType
+{
+    Pickup = 0,
+    Delivery = 1,
+}
+
+public enum PaymentMethod
+{
+    Card = 0,
+    OnReceipt = 1,
+}
+
 public enum PaymentStatus
 {
     Pending = 0,

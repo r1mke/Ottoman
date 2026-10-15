@@ -1,0 +1,205 @@
+using Microsoft.EntityFrameworkCore;
+using Ottoman.Application.Common;
+using Ottoman.Application.Shop;
+using Ottoman.Domain.Entities;
+using Ottoman.Infrastructure.Persistence;
+
+namespace Ottoman.Infrastructure.Shop;
+
+public class ProductCatalog(OttomanDbContext db) : IProductCatalog
+{
+    // ---------------------------------------------------------------- products
+
+    public async Task<PagedResult<ProductDto>> ListAsync(ProductQuery q, PageQuery page, CancellationToken ct)
+    {
+        var query = db.Products.AsNoTracking().AsQueryable();
+        if (!q.IncludeInactive) query = query.Where(p => p.IsActive);
+        if (q.CategoryId is { } c) query = query.Where(p => p.CategoryId == c);
+        if (q.BrandId is { } b) query = query.Where(p => p.BrandId == b);
+        if (q.OnlyLowStock) query = query.Where(p => p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold);
+        if (!string.IsNullOrWhiteSpace(q.Search))
+        {
+            var term = q.Search.Trim();
+            query = query.Where(p => p.Name.Contains(term) || (p.Description != null && p.Description.Contains(term)) ||
+                                     (p.Brand != null && p.Brand.Name.Contains(term)));
+        }
+
+        var total = await query.CountAsync(ct);
+        query = q.Sort switch
+        {
+            ProductSort.PriceAsc => query.OrderBy(p => p.Price).ThenBy(p => p.Id),
+            ProductSort.PriceDesc => query.OrderByDescending(p => p.Price).ThenBy(p => p.Id),
+            ProductSort.Newest => query.OrderByDescending(p => p.Id),
+            _ => query.OrderBy(p => p.Name).ThenBy(p => p.Id),
+        };
+
+        var items = await query.Skip(page.Skip).Take(page.SafePageSize)
+            .Select(p => new ProductDto(
+                p.Id, p.Name, p.Description,
+                p.BrandId, p.Brand != null ? p.Brand.Name : null,
+                p.CategoryId, p.Category != null ? p.Category.Name : null,
+                p.Price, p.Stock, p.LowStockThreshold,
+                p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
+                p.IsActive))
+            .ToListAsync(ct);
+        return new PagedResult<ProductDto>(items, total);
+    }
+
+    public async Task<Result<ProductDto>> GetAsync(int id, bool includeInactive, CancellationToken ct)
+    {
+        var p = await LoadDtoAsync(id, ct);
+        return p is null || (!p.IsActive && !includeInactive) ? Result<ProductDto>.NotFound() : Result<ProductDto>.Ok(p);
+    }
+
+    public async Task<Result<ProductDto>> CreateAsync(ProductUpsertRequest r, CancellationToken ct)
+    {
+        var refs = await CheckReferencesAsync(r, ct);
+        if (refs is not null) return Result<ProductDto>.Invalid(refs);
+
+        var name = r.Name.Trim();
+        if (await db.Products.AnyAsync(p => p.Name == name, ct))
+            return Result<ProductDto>.Conflict("Proizvod s tim nazivom već postoji.");
+
+        var product = new Product
+        {
+            Name = name,
+            Description = r.Description?.Trim(),
+            BrandId = r.BrandId,
+            CategoryId = r.CategoryId,
+            Price = r.Price,
+            Stock = r.Stock,
+            LowStockThreshold = r.LowStockThreshold,
+            IsActive = r.IsActive,
+        };
+        db.Products.Add(product);
+        await db.SaveChangesAsync(ct);
+        return Result<ProductDto>.Ok((await LoadDtoAsync(product.Id, ct))!);
+    }
+
+    public async Task<Result<ProductDto>> UpdateAsync(int id, ProductUpsertRequest r, CancellationToken ct)
+    {
+        var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (product is null) return Result<ProductDto>.NotFound();
+
+        var refs = await CheckReferencesAsync(r, ct);
+        if (refs is not null) return Result<ProductDto>.Invalid(refs);
+
+        var name = r.Name.Trim();
+        if (await db.Products.AnyAsync(p => p.Id != id && p.Name == name, ct))
+            return Result<ProductDto>.Conflict("Proizvod s tim nazivom već postoji.");
+
+        // Stock is deliberately not touched: concurrent orders change it, so only the atomic adjust may.
+        product.Name = name;
+        product.Description = r.Description?.Trim();
+        product.BrandId = r.BrandId;
+        product.CategoryId = r.CategoryId;
+        product.Price = r.Price;
+        product.LowStockThreshold = r.LowStockThreshold;
+        product.IsActive = r.IsActive;
+        await db.SaveChangesAsync(ct);
+        return Result<ProductDto>.Ok((await LoadDtoAsync(id, ct))!);
+    }
+
+    public async Task<Result<ProductDto>> AdjustStockAsync(int id, int delta, CancellationToken ct)
+    {
+        // One conditional UPDATE: the stock can never go negative, whatever else is running.
+        var rows = await db.Products
+            .Where(p => p.Id == id && p.Stock + delta >= 0)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock + delta), ct);
+        if (rows == 1) return Result<ProductDto>.Ok((await LoadDtoAsync(id, ct))!);
+
+        return await db.Products.AnyAsync(p => p.Id == id, ct)
+            ? Result<ProductDto>.Conflict("Zaliha ne može biti negativna.")
+            : Result<ProductDto>.NotFound();
+    }
+
+    public async Task<Result<bool>> DeactivateAsync(int id, CancellationToken ct)
+    {
+        var rows = await db.Products.Where(p => p.Id == id).ExecuteUpdateAsync(s => s.SetProperty(p => p.IsActive, false), ct);
+        return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
+    }
+
+    private async Task<string?> CheckReferencesAsync(ProductUpsertRequest r, CancellationToken ct)
+    {
+        if (r.BrandId is { } b && !await db.Brands.AnyAsync(x => x.Id == b, ct)) return "Odabrani brend ne postoji.";
+        if (r.CategoryId is { } c && !await db.Categories.AnyAsync(x => x.Id == c, ct)) return "Odabrana kategorija ne postoji.";
+        return null;
+    }
+
+    private Task<ProductDto?> LoadDtoAsync(int id, CancellationToken ct) =>
+        db.Products.AsNoTracking().Where(p => p.Id == id)
+            .Select(p => new ProductDto(
+                p.Id, p.Name, p.Description,
+                p.BrandId, p.Brand != null ? p.Brand.Name : null,
+                p.CategoryId, p.Category != null ? p.Category.Name : null,
+                p.Price, p.Stock, p.LowStockThreshold,
+                p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
+                p.IsActive))
+            .FirstOrDefaultAsync(ct);
+
+    // ---------------------------------------------------------------- brands
+
+    public async Task<IReadOnlyList<BrandDto>> ListBrandsAsync(CancellationToken ct) =>
+        await db.Brands.AsNoTracking().OrderBy(b => b.Name).Select(b => new BrandDto(b.Id, b.Name)).ToListAsync(ct);
+
+    public async Task<Result<BrandDto>> CreateBrandAsync(NameRequest r, CancellationToken ct)
+    {
+        var name = r.Name.Trim();
+        if (await db.Brands.AnyAsync(b => b.Name == name, ct)) return Result<BrandDto>.Conflict("Brend s tim nazivom već postoji.");
+        var brand = new Brand { Name = name };
+        db.Brands.Add(brand);
+        await db.SaveChangesAsync(ct);
+        return Result<BrandDto>.Ok(new BrandDto(brand.Id, brand.Name));
+    }
+
+    public async Task<Result<BrandDto>> UpdateBrandAsync(int id, NameRequest r, CancellationToken ct)
+    {
+        var brand = await db.Brands.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (brand is null) return Result<BrandDto>.NotFound();
+        var name = r.Name.Trim();
+        if (await db.Brands.AnyAsync(b => b.Id != id && b.Name == name, ct)) return Result<BrandDto>.Conflict("Brend s tim nazivom već postoji.");
+        brand.Name = name;
+        await db.SaveChangesAsync(ct);
+        return Result<BrandDto>.Ok(new BrandDto(brand.Id, brand.Name));
+    }
+
+    public async Task<Result<bool>> DeleteBrandAsync(int id, CancellationToken ct)
+    {
+        // Products keep existing without a brand (FK is SET NULL).
+        var rows = await db.Brands.Where(b => b.Id == id).ExecuteDeleteAsync(ct);
+        return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
+    }
+
+    // ---------------------------------------------------------------- categories
+
+    public async Task<IReadOnlyList<CategoryDto>> ListCategoriesAsync(CancellationToken ct) =>
+        await db.Categories.AsNoTracking().OrderBy(c => c.Name).Select(c => new CategoryDto(c.Id, c.Name, c.Description)).ToListAsync(ct);
+
+    public async Task<Result<CategoryDto>> CreateCategoryAsync(NameRequest r, CancellationToken ct)
+    {
+        var name = r.Name.Trim();
+        if (await db.Categories.AnyAsync(c => c.Name == name, ct)) return Result<CategoryDto>.Conflict("Kategorija s tim nazivom već postoji.");
+        var category = new Category { Name = name, Description = r.Description?.Trim() };
+        db.Categories.Add(category);
+        await db.SaveChangesAsync(ct);
+        return Result<CategoryDto>.Ok(new CategoryDto(category.Id, category.Name, category.Description));
+    }
+
+    public async Task<Result<CategoryDto>> UpdateCategoryAsync(int id, NameRequest r, CancellationToken ct)
+    {
+        var category = await db.Categories.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (category is null) return Result<CategoryDto>.NotFound();
+        var name = r.Name.Trim();
+        if (await db.Categories.AnyAsync(c => c.Id != id && c.Name == name, ct)) return Result<CategoryDto>.Conflict("Kategorija s tim nazivom već postoji.");
+        category.Name = name;
+        category.Description = r.Description?.Trim();
+        await db.SaveChangesAsync(ct);
+        return Result<CategoryDto>.Ok(new CategoryDto(category.Id, category.Name, category.Description));
+    }
+
+    public async Task<Result<bool>> DeleteCategoryAsync(int id, CancellationToken ct)
+    {
+        var rows = await db.Categories.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
+        return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
+    }
+}

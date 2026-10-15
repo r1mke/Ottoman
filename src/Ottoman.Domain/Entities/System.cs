@@ -9,6 +9,8 @@ public class Payment
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "BAM";
     public PaymentStatus Status { get; set; }
+    /// <summary>Needed by the client to confirm the payment; only ever returned to the order owner.</summary>
+    public string? ClientSecret { get; set; }
     public DateTime CreatedAtUtc { get; set; }
 }
 
