@@ -7,6 +7,9 @@ public class PaymentOptions
     /// <summary>Stripe secret key. Empty = no processor configured (card orders can be created but never get paid).</summary>
     public string SecretKey { get; set; } = "";
 
+    /// <summary>Publishable key (pk_...). Safe to hand to the apps; they need it to open the card sheet.</summary>
+    public string PublishableKey { get; set; } = "";
+
     /// <summary>Signing secret of the webhook endpoint. Empty = the webhook endpoint refuses everything.</summary>
     public string WebhookSecret { get; set; } = "";
 

@@ -4,6 +4,7 @@ using System.Text;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Ottoman.Api.Controllers;
 using Ottoman.Application.Common;
 using Ottoman.Application.Orders;
 using Ottoman.Application.Payments;
@@ -327,16 +328,22 @@ public class ShopTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task Delivery_needs_an_address_and_a_card_and_stores_the_address()
+    public async Task Delivery_is_not_offered_only_pickup_at_the_salon()
     {
         var p = await NewProduct();
         var (_, client) = await NewClient();
-        (await Order(client, p, 1, PaymentMethod.Card, FulfilmentType.Delivery)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await Order(client, p, 1, PaymentMethod.OnReceipt, FulfilmentType.Delivery, "Ulica 1")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Order(client, p, 1, PaymentMethod.Card, FulfilmentType.Delivery, "Maršala Tita 5")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Order(client, p, 1, PaymentMethod.Card)).StatusCode.Should().Be(HttpStatusCode.Created);
+    }
 
-        var ok = await Dto(await Order(client, p, 1, PaymentMethod.Card, FulfilmentType.Delivery, "Maršala Tita 5, Mostar"));
-        ok.DeliveryAddress.Should().Be("Maršala Tita 5, Mostar");
-        ok.Fulfilment.Should().Be(FulfilmentType.Delivery);
+    [Fact]
+    public async Task Payment_config_is_for_signed_in_users_and_says_cards_are_off_without_keys()
+    {
+        (await api.CreateClient().GetAsync("/api/v1/payments/config")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        var (_, client) = await NewClient();
+        var cfg = (await client.GetFromJsonAsync<PaymentConfigDto>("/api/v1/payments/config"))!;
+        cfg.CardsEnabled.Should().BeFalse();
+        cfg.PublishableKey.Should().BeNull();
     }
 
     [Fact]

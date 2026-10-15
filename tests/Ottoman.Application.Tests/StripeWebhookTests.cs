@@ -116,11 +116,10 @@ public class ShopValidatorTests
     public void Quantity_must_be_between_one_and_twenty(int qty) => Order.Validate(Req(qty: qty)).IsValid.Should().BeFalse();
 
     [Fact]
-    public void Delivery_needs_an_address_and_a_card()
+    public void Only_pickup_is_offered()
     {
-        Order.Validate(Req(FulfilmentType.Delivery, PaymentMethod.Card)).IsValid.Should().BeFalse();
-        Order.Validate(Req(FulfilmentType.Delivery, PaymentMethod.Card, "Ulica 1")).IsValid.Should().BeTrue();
-        Order.Validate(Req(FulfilmentType.Delivery, PaymentMethod.OnReceipt, "Ulica 1")).IsValid.Should().BeFalse();
+        Order.Validate(Req(FulfilmentType.Delivery, PaymentMethod.Card, "Ulica 1")).IsValid.Should().BeFalse();
+        Order.Validate(Req(FulfilmentType.Pickup, PaymentMethod.OnReceipt)).IsValid.Should().BeTrue();
     }
 
     [Fact]

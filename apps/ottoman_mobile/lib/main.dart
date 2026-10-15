@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 import 'app.dart';
+import 'features/shop/stripe_card_payment.dart';
 
 // 10.0.2.2 is the host machine as seen from the Android emulator.
 const _apiUrl = String.fromEnvironment(
@@ -19,5 +20,7 @@ Future<void> main() async {
   );
   await auth.restore();
 
-  runApp(OttomanMobileApp(auth: auth));
+  runApp(
+    OttomanMobileApp(auth: auth, cardPayment: StripeCardPayment(auth.api)),
+  );
 }
