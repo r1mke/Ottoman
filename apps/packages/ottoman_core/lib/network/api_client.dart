@@ -1,0 +1,95 @@
+import 'package:dio/dio.dart';
+
+import 'app_exception.dart';
+
+typedef TokenReader = Future<String?> Function();
+
+/// Called once on a 401. Return true if the session was renewed and the request
+/// should be retried with the new token.
+typedef SessionRefresher = Future<bool> Function();
+
+/// Thin Dio wrapper: bearer auth, one refresh-and-retry on 401, and every
+/// failure mapped to [AppException].
+class ApiClient {
+  ApiClient({
+    required String baseUrl,
+    required this.readToken,
+    this.refreshSession,
+    Dio? dio,
+  }) : dio = dio ?? Dio() {
+    this.dio.options
+      ..baseUrl = baseUrl
+      ..connectTimeout = const Duration(seconds: 10)
+      ..receiveTimeout = const Duration(seconds: 20)
+      ..headers['Accept'] = 'application/json';
+    this.dio.interceptors.add(_AuthInterceptor(this));
+  }
+
+  final Dio dio;
+  final TokenReader readToken;
+  final SessionRefresher? refreshSession;
+
+  Future<T> get<T>(String path, {Map<String, dynamic>? query}) =>
+      _send(() => dio.get<dynamic>(path, queryParameters: query));
+
+  Future<T> post<T>(String path, {Object? body}) =>
+      _send(() => dio.post<dynamic>(path, data: body));
+
+  Future<T> put<T>(String path, {Object? body}) =>
+      _send(() => dio.put<dynamic>(path, data: body));
+
+  Future<T> delete<T>(String path) => _send(() => dio.delete<dynamic>(path));
+
+  Future<T> _send<T>(Future<Response<dynamic>> Function() call) async {
+    try {
+      final res = await call();
+      return res.data as T;
+    } on DioException catch (e) {
+      throw AppException.fromDio(e);
+    }
+  }
+}
+
+class _AuthInterceptor extends Interceptor {
+  _AuthInterceptor(this._client);
+  final ApiClient _client;
+
+  static const _retriedKey = 'ottoman_retried';
+
+  @override
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final token = await _client.readToken();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    handler.next(options);
+  }
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final req = err.requestOptions;
+    final isAuthCall = req.path.startsWith('/api/v1/auth/');
+    if (err.response?.statusCode == 401 &&
+        !isAuthCall &&
+        req.extra[_retriedKey] != true &&
+        _client.refreshSession != null) {
+      final renewed = await _client.refreshSession!();
+      if (renewed) {
+        req.extra[_retriedKey] = true;
+        try {
+          final res = await _client.dio.fetch<dynamic>(req);
+          return handler.resolve(res);
+        } on DioException catch (e) {
+          return handler.next(e);
+        }
+      }
+    }
+    handler.next(err);
+  }
+}

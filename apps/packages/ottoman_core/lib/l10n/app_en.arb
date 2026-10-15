@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "appName": "OTTOMAN",
+  "login": "Sign in",
+  "logout": "Sign out",
+  "email": "Email",
+  "password": "Password",
+  "retry": "Try again",
+  "cancel": "Cancel",
+  "save": "Save",
+  "edit": "Edit",
+  "delete": "Delete",
+  "employees": "Staff",
+  "services": "Services",
+  "appointments": "Appointments",
+  "products": "Products",
+  "settings": "Settings",
+  "home": "Home",
+  "noData": "No data",
+  "currencyShort": "BAM"
+}

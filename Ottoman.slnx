@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ottoman.Api/Ottoman.Api.csproj" />
+    <Project Path="src/Ottoman.Application/Ottoman.Application.csproj" />
+    <Project Path="src/Ottoman.Contracts/Ottoman.Contracts.csproj" />
+    <Project Path="src/Ottoman.Domain/Ottoman.Domain.csproj" />
+    <Project Path="src/Ottoman.Infrastructure/Ottoman.Infrastructure.csproj" />
+    <Project Path="src/Ottoman.Worker/Ottoman.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ottoman.Api.IntegrationTests/Ottoman.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Ottoman.Domain.Tests/Ottoman.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

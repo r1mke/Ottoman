@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore Ottoman.slnx
+      - run: dotnet format Ottoman.slnx --verify-no-changes --no-restore
+      - run: dotnet build Ottoman.slnx --no-restore -c Release
+      - run: dotnet test Ottoman.slnx --no-build -c Release
+      - name: Vulnerable packages
+        run: |
+          dotnet list Ottoman.slnx package --vulnerable --include-transitive | tee vuln.txt
+          ! grep -q "has the following vulnerable packages" vuln.txt
+
+  flutter:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [packages/ottoman_core, ottoman_mobile, ottoman_desktop]
+    defaults:
+      run:
+        working-directory: apps/${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: flutter analyze
+      - run: flutter test
+        if: hashFiles(format('apps/{0}/test/**', matrix.app)) != ''

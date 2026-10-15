@@ -1,0 +1,21 @@
+{
+  "@@locale": "bs",
+  "appName": "OTTOMAN",
+  "login": "Prijava",
+  "logout": "Odjava",
+  "email": "Email",
+  "password": "Lozinka",
+  "retry": "Pokušaj ponovo",
+  "cancel": "Otkaži",
+  "save": "Spremi",
+  "edit": "Uredi",
+  "delete": "Obriši",
+  "employees": "Uposlenici",
+  "services": "Usluge",
+  "appointments": "Termini",
+  "products": "Proizvodi",
+  "settings": "Postavke",
+  "home": "Početna",
+  "noData": "Nema podataka",
+  "currencyShort": "KM"
+}

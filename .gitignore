@@ -1,0 +1,36 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.log
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+secrets.json
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.packages
+.pub-cache/
+.pub/
+**/ios/Pods/
+**/android/.gradle/
+**/android/local.properties
+**/android/key.properties
+**/*.jks
+**/google-services.json
+**/GoogleService-Info.plist
+*.iml
+.idea/
+
+# Uploaded files
+data/images/
