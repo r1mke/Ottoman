@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ottoman.Api.IntegrationTests/Ottoman.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Ottoman.Application.Tests/Ottoman.Application.Tests.csproj" />
     <Project Path="tests/Ottoman.Domain.Tests/Ottoman.Domain.Tests.csproj" />
   </Folder>
 </Solution>

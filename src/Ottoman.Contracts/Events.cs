@@ -7,3 +7,8 @@ public static class Exchanges
 }
 
 public record UserRegistered(string UserId, string Email, string FullName);
+
+/// <summary>Someone tried to register with an email that already has an account.</summary>
+public record RegistrationAttemptedForExistingAccount(string Email, string FullName);
+
+public record PasswordResetRequested(string UserId, string Email, string FullName, string Token);

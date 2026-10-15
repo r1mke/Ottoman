@@ -62,4 +62,88 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get currencyShort => 'KM';
+
+  @override
+  String get register => 'Registracija';
+
+  @override
+  String get createAccount => 'Kreiraj račun';
+
+  @override
+  String get haveAccount => 'Već imate račun? Prijavite se';
+
+  @override
+  String get noAccount => 'Nemate račun? Registrujte se';
+
+  @override
+  String get forgotPassword => 'Zaboravljena lozinka?';
+
+  @override
+  String get resetEmailSent => 'Ako račun postoji, poslali smo upute na email.';
+
+  @override
+  String get firstName => 'Ime';
+
+  @override
+  String get lastName => 'Prezime';
+
+  @override
+  String get phone => 'Telefon';
+
+  @override
+  String get profile => 'Profil';
+
+  @override
+  String get saveChanges => 'Spremi izmjene';
+
+  @override
+  String get profileSaved => 'Profil je spremljen.';
+
+  @override
+  String get requiredField => 'Obavezno polje';
+
+  @override
+  String get invalidEmail => 'Unesite ispravan email';
+
+  @override
+  String get passwordRules =>
+      'Najmanje 8 znakova, veliko i malo slovo, broj i poseban znak.';
+
+  @override
+  String get registrationDone => 'Račun je kreiran. Sada se možete prijaviti.';
+
+  @override
+  String get welcomeBack => 'Dobrodošli nazad';
+
+  @override
+  String get signInSubtitle => 'Prijavite se da nastavite';
+
+  @override
+  String get language => 'Jezik';
+
+  @override
+  String get overview => 'Pregled';
+
+  @override
+  String get clients => 'Klijenti';
+
+  @override
+  String get notifications => 'Notifikacije';
+
+  @override
+  String get reports => 'Izvještaji';
+
+  @override
+  String get earnings => 'Zarada';
+
+  @override
+  String get myProfile => 'Moj profil';
+
+  @override
+  String get comingSoon => 'Uskoro dostupno';
+
+  @override
+  String signedInAs(String name) {
+    return 'Prijavljeni ste kao $name';
+  }
 }

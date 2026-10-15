@@ -205,6 +205,168 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'KM'**
   String get currencyShort;
+
+  /// No description provided for @register.
+  ///
+  /// In bs, this message translates to:
+  /// **'Registracija'**
+  String get register;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kreiraj račun'**
+  String get createAccount;
+
+  /// No description provided for @haveAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Već imate račun? Prijavite se'**
+  String get haveAccount;
+
+  /// No description provided for @noAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nemate račun? Registrujte se'**
+  String get noAccount;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zaboravljena lozinka?'**
+  String get forgotPassword;
+
+  /// No description provided for @resetEmailSent.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ako račun postoji, poslali smo upute na email.'**
+  String get resetEmailSent;
+
+  /// No description provided for @firstName.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ime'**
+  String get firstName;
+
+  /// No description provided for @lastName.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prezime'**
+  String get lastName;
+
+  /// No description provided for @phone.
+  ///
+  /// In bs, this message translates to:
+  /// **'Telefon'**
+  String get phone;
+
+  /// No description provided for @profile.
+  ///
+  /// In bs, this message translates to:
+  /// **'Profil'**
+  String get profile;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In bs, this message translates to:
+  /// **'Spremi izmjene'**
+  String get saveChanges;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In bs, this message translates to:
+  /// **'Profil je spremljen.'**
+  String get profileSaved;
+
+  /// No description provided for @requiredField.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obavezno polje'**
+  String get requiredField;
+
+  /// No description provided for @invalidEmail.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite ispravan email'**
+  String get invalidEmail;
+
+  /// No description provided for @passwordRules.
+  ///
+  /// In bs, this message translates to:
+  /// **'Najmanje 8 znakova, veliko i malo slovo, broj i poseban znak.'**
+  String get passwordRules;
+
+  /// No description provided for @registrationDone.
+  ///
+  /// In bs, this message translates to:
+  /// **'Račun je kreiran. Sada se možete prijaviti.'**
+  String get registrationDone;
+
+  /// No description provided for @welcomeBack.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dobrodošli nazad'**
+  String get welcomeBack;
+
+  /// No description provided for @signInSubtitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prijavite se da nastavite'**
+  String get signInSubtitle;
+
+  /// No description provided for @language.
+  ///
+  /// In bs, this message translates to:
+  /// **'Jezik'**
+  String get language;
+
+  /// No description provided for @overview.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pregled'**
+  String get overview;
+
+  /// No description provided for @clients.
+  ///
+  /// In bs, this message translates to:
+  /// **'Klijenti'**
+  String get clients;
+
+  /// No description provided for @notifications.
+  ///
+  /// In bs, this message translates to:
+  /// **'Notifikacije'**
+  String get notifications;
+
+  /// No description provided for @reports.
+  ///
+  /// In bs, this message translates to:
+  /// **'Izvještaji'**
+  String get reports;
+
+  /// No description provided for @earnings.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zarada'**
+  String get earnings;
+
+  /// No description provided for @myProfile.
+  ///
+  /// In bs, this message translates to:
+  /// **'Moj profil'**
+  String get myProfile;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uskoro dostupno'**
+  String get comingSoon;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prijavljeni ste kao {name}'**
+  String signedInAs(String name);
 }
 
 class _AppLocalizationsDelegate

@@ -1,46 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
-void main() => runApp(const OttomanApp());
+import 'app.dart';
 
-class OttomanApp extends StatelessWidget {
-  const OttomanApp({super.key});
+const _apiUrl = String.fromEnvironment(
+  'API_URL',
+  defaultValue: 'http://localhost:5080',
+);
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      onGenerateTitle: (c) => AppLocalizations.of(c).appName,
-      theme: OttomanTheme.light(),
-      darkTheme: OttomanTheme.dark(),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('bs'),
-      debugShowCheckedModeBanner: false,
-      home: const _Splash(),
-    );
-  }
-}
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-class _Splash extends StatelessWidget {
-  const _Splash();
+  // The desktop app is for staff only; clients use the mobile app.
+  final auth = AuthController(
+    baseUrl: _apiUrl,
+    storage: SecureTokenStorage(keyPrefix: 'ottoman.desktop'),
+    allowedRoles: {Roles.admin, Roles.employee},
+  );
+  await auth.restore();
 
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Scaffold(
-      body: Center(
-        child: Text(
-          t.appName,
-          style: Theme.of(context).textTheme.displaySmall
-              ?.copyWith(fontWeight: FontWeight.w800, letterSpacing: 4),
-        ),
-      ),
-    );
-  }
+  runApp(OttomanDesktopApp(auth: auth));
 }

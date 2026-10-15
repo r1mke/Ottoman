@@ -7,7 +7,7 @@ using Ottoman.Infrastructure.Identity;
 namespace Ottoman.Infrastructure.Persistence;
 
 public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
-    : IdentityDbContext<AppUser, IdentityRole, string>(options)
+    : IdentityDbContext<AppUser, IdentityRole, string>(options), Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.IDataProtectionKeyContext
 {
     public DbSet<EmployeeProfile> EmployeeProfiles => Set<EmployeeProfile>();
     public DbSet<EmployeeService> EmployeeServices => Set<EmployeeService>();
@@ -25,6 +25,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys => Set<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {

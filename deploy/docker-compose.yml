@@ -56,6 +56,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__Default: Server=sql;Database=Ottoman;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in deploy/.env (min 32 chars)}
+      Jwt__Issuer: ${JWT_ISSUER:-ottoman}
+      Jwt__Audience: ${JWT_AUDIENCE:-ottoman-clients}
       Database__MigrateOnStartup: "true"
       Seed__DemoData: ${SEED_DEMO_DATA:-true}
       Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-}
