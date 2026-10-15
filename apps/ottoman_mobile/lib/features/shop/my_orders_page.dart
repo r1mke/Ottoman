@@ -52,7 +52,8 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   Future<void> _pay(ShopOrder o) async {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final result = await widget.cardPayment.pay(o);
+    // The list does not carry payment secrets; fetch the one order.
+    final result = await widget.cardPayment.pay(await widget.shop.order(o.id));
     if (result == CardPaymentResult.unavailable) {
       messenger.showSnackBar(SnackBar(content: Text(t.cardUnavailable)));
     }

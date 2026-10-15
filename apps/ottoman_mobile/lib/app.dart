@@ -6,9 +6,14 @@ import 'features/auth/login_page.dart';
 import 'features/shell/mobile_shell.dart';
 
 class OttomanMobileApp extends StatelessWidget {
-  const OttomanMobileApp({super.key, required this.auth});
+  const OttomanMobileApp({
+    super.key,
+    required this.auth,
+    this.cardPayment = const UnavailableCardPayment(),
+  });
 
   final AuthController auth;
+  final CardPaymentLauncher cardPayment;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +32,7 @@ class OttomanMobileApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: AuthGate(
         auth: auth,
-        signedIn: (_) => MobileShell(auth: auth),
+        signedIn: (_) => MobileShell(auth: auth, cardPayment: cardPayment),
         signedOut: (_) => LoginPage(auth: auth),
       ),
     );

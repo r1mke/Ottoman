@@ -53,6 +53,15 @@ class _MobileShellState extends State<MobileShell> {
   final CartController _cart = CartController();
 
   @override
+  void initState() {
+    super.initState();
+    // Cards show up once the server has said it can take them.
+    widget.cardPayment.prepare().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     _cart.dispose();
     super.dispose();

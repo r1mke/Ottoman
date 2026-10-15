@@ -27,14 +27,9 @@ public class CreateOrderRequestValidator : AbstractValidator<CreateOrderRequest>
         });
         RuleFor(x => x.Fulfilment).IsInEnum();
         RuleFor(x => x.PaymentMethod).IsInEnum();
-        RuleFor(x => x.DeliveryAddress).NotEmpty().MaximumLength(300)
-            .When(x => x.Fulfilment == FulfilmentType.Delivery)
-            .WithMessage("Unesite adresu za dostavu.").WithName("Adresa");
+        // Goods are collected at the salon; delivery is not offered (docs/06 #65).
+        RuleFor(x => x.Fulfilment).Equal(FulfilmentType.Pickup).WithMessage("Proizvodi se preuzimaju u salonu.");
         RuleFor(x => x.Note).MaximumLength(500).WithName("Napomena");
-        // Paying on receipt means paying the person who hands over the goods; a courier flow is out of scope for now.
-        RuleFor(x => x.PaymentMethod).Equal(PaymentMethod.Card)
-            .When(x => x.Fulfilment == FulfilmentType.Delivery)
-            .WithMessage("Dostava se plaća karticom.");
     }
 }
 

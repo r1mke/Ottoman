@@ -65,6 +65,7 @@ services:
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-}
       Seed__DemoPassword: ${SEED_DEMO_PASSWORD:-Test123!}
       Payments__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Payments__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-}
       Payments__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}

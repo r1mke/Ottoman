@@ -122,7 +122,25 @@ class _Api implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Future<_Api> _openShop(WidgetTester tester) async {
+class _FakeCard extends CardPaymentLauncher {
+  _FakeCard(this.result);
+  final CardPaymentResult result;
+  final paid = <ShopOrder>[];
+
+  @override
+  bool get isAvailable => true;
+
+  @override
+  Future<CardPaymentResult> pay(ShopOrder order) async {
+    paid.add(order);
+    return result;
+  }
+}
+
+Future<_Api> _openShop(
+  WidgetTester tester, {
+  CardPaymentLauncher? cardPayment,
+}) async {
   tester.view.devicePixelRatio = 1.0;
   tester.view.physicalSize = const Size(420, 900);
   addTearDown(tester.view.reset);
@@ -139,7 +157,12 @@ Future<_Api> _openShop(WidgetTester tester) async {
     ),
   );
   await auth.restore();
-  await tester.pumpWidget(OttomanMobileApp(auth: auth));
+  await tester.pumpWidget(
+    OttomanMobileApp(
+      auth: auth,
+      cardPayment: cardPayment ?? const UnavailableCardPayment(),
+    ),
+  );
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('login_email')), 'x@y.z');
   await tester.enterText(find.byKey(const Key('login_password')), 'pw');
@@ -250,6 +273,47 @@ void main() {
     expect(find.byKey(const Key('product_search')), findsOneWidget);
     expect(find.byType(Badge), findsOneWidget);
     expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isFalse);
+  });
+
+  Future<_Api> checkoutWithCard(
+    WidgetTester tester,
+    CardPaymentResult result,
+    _FakeCard card,
+  ) async {
+    final api = await _openShop(tester, cardPayment: card);
+    api.createError = {
+      ..._order(status: 'PendingPayment', method: 'Card'),
+      'paymentClientSecret': 'pi_1_secret_x',
+    };
+    await tester.tap(find.byKey(const Key('add_1')));
+    await tester.tap(find.byKey(const Key('open_cart')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('go_checkout')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('place_order')));
+    await tester.pumpAndSettle();
+    return api;
+  }
+
+  testWidgets('with cards available checkout defaults to card and opens the '
+      'payment sheet with the server secret', (tester) async {
+    final card = _FakeCard(CardPaymentResult.paid);
+    final api = await checkoutWithCard(tester, CardPaymentResult.paid, card);
+
+    final sent = api.last('POST', '/orders')!.data as Map<String, dynamic>;
+    expect(sent['paymentMethod'], 'Card');
+    expect(sent['fulfilment'], 'Pickup');
+    expect(card.paid.single.paymentClientSecret, 'pi_1_secret_x');
+    expect(find.text('Narudžba je zaprimljena.'), findsOneWidget);
+  });
+
+  testWidgets('a cancelled card payment leaves the order waiting and says so', (
+    tester,
+  ) async {
+    final card = _FakeCard(CardPaymentResult.cancelled);
+    await checkoutWithCard(tester, CardPaymentResult.cancelled, card);
+
+    expect(find.text('Narudžba čeka plaćanje.'), findsOneWidget);
   });
 
   testWidgets(

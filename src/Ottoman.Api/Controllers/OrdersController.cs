@@ -54,10 +54,20 @@ public class OrdersController(IOrderService orders) : ControllerBase
         this.ToActionResult(await orders.FulfilAsync(User.ToActor(), id, ct));
 }
 
+public record PaymentConfigDto(string? PublishableKey, bool CardsEnabled);
+
 [ApiController]
 [Route("api/v1/payments")]
-public class PaymentsController(IPaymentWebhookHandler webhook) : ControllerBase
+public class PaymentsController(IPaymentWebhookHandler webhook, Microsoft.Extensions.Options.IOptions<PaymentOptions> options) : ControllerBase
 {
+    /// <summary>What the apps need to offer card payment. Cards are enabled only when both Stripe keys are configured.</summary>
+    [HttpGet("config")]
+    [Authorize]
+    public PaymentConfigDto Config() =>
+        new(
+            string.IsNullOrWhiteSpace(options.Value.PublishableKey) ? null : options.Value.PublishableKey,
+            !string.IsNullOrWhiteSpace(options.Value.PublishableKey) && !string.IsNullOrWhiteSpace(options.Value.SecretKey));
+
     /// <summary>
     /// Stripe calls this. Anonymous on purpose: the only credential is the signature over the raw body,
     /// so the body is read as-is and nothing is acted on before the signature is verified.
