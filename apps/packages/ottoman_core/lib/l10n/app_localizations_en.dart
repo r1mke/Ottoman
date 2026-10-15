@@ -62,4 +62,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currencyShort => 'BAM';
+
+  @override
+  String get register => 'Sign up';
+
+  @override
+  String get createAccount => 'Create account';
+
+  @override
+  String get haveAccount => 'Already have an account? Sign in';
+
+  @override
+  String get noAccount => 'No account? Sign up';
+
+  @override
+  String get forgotPassword => 'Forgot password?';
+
+  @override
+  String get resetEmailSent =>
+      'If the account exists, we\'ve emailed instructions.';
+
+  @override
+  String get firstName => 'First name';
+
+  @override
+  String get lastName => 'Last name';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get saveChanges => 'Save changes';
+
+  @override
+  String get profileSaved => 'Profile saved.';
+
+  @override
+  String get requiredField => 'Required';
+
+  @override
+  String get invalidEmail => 'Enter a valid email';
+
+  @override
+  String get passwordRules =>
+      'At least 8 characters, upper and lower case, a digit and a symbol.';
+
+  @override
+  String get registrationDone => 'Account created. You can sign in now.';
+
+  @override
+  String get welcomeBack => 'Welcome back';
+
+  @override
+  String get signInSubtitle => 'Sign in to continue';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get overview => 'Overview';
+
+  @override
+  String get clients => 'Clients';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get reports => 'Reports';
+
+  @override
+  String get earnings => 'Earnings';
+
+  @override
+  String get myProfile => 'My profile';
+
+  @override
+  String get comingSoon => 'Coming soon';
+
+  @override
+  String signedInAs(String name) {
+    return 'Signed in as $name';
+  }
 }

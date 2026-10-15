@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Ottoman.Api.Auth;
+using Ottoman.Api.Filters;
+using Ottoman.Application;
 using Ottoman.Infrastructure;
 using Ottoman.Infrastructure.Persistence;
 using Ottoman.Infrastructure.Seeding;
@@ -17,7 +20,9 @@ try
         .WriteTo.Console());
 
     builder.Services.AddInfrastructure(builder.Configuration);
-    builder.Services.AddControllers();
+    builder.Services.AddApplication();
+    builder.Services.AddOttomanAuth(builder.Configuration);
+    builder.Services.AddControllers(o => o.Filters.Add<ValidationFilter>());
     builder.Services.AddOpenApi();
     builder.Services.AddProblemDetails();
     builder.Services.AddHealthChecks()
@@ -46,6 +51,7 @@ try
         app.MapScalarApiReference();
     }
 
+    app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
 

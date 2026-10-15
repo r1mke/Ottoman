@@ -1,41 +1,15 @@
 using System.Net;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ottoman.Domain;
+using Ottoman.Domain.Entities;
 using Ottoman.Infrastructure.Persistence;
-using Testcontainers.MsSql;
 
 namespace Ottoman.Api.IntegrationTests;
 
-/// <summary>Starts the real API against a real SQL Server (Testcontainers). Requires Docker.</summary>
-public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
-{
-    private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
-
-    public async Task InitializeAsync() => await _sql.StartAsync();
-
-    public new async Task DisposeAsync()
-    {
-        await base.DisposeAsync();
-        await _sql.DisposeAsync();
-    }
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Development");
-        // UseSetting (not ConfigureAppConfiguration): Program.cs reads the connection
-        // string during service registration, before late config sources are applied.
-        builder.UseSetting("ConnectionStrings:Default", _sql.GetConnectionString());
-        builder.UseSetting("Database:MigrateOnStartup", "true");
-        builder.UseSetting("Seed:DemoData", "true");
-    }
-}
-
-public class ApiSmokeTests(ApiFixture api) : IClassFixture<ApiFixture>
+[Collection("api")]
+public class ApiSmokeTests(ApiFixture api)
 {
     [Fact]
     public async Task Health_endpoints_respond_ok()
@@ -69,7 +43,7 @@ public class ApiSmokeTests(ApiFixture api) : IClassFixture<ApiFixture>
         var clientId = (await db.Users.FirstAsync(u => u.Email == "klijent@ottoman.local")).Id;
         var start = new DateTime(2030, 1, 7, 9, 0, 0, DateTimeKind.Utc);
 
-        Ottoman.Domain.Entities.Reservation Make() => new()
+        Reservation Make() => new()
         {
             ClientId = clientId,
             EmployeeId = employeeId,
