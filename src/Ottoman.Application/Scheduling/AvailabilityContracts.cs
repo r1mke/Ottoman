@@ -16,6 +16,7 @@ public record AvailabilityDto(
 public interface IAvailabilityService
 {
     /// <param name="date">The salon-local calendar date.</param>
+    /// <param name="excludeReservationId">Treat this reservation as free (used when an admin moves it).</param>
     Task<Result<AvailabilityDto>> GetAsync(
-        string employeeId, DateOnly date, IReadOnlyList<int> serviceIds, bool allTimes, CancellationToken ct);
+        string employeeId, DateOnly date, IReadOnlyList<int> serviceIds, bool allTimes, int? excludeReservationId, CancellationToken ct);
 }

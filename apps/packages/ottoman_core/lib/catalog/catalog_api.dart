@@ -149,6 +149,7 @@ class CatalogApi {
     required DateTime date,
     required List<int> serviceIds,
     bool allTimes = false,
+    int? excludeReservationId,
   }) async {
     final d =
         '${date.year.toString().padLeft(4, '0')}-'
@@ -157,7 +158,12 @@ class CatalogApi {
     return Availability.fromJson(
       await _api.get<Map<String, dynamic>>(
         '/api/v1/employees/$employeeId/availability',
-        query: {'date': d, 'serviceIds': serviceIds, 'allTimes': allTimes},
+        query: {
+          'date': d,
+          'serviceIds': serviceIds,
+          'allTimes': allTimes,
+          'excludeReservationId': ?excludeReservationId,
+        },
       ),
     );
   }

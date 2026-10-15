@@ -12,3 +12,6 @@ export 'auth/auth_widgets.dart';
 export 'catalog/catalog_api.dart';
 export 'catalog/catalog_models.dart';
 export 'widgets/async_view.dart';
+export 'reservations/reservation_models.dart';
+export 'reservations/reservations_api.dart';
+export 'widgets/slot_selector.dart';

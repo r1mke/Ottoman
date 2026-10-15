@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 import 'employee_services_page.dart';
+import 'slot_picker_page.dart';
 
 /// Step 1 of booking: choose a barber (mockup "Uposlenici").
 class EmployeesTab extends StatelessWidget {
-  const EmployeesTab({super.key, required this.catalog});
+  const EmployeesTab({
+    super.key,
+    required this.catalog,
+    required this.reservations,
+    required this.onBooked,
+  });
 
   final CatalogApi catalog;
+  final ReservationsApi reservations;
+
+  /// Called after a successful booking so other tabs can refresh.
+  final VoidCallback onBooked;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +69,17 @@ class EmployeesTab extends StatelessWidget {
                       builder: (_) => EmployeeServicesPage(
                         catalog: catalog,
                         employee: employees[i],
+                        onContinue: (ctx, services) => Navigator.of(ctx).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => SlotPickerPage(
+                              catalog: catalog,
+                              reservations: reservations,
+                              employee: employees[i],
+                              services: services,
+                              onBooked: onBooked,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),

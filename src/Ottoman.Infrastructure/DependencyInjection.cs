@@ -8,6 +8,7 @@ using Ottoman.Application.Catalog;
 using Ottoman.Application.Clients;
 using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
+using Ottoman.Application.Reservations;
 using Ottoman.Application.Scheduling;
 using Ottoman.Application.Settings;
 using Ottoman.Infrastructure.Auth;
@@ -16,6 +17,7 @@ using Ottoman.Infrastructure.Employees;
 using Ottoman.Infrastructure.Identity;
 using Ottoman.Infrastructure.Outbox;
 using Ottoman.Infrastructure.Persistence;
+using Ottoman.Infrastructure.Reservations;
 using Ottoman.Infrastructure.Scheduling;
 using Ottoman.Infrastructure.Seeding;
 using Ottoman.Infrastructure.Settings;
@@ -60,7 +62,9 @@ public static class DependencyInjection
         services.AddScoped<IClientQueries, ClientQueries>();
         services.AddScoped<IServiceCatalog, ServiceCatalog>();
         services.AddScoped<IEmployeeService, EmployeeManagement>();
+        services.AddScoped<AvailabilityLoader>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<ISalonSettingsService, SalonSettingsService>();
 
         services.Configure<SeedOptions>(config.GetSection(SeedOptions.Section));

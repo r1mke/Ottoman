@@ -34,6 +34,15 @@ public class RateLimitOptions
 
 public static class ClaimsExtensions
 {
+    /// <summary>Highest-privilege role wins if a token somehow carries several.</summary>
+    public static Ottoman.Application.Common.Actor ToActor(this ClaimsPrincipal user)
+    {
+        var kind = user.IsInRole(Roles.Admin) ? Ottoman.Domain.Reservations.ActorKind.Admin
+            : user.IsInRole(Roles.Employee) ? Ottoman.Domain.Reservations.ActorKind.Employee
+            : Ottoman.Domain.Reservations.ActorKind.Client;
+        return new Ottoman.Application.Common.Actor(user.UserId(), kind);
+    }
+
     public static string UserId(this ClaimsPrincipal user) =>
         user.FindFirstValue("sub") ?? throw new InvalidOperationException("Authenticated principal has no 'sub' claim.");
 }

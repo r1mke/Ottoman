@@ -227,4 +227,143 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get invalidNumber => 'Unesite ispravan broj';
+
+  @override
+  String get book => 'Rezerviši';
+
+  @override
+  String get noSlots => 'Nema dostupnih termina za odabrani datum';
+
+  @override
+  String get showAllTimes => 'Prikaži sve termine';
+
+  @override
+  String get showFewerTimes => 'Prikaži manje termina';
+
+  @override
+  String get morning => 'Jutro';
+
+  @override
+  String get afternoon => 'Popodne';
+
+  @override
+  String get evening => 'Veče';
+
+  @override
+  String get note => 'Napomena';
+
+  @override
+  String get noteHint => 'Ostavite poruku';
+
+  @override
+  String get bookingConfirmed => 'Termin je rezervisan.';
+
+  @override
+  String get upcoming => 'Nadolazeći';
+
+  @override
+  String get past => 'Prošli';
+
+  @override
+  String get cancelBooking => 'Otkaži termin';
+
+  @override
+  String get cancelBookingQuestion =>
+      'Da li sigurno želite otkazati ovaj termin?';
+
+  @override
+  String get no => 'Ne';
+
+  @override
+  String get yes => 'Da';
+
+  @override
+  String get statusPending => 'Na čekanju';
+
+  @override
+  String get statusConfirmed => 'Potvrđen';
+
+  @override
+  String get statusCompleted => 'Završen';
+
+  @override
+  String get statusCancelled => 'Otkazan';
+
+  @override
+  String get statusNoShow => 'Nije došao';
+
+  @override
+  String get complete => 'Završi';
+
+  @override
+  String get markNoShow => 'Nije došao';
+
+  @override
+  String get reschedule => 'Uredi termin';
+
+  @override
+  String get newAppointment => 'Novi termin';
+
+  @override
+  String get client => 'Klijent';
+
+  @override
+  String get employee => 'Uposlenik';
+
+  @override
+  String get date => 'Datum';
+
+  @override
+  String get time => 'Vrijeme';
+
+  @override
+  String get service => 'Usluga';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get allEmployees => 'Svi uposlenici';
+
+  @override
+  String get today => 'Danas';
+
+  @override
+  String get weekly => 'Sedmično';
+
+  @override
+  String get monthly => 'Mjesečno';
+
+  @override
+  String get statUpcoming => 'Nadolazeći termini';
+
+  @override
+  String get statCompleted => 'Završeni termini';
+
+  @override
+  String get statCancelled => 'Otkazani termini';
+
+  @override
+  String get statClients => 'Ukupno mušterija';
+
+  @override
+  String get appointmentsOverview => 'Pregled termina';
+
+  @override
+  String get noAppointments => 'Nema termina';
+
+  @override
+  String get chooseClient => 'Odaberite klijenta';
+
+  @override
+  String get searchClient => 'Pretraži klijente';
+
+  @override
+  String get previousDay => 'Prethodni dan';
+
+  @override
+  String get nextDay => 'Sljedeći dan';
+
+  @override
+  String get slotTaken => 'Termin je upravo zauzet. Odaberite drugi.';
 }
