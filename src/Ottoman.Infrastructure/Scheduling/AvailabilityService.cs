@@ -8,9 +8,9 @@ namespace Ottoman.Infrastructure.Scheduling;
 public class AvailabilityService(AvailabilityLoader loader) : IAvailabilityService
 {
     public async Task<Result<AvailabilityDto>> GetAsync(
-        string employeeId, DateOnly date, IReadOnlyList<int> serviceIds, bool allTimes, CancellationToken ct)
+        string employeeId, DateOnly date, IReadOnlyList<int> serviceIds, bool allTimes, int? excludeReservationId, CancellationToken ct)
     {
-        var loaded = await loader.LoadAsync(employeeId, date, serviceIds, excludeReservationId: null, ct);
+        var loaded = await loader.LoadAsync(employeeId, date, serviceIds, excludeReservationId, ct);
         if (!loaded.Succeeded) return new Result<AvailabilityDto>(loaded.Status, Error: loaded.Error);
 
         var (query, chosen, zone, _) = loaded.Value!;

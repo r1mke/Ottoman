@@ -146,8 +146,9 @@ public class ReservationService(
             if (f.ClientId is not null) query = query.Where(r => r.ClientId == f.ClientId);
         }
 
-        if (f.FromUtc is { } from) query = query.Where(r => r.StartUtc >= from);
-        if (f.ToUtc is { } to) query = query.Where(r => r.StartUtc < to);
+        var (fromUtc, toUtc) = await ResolveRangeAsync(f.FromDate, f.ToDate, f.FromUtc, f.ToUtc, ct);
+        if (fromUtc is { } from) query = query.Where(r => r.StartUtc >= from);
+        if (toUtc is { } to) query = query.Where(r => r.StartUtc < to);
         if (f.Status is { } status) query = query.Where(r => r.Status == status);
 
         if (f.Upcoming == true)
@@ -164,9 +165,10 @@ public class ReservationService(
         return new PagedResult<ReservationDto>(await ToDtosAsync(actor, rows, ct), total);
     }
 
-    public async Task<ReservationSummaryDto> SummaryAsync(Actor actor, DateTime? fromUtc, DateTime? toUtc, string? employeeId, CancellationToken ct)
+    public async Task<ReservationSummaryDto> SummaryAsync(Actor actor, DateOnly? fromDate, DateOnly? toDate, string? employeeId, CancellationToken ct)
     {
         var now = Now;
+        var (fromUtc, toUtc) = await ResolveRangeAsync(fromDate, toDate, null, null, ct);
         var query = db.Reservations.AsNoTracking().AsQueryable();
         if (actor.IsEmployee) query = query.Where(r => r.EmployeeId == actor.UserId);
         else if (actor.IsAdmin && employeeId is not null) query = query.Where(r => r.EmployeeId == employeeId);
@@ -290,6 +292,18 @@ public class ReservationService(
     }
 
     // ---------------------------------------------------------------- helpers
+
+    /// <summary>Salon-local dates (inclusive) win over explicit UTC bounds; the server owns the time zone.</summary>
+    private async Task<(DateTime? From, DateTime? To)> ResolveRangeAsync(
+        DateOnly? fromDate, DateOnly? toDate, DateTime? fromUtc, DateTime? toUtc, CancellationToken ct)
+    {
+        if (fromDate is null && toDate is null) return (fromUtc, toUtc);
+        var zoneId = await db.SalonSettings.AsNoTracking().Select(s => s.TimeZoneId).SingleAsync(ct);
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
+        return (
+            fromDate is { } fd ? LocalTime.DayRangeUtc(fd, zone).Start : fromUtc,
+            toDate is { } td ? LocalTime.DayRangeUtc(td, zone).End : toUtc);
+    }
 
     private static bool CanSee(Actor actor, Reservation r) => actor.Kind switch
     {

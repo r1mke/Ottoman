@@ -523,6 +523,282 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Unesite ispravan broj'**
   String get invalidNumber;
+
+  /// No description provided for @book.
+  ///
+  /// In bs, this message translates to:
+  /// **'Rezerviši'**
+  String get book;
+
+  /// No description provided for @noSlots.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema dostupnih termina za odabrani datum'**
+  String get noSlots;
+
+  /// No description provided for @showAllTimes.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži sve termine'**
+  String get showAllTimes;
+
+  /// No description provided for @showFewerTimes.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži manje termina'**
+  String get showFewerTimes;
+
+  /// No description provided for @morning.
+  ///
+  /// In bs, this message translates to:
+  /// **'Jutro'**
+  String get morning;
+
+  /// No description provided for @afternoon.
+  ///
+  /// In bs, this message translates to:
+  /// **'Popodne'**
+  String get afternoon;
+
+  /// No description provided for @evening.
+  ///
+  /// In bs, this message translates to:
+  /// **'Veče'**
+  String get evening;
+
+  /// No description provided for @note.
+  ///
+  /// In bs, this message translates to:
+  /// **'Napomena'**
+  String get note;
+
+  /// No description provided for @noteHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ostavite poruku'**
+  String get noteHint;
+
+  /// No description provided for @bookingConfirmed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Termin je rezervisan.'**
+  String get bookingConfirmed;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nadolazeći'**
+  String get upcoming;
+
+  /// No description provided for @past.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prošli'**
+  String get past;
+
+  /// No description provided for @cancelBooking.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkaži termin'**
+  String get cancelBooking;
+
+  /// No description provided for @cancelBookingQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Da li sigurno želite otkazati ovaj termin?'**
+  String get cancelBookingQuestion;
+
+  /// No description provided for @no.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ne'**
+  String get no;
+
+  /// No description provided for @yes.
+  ///
+  /// In bs, this message translates to:
+  /// **'Da'**
+  String get yes;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In bs, this message translates to:
+  /// **'Na čekanju'**
+  String get statusPending;
+
+  /// No description provided for @statusConfirmed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Potvrđen'**
+  String get statusConfirmed;
+
+  /// No description provided for @statusCompleted.
+  ///
+  /// In bs, this message translates to:
+  /// **'Završen'**
+  String get statusCompleted;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkazan'**
+  String get statusCancelled;
+
+  /// No description provided for @statusNoShow.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nije došao'**
+  String get statusNoShow;
+
+  /// No description provided for @complete.
+  ///
+  /// In bs, this message translates to:
+  /// **'Završi'**
+  String get complete;
+
+  /// No description provided for @markNoShow.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nije došao'**
+  String get markNoShow;
+
+  /// No description provided for @reschedule.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uredi termin'**
+  String get reschedule;
+
+  /// No description provided for @newAppointment.
+  ///
+  /// In bs, this message translates to:
+  /// **'Novi termin'**
+  String get newAppointment;
+
+  /// No description provided for @client.
+  ///
+  /// In bs, this message translates to:
+  /// **'Klijent'**
+  String get client;
+
+  /// No description provided for @employee.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uposlenik'**
+  String get employee;
+
+  /// No description provided for @date.
+  ///
+  /// In bs, this message translates to:
+  /// **'Datum'**
+  String get date;
+
+  /// No description provided for @time.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vrijeme'**
+  String get time;
+
+  /// No description provided for @service.
+  ///
+  /// In bs, this message translates to:
+  /// **'Usluga'**
+  String get service;
+
+  /// No description provided for @status.
+  ///
+  /// In bs, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @allEmployees.
+  ///
+  /// In bs, this message translates to:
+  /// **'Svi uposlenici'**
+  String get allEmployees;
+
+  /// No description provided for @today.
+  ///
+  /// In bs, this message translates to:
+  /// **'Danas'**
+  String get today;
+
+  /// No description provided for @weekly.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sedmično'**
+  String get weekly;
+
+  /// No description provided for @monthly.
+  ///
+  /// In bs, this message translates to:
+  /// **'Mjesečno'**
+  String get monthly;
+
+  /// No description provided for @statUpcoming.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nadolazeći termini'**
+  String get statUpcoming;
+
+  /// No description provided for @statCompleted.
+  ///
+  /// In bs, this message translates to:
+  /// **'Završeni termini'**
+  String get statCompleted;
+
+  /// No description provided for @statCancelled.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkazani termini'**
+  String get statCancelled;
+
+  /// No description provided for @statClients.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukupno mušterija'**
+  String get statClients;
+
+  /// No description provided for @appointmentsOverview.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pregled termina'**
+  String get appointmentsOverview;
+
+  /// No description provided for @noAppointments.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema termina'**
+  String get noAppointments;
+
+  /// No description provided for @chooseClient.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite klijenta'**
+  String get chooseClient;
+
+  /// No description provided for @searchClient.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraži klijente'**
+  String get searchClient;
+
+  /// No description provided for @previousDay.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prethodni dan'**
+  String get previousDay;
+
+  /// No description provided for @nextDay.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sljedeći dan'**
+  String get nextDay;
+
+  /// No description provided for @slotTaken.
+  ///
+  /// In bs, this message translates to:
+  /// **'Termin je upravo zauzet. Odaberite drugi.'**
+  String get slotTaken;
 }
 
 class _AppLocalizationsDelegate

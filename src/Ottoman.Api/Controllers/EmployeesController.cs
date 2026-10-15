@@ -83,6 +83,9 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
         [FromQuery] DateOnly date,
         [FromQuery] int[] serviceIds,
         [FromQuery] bool allTimes = false,
+        [FromQuery] int? excludeReservationId = null,
         CancellationToken ct = default) =>
-        this.ToActionResult(await availability.GetAsync(id, date, serviceIds, allTimes, ct));
+        // Only admins may ask for a reservation to be ignored; for everyone else the parameter has no effect.
+        this.ToActionResult(await availability.GetAsync(
+            id, date, serviceIds, allTimes, IsAdmin ? excludeReservationId : null, ct));
 }

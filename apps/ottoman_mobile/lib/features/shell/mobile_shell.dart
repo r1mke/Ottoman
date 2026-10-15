@@ -3,13 +3,15 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../booking/employees_tab.dart';
 import '../profile/profile_page.dart';
+import '../reservations/employee_schedule_tab.dart';
+import '../reservations/my_reservations_tab.dart';
 import '../services/pricelist_tab.dart';
 
 class _Tab {
   const _Tab(this.icon, this.label, this.body);
   final IconData icon;
   final String Function(AppLocalizations) label;
-  final Widget Function(MobileShell shell) body;
+  final Widget Function() body;
 }
 
 /// Clients and employees get different navigation: clients book and shop,
@@ -28,8 +30,13 @@ class MobileShell extends StatefulWidget {
 
 class _MobileShellState extends State<MobileShell> {
   int _index = 0;
+
+  /// Bumped after a booking so the appointments tab reloads instead of showing stale data.
+  int _bookingsVersion = 0;
+
   late final CatalogApi _catalog =
       widget.catalogOverride ?? CatalogApi(widget.auth.api);
+  late final ReservationsApi _reservations = ReservationsApi(widget.auth.api);
 
   Widget _soon(IconData icon, AppLocalizations t) =>
       EmptyState(icon: icon, message: t.comingSoon);
@@ -40,23 +47,23 @@ class _MobileShellState extends State<MobileShell> {
         _Tab(
           Icons.calendar_month_outlined,
           (t) => t.appointments,
-          (_) => _soon(Icons.calendar_month_outlined, t),
+          () => EmployeeScheduleTab(reservations: _reservations),
         ),
         _Tab(
           Icons.list_alt_outlined,
           (t) => t.services,
-          (s) =>
+          () =>
               PricelistTab(catalog: _catalog, employeeId: widget.auth.user!.id),
         ),
         _Tab(
           Icons.notifications_outlined,
           (t) => t.notifications,
-          (_) => _soon(Icons.notifications_outlined, t),
+          () => _soon(Icons.notifications_outlined, t),
         ),
         _Tab(
           Icons.person_outline,
           (t) => t.profile,
-          (s) => ProfilePage(auth: widget.auth),
+          () => ProfilePage(auth: widget.auth),
         ),
       ];
     }
@@ -64,27 +71,34 @@ class _MobileShellState extends State<MobileShell> {
       _Tab(
         Icons.home_outlined,
         (t) => t.home,
-        (_) => EmployeesTab(catalog: _catalog),
+        () => EmployeesTab(
+          catalog: _catalog,
+          reservations: _reservations,
+          onBooked: () => setState(() => _bookingsVersion++),
+        ),
       ),
       _Tab(
         Icons.list_alt_outlined,
         (t) => t.services,
-        (_) => PricelistTab(catalog: _catalog),
+        () => PricelistTab(catalog: _catalog),
       ),
       _Tab(
         Icons.calendar_month_outlined,
         (t) => t.appointments,
-        (_) => _soon(Icons.calendar_month_outlined, t),
+        () => MyReservationsTab(
+          key: ValueKey(_bookingsVersion),
+          reservations: _reservations,
+        ),
       ),
       _Tab(
         Icons.shopping_cart_outlined,
         (t) => t.products,
-        (_) => _soon(Icons.shopping_cart_outlined, t),
+        () => _soon(Icons.shopping_cart_outlined, t),
       ),
       _Tab(
         Icons.settings_outlined,
         (t) => t.settings,
-        (s) => ProfilePage(auth: widget.auth),
+        () => ProfilePage(auth: widget.auth),
       ),
     ];
   }
@@ -98,7 +112,7 @@ class _MobileShellState extends State<MobileShell> {
 
     return Scaffold(
       appBar: AppBar(title: Text(tab.label(t))),
-      body: tab.body(widget),
+      body: tab.body(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => setState(() => _index = i),

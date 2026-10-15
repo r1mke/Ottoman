@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../appointments/appointments_page.dart';
 import '../employees/employees_page.dart';
 import '../services/services_page.dart';
 
@@ -11,7 +12,12 @@ class _Section {
   final bool adminOnly;
 
   /// Null renders the "coming soon" placeholder.
-  final Widget Function(CatalogApi catalog)? body;
+  final Widget Function(
+    CatalogApi catalog,
+    ReservationsApi reservations,
+    AppUser user,
+  )?
+  body;
 }
 
 /// Left navigation + content area. Sections are filtered by role: staff see only
@@ -32,16 +38,22 @@ class _DesktopShellState extends State<DesktopShell> {
   int _index = 0;
   late final CatalogApi _catalog =
       widget.catalogOverride ?? CatalogApi(widget.auth.api);
+  late final ReservationsApi _reservations = ReservationsApi(widget.auth.api);
 
   static final _sections = <_Section>[
     _Section(Icons.dashboard_outlined, (t) => t.overview, adminOnly: true),
-    _Section(Icons.schedule_outlined, (t) => t.appointments),
+    _Section(
+      Icons.schedule_outlined,
+      (t) => t.appointments,
+      body: (c, r, u) =>
+          AppointmentsPage(catalog: c, reservations: r, isAdmin: u.isAdmin),
+    ),
     _Section(Icons.payments_outlined, (t) => t.earnings, adminOnly: true),
     _Section(
       Icons.list_alt_outlined,
       (t) => t.services,
       adminOnly: true,
-      body: (c) => ServicesPage(catalog: c),
+      body: (c, _, _) => ServicesPage(catalog: c),
     ),
     _Section(
       Icons.notifications_outlined,
@@ -54,7 +66,7 @@ class _DesktopShellState extends State<DesktopShell> {
       Icons.content_cut,
       (t) => t.employees,
       adminOnly: true,
-      body: (c) => EmployeesPage(catalog: c),
+      body: (c, _, _) => EmployeesPage(catalog: c),
     ),
     _Section(Icons.insert_chart_outlined, (t) => t.reports, adminOnly: true),
     _Section(Icons.person_outline, (t) => t.myProfile),
@@ -131,7 +143,7 @@ class _DesktopShellState extends State<DesktopShell> {
                 ),
                 Expanded(
                   child:
-                      current.body?.call(_catalog) ??
+                      current.body?.call(_catalog, _reservations, user) ??
                       EmptyState(icon: current.icon, message: t.comingSoon),
                 ),
               ],

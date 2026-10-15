@@ -228,4 +228,143 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidNumber => 'Enter a valid number';
+
+  @override
+  String get book => 'Book';
+
+  @override
+  String get noSlots => 'No available times for the selected date';
+
+  @override
+  String get showAllTimes => 'Show all times';
+
+  @override
+  String get showFewerTimes => 'Show fewer times';
+
+  @override
+  String get morning => 'Morning';
+
+  @override
+  String get afternoon => 'Afternoon';
+
+  @override
+  String get evening => 'Evening';
+
+  @override
+  String get note => 'Note';
+
+  @override
+  String get noteHint => 'Leave a message';
+
+  @override
+  String get bookingConfirmed => 'Appointment booked.';
+
+  @override
+  String get upcoming => 'Upcoming';
+
+  @override
+  String get past => 'Past';
+
+  @override
+  String get cancelBooking => 'Cancel appointment';
+
+  @override
+  String get cancelBookingQuestion =>
+      'Are you sure you want to cancel this appointment?';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusConfirmed => 'Confirmed';
+
+  @override
+  String get statusCompleted => 'Completed';
+
+  @override
+  String get statusCancelled => 'Cancelled';
+
+  @override
+  String get statusNoShow => 'No-show';
+
+  @override
+  String get complete => 'Complete';
+
+  @override
+  String get markNoShow => 'No-show';
+
+  @override
+  String get reschedule => 'Edit appointment';
+
+  @override
+  String get newAppointment => 'New appointment';
+
+  @override
+  String get client => 'Client';
+
+  @override
+  String get employee => 'Barber';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get service => 'Service';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get allEmployees => 'All barbers';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get weekly => 'Weekly';
+
+  @override
+  String get monthly => 'Monthly';
+
+  @override
+  String get statUpcoming => 'Upcoming';
+
+  @override
+  String get statCompleted => 'Completed';
+
+  @override
+  String get statCancelled => 'Cancelled';
+
+  @override
+  String get statClients => 'Total clients';
+
+  @override
+  String get appointmentsOverview => 'Appointments';
+
+  @override
+  String get noAppointments => 'No appointments';
+
+  @override
+  String get chooseClient => 'Choose a client';
+
+  @override
+  String get searchClient => 'Search clients';
+
+  @override
+  String get previousDay => 'Previous day';
+
+  @override
+  String get nextDay => 'Next day';
+
+  @override
+  String get slotTaken => 'That time was just taken. Please pick another.';
 }

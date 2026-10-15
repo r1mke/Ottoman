@@ -38,19 +38,21 @@ public class ReservationsController(IReservationService reservations) : Controll
         [FromQuery] string? clientId,
         [FromQuery] ReservationStatus? status,
         [FromQuery] bool? upcoming,
+        [FromQuery] DateOnly? fromDate,
+        [FromQuery] DateOnly? toDate,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default) =>
         reservations.ListAsync(
             User.ToActor(),
-            new ReservationFilter(fromUtc, toUtc, employeeId, clientId, status, upcoming),
+            new ReservationFilter(fromUtc, toUtc, employeeId, clientId, status, upcoming, fromDate, toDate),
             new PageQuery(page, pageSize), ct);
 
     [HttpGet("summary")]
     [Authorize(Policy = Policies.Staff)]
     public Task<ReservationSummaryDto> Summary(
-        [FromQuery] DateTime? fromUtc, [FromQuery] DateTime? toUtc, [FromQuery] string? employeeId, CancellationToken ct) =>
-        reservations.SummaryAsync(User.ToActor(), fromUtc, toUtc, employeeId, ct);
+        [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate, [FromQuery] string? employeeId, CancellationToken ct) =>
+        reservations.SummaryAsync(User.ToActor(), fromDate, toDate, employeeId, ct);
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ReservationDto>> Get(int id, CancellationToken ct) =>

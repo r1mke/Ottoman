@@ -45,7 +45,9 @@ public record ReservationFilter(
     string? EmployeeId = null,
     string? ClientId = null,
     ReservationStatus? Status = null,
-    bool? Upcoming = null);
+    bool? Upcoming = null,
+    DateOnly? FromDate = null,
+    DateOnly? ToDate = null);
 
 public record ReservationSummaryDto(int Upcoming, int Completed, int Cancelled, int NoShow, int TotalClients);
 
@@ -93,5 +95,7 @@ public interface IReservationService
     /// <summary>Admin only. Keeps the original price snapshot.</summary>
     Task<Result<ReservationDto>> RescheduleAsync(Actor actor, int id, RescheduleReservationRequest request, CancellationToken ct);
 
-    Task<ReservationSummaryDto> SummaryAsync(Actor actor, DateTime? fromUtc, DateTime? toUtc, string? employeeId, CancellationToken ct);
+    /// <param name="fromDate">Salon-local first day (inclusive).</param>
+    /// <param name="toDate">Salon-local last day (inclusive).</param>
+    Task<ReservationSummaryDto> SummaryAsync(Actor actor, DateOnly? fromDate, DateOnly? toDate, string? employeeId, CancellationToken ct);
 }

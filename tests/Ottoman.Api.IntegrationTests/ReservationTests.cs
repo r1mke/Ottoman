@@ -532,8 +532,7 @@ public class ReservationTests(ApiFixture api)
         await Book(client, kerimId, At(day, 10), [sisanje]);
         var toCancel = await Dto(await Book(client, kerimId, At(day, 11), [sisanje]));
         await client.PostAsJsonAsync($"/api/v1/reservations/{toCancel.Id}/cancel", new CancelReservationRequest(null));
-        var range = LocalTime.DayRangeUtc(day, Zone);
-        var url = $"/api/v1/reservations/summary?fromUtc={range.Start:yyyy-MM-ddTHH:mm:ssZ}&toUtc={range.End:yyyy-MM-ddTHH:mm:ssZ}";
+        var url = $"/api/v1/reservations/summary?fromDate={day:yyyy-MM-dd}&toDate={day:yyyy-MM-dd}";
 
         var summary = (await admin.GetFromJsonAsync<ReservationSummaryDto>(url))!;
         var asEmployee = (await kerim.GetFromJsonAsync<ReservationSummaryDto>(url))!;
@@ -561,5 +560,45 @@ public class ReservationTests(ApiFixture api)
         var json = await db.OutboxMessages.Where(m => m.PayloadJson.Contains($"\"ReservationId\":{booked.Id},")).Select(m => m.Type).ToListAsync();
 
         json.Should().Contain("ReservationCreated").And.Contain("ReservationCancelled");
+    }
+
+    [Fact]
+    public async Task Date_filters_use_salon_local_days_and_include_both_ends()
+    {
+        var (_, client, _) = await NewClient();
+        var (kerimId, kerim) = await Employee("kerim@ottoman.local");
+        var day = Days.Next();
+        var sisanje = await ServiceId("Šišanje");
+        var booked = await Dto(await Book(client, kerimId, At(day, 9), [sisanje]));
+
+        async Task<List<int>> Ids(DateOnly from, DateOnly to) =>
+            (await kerim.GetFromJsonAsync<PagedResult<ReservationDto>>($"/api/v1/reservations?fromDate={from:yyyy-MM-dd}&toDate={to:yyyy-MM-dd}&pageSize=100"))!
+                .Items.Select(r => r.Id).ToList();
+
+        (await Ids(day, day)).Should().Contain(booked.Id);
+        (await Ids(day.AddDays(-3), day)).Should().Contain(booked.Id);   // last day is inclusive
+        (await Ids(day, day.AddDays(3))).Should().Contain(booked.Id);    // first day is inclusive
+        (await Ids(day.AddDays(1), day.AddDays(5))).Should().NotContain(booked.Id);
+        (await Ids(day.AddDays(-5), day.AddDays(-1))).Should().NotContain(booked.Id);
+    }
+
+    [Fact]
+    public async Task Admin_can_see_a_reservations_own_time_as_free_when_moving_it_but_clients_cannot()
+    {
+        var admin = await Admin();
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var day = Days.Next();
+        var sisanje = await ServiceId("Šišanje");
+        var booked = await Dto(await Book(client, kerim, At(day, 10), [sisanje]));
+        string Url(int? exclude) =>
+            $"/api/v1/employees/{kerim}/availability?date={day:yyyy-MM-dd}&serviceIds={sisanje}&allTimes=true"
+            + (exclude is null ? "" : $"&excludeReservationId={exclude}");
+
+        var adminView = (await admin.GetFromJsonAsync<Ottoman.Application.Scheduling.AvailabilityDto>(Url(booked.Id)))!;
+        var clientView = (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.AvailabilityDto>(Url(booked.Id)))!;
+
+        adminView.Starts.Should().Contain(At(day, 10, 15));    // overlaps only its own booking
+        clientView.Starts.Should().NotContain(At(day, 10, 15)); // the parameter is ignored for non-admins
     }
 }
