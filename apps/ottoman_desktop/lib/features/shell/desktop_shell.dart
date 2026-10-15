@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../employees/employees_page.dart';
+import '../services/services_page.dart';
+
 class _Section {
-  const _Section(this.icon, this.label, {this.adminOnly = false});
+  const _Section(this.icon, this.label, {this.adminOnly = false, this.body});
   final IconData icon;
   final String Function(AppLocalizations) label;
   final bool adminOnly;
+
+  /// Null renders the "coming soon" placeholder.
+  final Widget Function(CatalogApi catalog)? body;
 }
 
 /// Left navigation + content area. Sections are filtered by role: staff see only
 /// their own schedule and profile, admins see everything.
 class DesktopShell extends StatefulWidget {
-  const DesktopShell({super.key, required this.auth});
+  const DesktopShell({super.key, required this.auth, this.catalogOverride});
 
   final AuthController auth;
+
+  /// Test seam; built from the session when null.
+  final CatalogApi? catalogOverride;
 
   @override
   State<DesktopShell> createState() => _DesktopShellState();
@@ -21,12 +30,19 @@ class DesktopShell extends StatefulWidget {
 
 class _DesktopShellState extends State<DesktopShell> {
   int _index = 0;
+  late final CatalogApi _catalog =
+      widget.catalogOverride ?? CatalogApi(widget.auth.api);
 
   static final _sections = <_Section>[
     _Section(Icons.dashboard_outlined, (t) => t.overview, adminOnly: true),
     _Section(Icons.schedule_outlined, (t) => t.appointments),
     _Section(Icons.payments_outlined, (t) => t.earnings, adminOnly: true),
-    _Section(Icons.list_alt_outlined, (t) => t.services, adminOnly: true),
+    _Section(
+      Icons.list_alt_outlined,
+      (t) => t.services,
+      adminOnly: true,
+      body: (c) => ServicesPage(catalog: c),
+    ),
     _Section(
       Icons.notifications_outlined,
       (t) => t.notifications,
@@ -34,7 +50,12 @@ class _DesktopShellState extends State<DesktopShell> {
     ),
     _Section(Icons.inventory_2_outlined, (t) => t.products, adminOnly: true),
     _Section(Icons.groups_outlined, (t) => t.clients, adminOnly: true),
-    _Section(Icons.content_cut, (t) => t.employees, adminOnly: true),
+    _Section(
+      Icons.content_cut,
+      (t) => t.employees,
+      adminOnly: true,
+      body: (c) => EmployeesPage(catalog: c),
+    ),
     _Section(Icons.insert_chart_outlined, (t) => t.reports, adminOnly: true),
     _Section(Icons.person_outline, (t) => t.myProfile),
   ];
@@ -109,7 +130,9 @@ class _DesktopShellState extends State<DesktopShell> {
                   ),
                 ),
                 Expanded(
-                  child: EmptyState(icon: current.icon, message: t.comingSoon),
+                  child:
+                      current.body?.call(_catalog) ??
+                      EmptyState(icon: current.icon, message: t.comingSoon),
                 ),
               ],
             ),

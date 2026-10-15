@@ -147,4 +147,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String signedInAs(String name) {
     return 'Signed in as $name';
   }
+
+  @override
+  String get genericError => 'Something went wrong.';
+
+  @override
+  String get chooseEmployee => 'Choose a barber';
+
+  @override
+  String get chooseEmployeeHint =>
+      'To pick services, first choose one of our barbers.';
+
+  @override
+  String get pricelist => 'Services & Prices';
+
+  @override
+  String minutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get selectServices => 'Select one or more services';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get price => 'Price';
+
+  @override
+  String get duration => 'Duration (min)';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get inactive => 'Inactive';
+
+  @override
+  String get title => 'Title';
+
+  @override
+  String get bio => 'Bio';
+
+  @override
+  String get workingHours => 'Working hours';
+
+  @override
+  String get dayOff => 'Day off';
+
+  @override
+  String get breakLabel => 'Break';
+
+  @override
+  String get from => 'From';
+
+  @override
+  String get to => 'To';
+
+  @override
+  String get deactivate => 'Deactivate';
+
+  @override
+  String get searchHint => 'Search…';
+
+  @override
+  String get durationStepError => 'Duration must be a multiple of 5 minutes.';
+
+  @override
+  String get invalidNumber => 'Enter a valid number';
 }

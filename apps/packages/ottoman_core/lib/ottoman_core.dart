@@ -9,3 +9,6 @@ export 'auth/auth_controller.dart';
 export 'auth/auth_models.dart';
 export 'auth/token_storage.dart';
 export 'auth/auth_widgets.dart';
+export 'catalog/catalog_api.dart';
+export 'catalog/catalog_models.dart';
+export 'widgets/async_view.dart';
