@@ -10,6 +10,7 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     public const string AdminEmail = "admin@ottoman.test";
     public const string AdminPassword = "Admin_Test123!";
     public const string DemoPassword = "Test123!";
+    public const string WebhookSecret = "whsec_integration_tests";
 
     private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
 
@@ -36,6 +37,7 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Seed:AdminPassword", AdminPassword);
         builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-0123456789-abcdef");
         builder.UseSetting("RateLimiting:Enabled", "false");
+        builder.UseSetting("Payments:WebhookSecret", WebhookSecret);
     }
 }
 

@@ -3,6 +3,8 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../appointments/appointments_page.dart';
 import '../employees/employees_page.dart';
+import '../orders/orders_page.dart';
+import '../products/products_page.dart';
 import '../services/services_page.dart';
 
 class _Section {
@@ -15,6 +17,7 @@ class _Section {
   final Widget Function(
     CatalogApi catalog,
     ReservationsApi reservations,
+    ShopApi shop,
     AppUser user,
   )?
   body;
@@ -23,12 +26,18 @@ class _Section {
 /// Left navigation + content area. Sections are filtered by role: staff see only
 /// their own schedule and profile, admins see everything.
 class DesktopShell extends StatefulWidget {
-  const DesktopShell({super.key, required this.auth, this.catalogOverride});
+  const DesktopShell({
+    super.key,
+    required this.auth,
+    this.catalogOverride,
+    this.shopOverride,
+  });
 
   final AuthController auth;
 
   /// Test seam; built from the session when null.
   final CatalogApi? catalogOverride;
+  final ShopApi? shopOverride;
 
   @override
   State<DesktopShell> createState() => _DesktopShellState();
@@ -39,13 +48,14 @@ class _DesktopShellState extends State<DesktopShell> {
   late final CatalogApi _catalog =
       widget.catalogOverride ?? CatalogApi(widget.auth.api);
   late final ReservationsApi _reservations = ReservationsApi(widget.auth.api);
+  late final ShopApi _shop = widget.shopOverride ?? ShopApi(widget.auth.api);
 
   static final _sections = <_Section>[
     _Section(Icons.dashboard_outlined, (t) => t.overview, adminOnly: true),
     _Section(
       Icons.schedule_outlined,
       (t) => t.appointments,
-      body: (c, r, u) =>
+      body: (c, r, _, u) =>
           AppointmentsPage(catalog: c, reservations: r, isAdmin: u.isAdmin),
     ),
     _Section(Icons.payments_outlined, (t) => t.earnings, adminOnly: true),
@@ -53,20 +63,31 @@ class _DesktopShellState extends State<DesktopShell> {
       Icons.list_alt_outlined,
       (t) => t.services,
       adminOnly: true,
-      body: (c, _, _) => ServicesPage(catalog: c),
+      body: (c, _, _, _) => ServicesPage(catalog: c),
     ),
     _Section(
       Icons.notifications_outlined,
       (t) => t.notifications,
       adminOnly: true,
     ),
-    _Section(Icons.inventory_2_outlined, (t) => t.products, adminOnly: true),
+    _Section(
+      Icons.inventory_2_outlined,
+      (t) => t.products,
+      adminOnly: true,
+      body: (_, _, s, _) => ProductsPage(shop: s),
+    ),
+    _Section(
+      Icons.receipt_long_outlined,
+      (t) => t.orders,
+      adminOnly: true,
+      body: (_, _, s, _) => OrdersPage(shop: s),
+    ),
     _Section(Icons.groups_outlined, (t) => t.clients, adminOnly: true),
     _Section(
       Icons.content_cut,
       (t) => t.employees,
       adminOnly: true,
-      body: (c, _, _) => EmployeesPage(catalog: c),
+      body: (c, _, _, _) => EmployeesPage(catalog: c),
     ),
     _Section(Icons.insert_chart_outlined, (t) => t.reports, adminOnly: true),
     _Section(Icons.person_outline, (t) => t.myProfile),
@@ -143,7 +164,12 @@ class _DesktopShellState extends State<DesktopShell> {
                 ),
                 Expanded(
                   child:
-                      current.body?.call(_catalog, _reservations, user) ??
+                      current.body?.call(
+                        _catalog,
+                        _reservations,
+                        _shop,
+                        user,
+                      ) ??
                       EmptyState(icon: current.icon, message: t.comingSoon),
                 ),
               ],

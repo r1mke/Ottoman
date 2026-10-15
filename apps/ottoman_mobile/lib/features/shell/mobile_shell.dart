@@ -6,6 +6,7 @@ import '../profile/profile_page.dart';
 import '../reservations/employee_schedule_tab.dart';
 import '../reservations/my_reservations_tab.dart';
 import '../services/pricelist_tab.dart';
+import '../shop/shop_tab.dart';
 
 class _Tab {
   const _Tab(this.icon, this.label, this.body);
@@ -17,12 +18,23 @@ class _Tab {
 /// Clients and employees get different navigation: clients book and shop,
 /// employees only see their schedule, services and notifications.
 class MobileShell extends StatefulWidget {
-  const MobileShell({super.key, required this.auth, this.catalogOverride});
+  const MobileShell({
+    super.key,
+    required this.auth,
+    this.catalogOverride,
+    this.shopOverride,
+    this.cardPayment = const UnavailableCardPayment(),
+  });
 
   final AuthController auth;
 
   /// Test seam; the shell builds its own [CatalogApi] from the session when null.
   final CatalogApi? catalogOverride;
+
+  final ShopApi? shopOverride;
+
+  /// Card payments need the Stripe SDK; until one is plugged in, card checkout is hidden.
+  final CardPaymentLauncher cardPayment;
 
   @override
   State<MobileShell> createState() => _MobileShellState();
@@ -37,6 +49,14 @@ class _MobileShellState extends State<MobileShell> {
   late final CatalogApi _catalog =
       widget.catalogOverride ?? CatalogApi(widget.auth.api);
   late final ReservationsApi _reservations = ReservationsApi(widget.auth.api);
+  late final ShopApi _shop = widget.shopOverride ?? ShopApi(widget.auth.api);
+  final CartController _cart = CartController();
+
+  @override
+  void dispose() {
+    _cart.dispose();
+    super.dispose();
+  }
 
   Widget _soon(IconData icon, AppLocalizations t) =>
       EmptyState(icon: icon, message: t.comingSoon);
@@ -93,7 +113,8 @@ class _MobileShellState extends State<MobileShell> {
       _Tab(
         Icons.shopping_cart_outlined,
         (t) => t.products,
-        () => _soon(Icons.shopping_cart_outlined, t),
+        () =>
+            ShopTab(shop: _shop, cart: _cart, cardPayment: widget.cardPayment),
       ),
       _Tab(
         Icons.settings_outlined,

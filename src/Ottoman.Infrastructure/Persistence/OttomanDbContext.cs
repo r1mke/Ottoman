@@ -22,6 +22,8 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<ReservationItem> ReservationItems => Set<ReservationItem>();
     public DbSet<ReservationSlot> ReservationSlots => Set<ReservationSlot>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
@@ -119,8 +121,33 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.Provider).HasMaxLength(30);
             e.Property(x => x.ProviderRef).HasMaxLength(100);
             e.Property(x => x.Currency).HasMaxLength(3);
+            e.Property(x => x.ClientSecret).HasMaxLength(200);
             e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             e.HasIndex(x => x.ProviderRef).IsUnique();
+        });
+
+        b.Entity<Order>(e =>
+        {
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.Fulfilment).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.PaymentMethod).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.DeliveryAddress).HasMaxLength(300);
+            e.Property(x => x.Note).HasMaxLength(500);
+            e.Property(x => x.TotalPrice).HasPrecision(18, 2);
+            e.Property(x => x.RowVersion).IsRowVersion();
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Payment>().WithMany().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.ClientId, x.CreatedAtUtc });
+            e.HasIndex(x => new { x.Status, x.ExpiresUtc });
+        });
+
+        b.Entity<OrderItem>(e =>
+        {
+            e.Property(x => x.ProductName).HasMaxLength(200);
+            e.Property(x => x.UnitPrice).HasPrecision(18, 2);
+            e.HasOne<Product>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            e.ToTable(t => t.HasCheckConstraint("CK_OrderItem_Quantity", "[Quantity] > 0"));
         });
 
         b.Entity<RefreshToken>(e =>

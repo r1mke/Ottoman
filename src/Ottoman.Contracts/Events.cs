@@ -19,3 +19,13 @@ public record ReservationCreated(int ReservationId, string ClientId, string Empl
 public record ReservationCancelled(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, string CancelledBy, string? Reason);
 
 public record ReservationRescheduled(int ReservationId, string ClientId, string EmployeeId, DateTime OldStartUtc, DateTime NewStartUtc);
+
+/// <param name="Method">"Card" or "OnReceipt".</param>
+public record OrderPlaced(int OrderId, string ClientId, decimal TotalPrice, string Method);
+
+public record OrderPaid(int OrderId, string ClientId, decimal TotalPrice);
+
+/// <param name="CancelledBy">"Client", "Admin" or "System" (unpaid order expired).</param>
+public record OrderCancelled(int OrderId, string ClientId, string CancelledBy);
+
+public record ProductLowStock(int ProductId, string Name, int Stock, int Threshold);
