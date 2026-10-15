@@ -4,13 +4,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ottoman.Application.Auth;
+using Ottoman.Application.Catalog;
 using Ottoman.Application.Clients;
 using Ottoman.Application.Common;
+using Ottoman.Application.Employees;
+using Ottoman.Application.Scheduling;
+using Ottoman.Application.Settings;
 using Ottoman.Infrastructure.Auth;
+using Ottoman.Infrastructure.Catalog;
+using Ottoman.Infrastructure.Employees;
 using Ottoman.Infrastructure.Identity;
 using Ottoman.Infrastructure.Outbox;
 using Ottoman.Infrastructure.Persistence;
+using Ottoman.Infrastructure.Scheduling;
 using Ottoman.Infrastructure.Seeding;
+using Ottoman.Infrastructure.Settings;
 
 namespace Ottoman.Infrastructure;
 
@@ -50,6 +58,10 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IOutbox, DbOutbox>();
         services.AddScoped<IClientQueries, ClientQueries>();
+        services.AddScoped<IServiceCatalog, ServiceCatalog>();
+        services.AddScoped<IEmployeeService, EmployeeManagement>();
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<ISalonSettingsService, SalonSettingsService>();
 
         services.Configure<SeedOptions>(config.GetSection(SeedOptions.Section));
         services.AddScoped<DatabaseSeeder>();

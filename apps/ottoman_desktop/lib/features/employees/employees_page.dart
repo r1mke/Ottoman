@@ -1,0 +1,117 @@
+import 'package:flutter/material.dart';
+import 'package:ottoman_core/ottoman_core.dart';
+
+import 'employee_dialogs.dart';
+
+/// Admin: staff list with edit, service assignment and working-hours actions.
+class EmployeesPage extends StatefulWidget {
+  const EmployeesPage({super.key, required this.catalog});
+
+  final CatalogApi catalog;
+
+  @override
+  State<EmployeesPage> createState() => _EmployeesPageState();
+}
+
+class _EmployeesPageState extends State<EmployeesPage> {
+  int _version = 0;
+
+  void _refresh() => setState(() => _version++);
+
+  Future<void> _open(Widget dialog) async {
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (_) => dialog,
+    );
+    if (changed == true) _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              key: const Key('add_employee'),
+              style: FilledButton.styleFrom(minimumSize: const Size(140, 44)),
+              onPressed: () => _open(EmployeeDialog(catalog: widget.catalog)),
+              icon: const Icon(Icons.add),
+              label: Text(t.add),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: AsyncView<List<Employee>>(
+              key: ValueKey(_version),
+              load: () => widget.catalog.employees(includeInactive: true),
+              skeleton: const ListSkeleton(),
+              isEmpty: (e) => e.isEmpty,
+              builder: (context, employees, _) => ListView.separated(
+                itemCount: employees.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, i) {
+                  final e = employees[i];
+                  return Card(
+                    child: ListTile(
+                      key: Key('employee_row_${e.id}'),
+                      leading: CircleAvatar(
+                        child: Text(e.firstName.characters.first),
+                      ),
+                      title: Text(
+                        e.fullName,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: Text('${e.title} · ${e.email ?? ''}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Chip(label: Text(e.isActive ? t.active : t.inactive)),
+                          IconButton(
+                            tooltip: t.edit,
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: () => _open(
+                              EmployeeDialog(
+                                catalog: widget.catalog,
+                                employee: e,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            key: Key('assign_btn_${e.id}'),
+                            tooltip: t.services,
+                            icon: const Icon(Icons.list_alt_outlined),
+                            onPressed: () => _open(
+                              AssignServicesDialog(
+                                catalog: widget.catalog,
+                                employee: e,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: t.workingHours,
+                            icon: const Icon(Icons.schedule_outlined),
+                            onPressed: () => _open(
+                              WorkingHoursDialog(
+                                catalog: widget.catalog,
+                                employee: e,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

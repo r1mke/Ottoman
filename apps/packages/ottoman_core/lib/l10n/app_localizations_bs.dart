@@ -146,4 +146,85 @@ class AppLocalizationsBs extends AppLocalizations {
   String signedInAs(String name) {
     return 'Prijavljeni ste kao $name';
   }
+
+  @override
+  String get genericError => 'Došlo je do greške.';
+
+  @override
+  String get chooseEmployee => 'Odaberite uposlenika';
+
+  @override
+  String get chooseEmployeeHint =>
+      'Za odabir usluga prvo odaberite nekog od naših uposlenika.';
+
+  @override
+  String get pricelist => 'Usluge & Cjenovnik';
+
+  @override
+  String minutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String get total => 'Ukupno';
+
+  @override
+  String get continueLabel => 'Nastavi';
+
+  @override
+  String get selectServices => 'Odaberite jednu ili više usluga';
+
+  @override
+  String get add => 'Dodaj';
+
+  @override
+  String get name => 'Naziv';
+
+  @override
+  String get description => 'Opis';
+
+  @override
+  String get price => 'Cijena';
+
+  @override
+  String get duration => 'Trajanje (min)';
+
+  @override
+  String get active => 'Aktivno';
+
+  @override
+  String get inactive => 'Neaktivno';
+
+  @override
+  String get title => 'Titula';
+
+  @override
+  String get bio => 'Opis / bio';
+
+  @override
+  String get workingHours => 'Radno vrijeme';
+
+  @override
+  String get dayOff => 'Neradni dan';
+
+  @override
+  String get breakLabel => 'Pauza';
+
+  @override
+  String get from => 'Od';
+
+  @override
+  String get to => 'Do';
+
+  @override
+  String get deactivate => 'Deaktiviraj';
+
+  @override
+  String get searchHint => 'Pretraga…';
+
+  @override
+  String get durationStepError => 'Trajanje mora biti višekratnik od 5 minuta.';
+
+  @override
+  String get invalidNumber => 'Unesite ispravan broj';
 }

@@ -367,6 +367,162 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Prijavljeni ste kao {name}'**
   String signedInAs(String name);
+
+  /// No description provided for @genericError.
+  ///
+  /// In bs, this message translates to:
+  /// **'Došlo je do greške.'**
+  String get genericError;
+
+  /// No description provided for @chooseEmployee.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite uposlenika'**
+  String get chooseEmployee;
+
+  /// No description provided for @chooseEmployeeHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Za odabir usluga prvo odaberite nekog od naših uposlenika.'**
+  String get chooseEmployeeHint;
+
+  /// No description provided for @pricelist.
+  ///
+  /// In bs, this message translates to:
+  /// **'Usluge & Cjenovnik'**
+  String get pricelist;
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'{count} min'**
+  String minutesShort(int count);
+
+  /// No description provided for @total.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukupno'**
+  String get total;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nastavi'**
+  String get continueLabel;
+
+  /// No description provided for @selectServices.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite jednu ili više usluga'**
+  String get selectServices;
+
+  /// No description provided for @add.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodaj'**
+  String get add;
+
+  /// No description provided for @name.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naziv'**
+  String get name;
+
+  /// No description provided for @description.
+  ///
+  /// In bs, this message translates to:
+  /// **'Opis'**
+  String get description;
+
+  /// No description provided for @price.
+  ///
+  /// In bs, this message translates to:
+  /// **'Cijena'**
+  String get price;
+
+  /// No description provided for @duration.
+  ///
+  /// In bs, this message translates to:
+  /// **'Trajanje (min)'**
+  String get duration;
+
+  /// No description provided for @active.
+  ///
+  /// In bs, this message translates to:
+  /// **'Aktivno'**
+  String get active;
+
+  /// No description provided for @inactive.
+  ///
+  /// In bs, this message translates to:
+  /// **'Neaktivno'**
+  String get inactive;
+
+  /// No description provided for @title.
+  ///
+  /// In bs, this message translates to:
+  /// **'Titula'**
+  String get title;
+
+  /// No description provided for @bio.
+  ///
+  /// In bs, this message translates to:
+  /// **'Opis / bio'**
+  String get bio;
+
+  /// No description provided for @workingHours.
+  ///
+  /// In bs, this message translates to:
+  /// **'Radno vrijeme'**
+  String get workingHours;
+
+  /// No description provided for @dayOff.
+  ///
+  /// In bs, this message translates to:
+  /// **'Neradni dan'**
+  String get dayOff;
+
+  /// No description provided for @breakLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pauza'**
+  String get breakLabel;
+
+  /// No description provided for @from.
+  ///
+  /// In bs, this message translates to:
+  /// **'Od'**
+  String get from;
+
+  /// No description provided for @to.
+  ///
+  /// In bs, this message translates to:
+  /// **'Do'**
+  String get to;
+
+  /// No description provided for @deactivate.
+  ///
+  /// In bs, this message translates to:
+  /// **'Deaktiviraj'**
+  String get deactivate;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraga…'**
+  String get searchHint;
+
+  /// No description provided for @durationStepError.
+  ///
+  /// In bs, this message translates to:
+  /// **'Trajanje mora biti višekratnik od 5 minuta.'**
+  String get durationStepError;
+
+  /// No description provided for @invalidNumber.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite ispravan broj'**
+  String get invalidNumber;
 }
 
 class _AppLocalizationsDelegate

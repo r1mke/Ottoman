@@ -29,7 +29,7 @@ public class ApiSmokeTests(ApiFixture api)
 
         (await db.Roles.Select(r => r.Name).ToListAsync()).Should().BeEquivalentTo(Roles.All);
         (await db.SalonSettings.SingleAsync()).SlotMinutes.Should().Be(5);
-        (await db.EmployeeProfiles.CountAsync()).Should().Be(2);
+        (await db.EmployeeProfiles.CountAsync(p => p.UserId != null)).Should().BeGreaterThanOrEqualTo(2); // shared DB: other tests add employees
         (await db.Services.CountAsync()).Should().BeGreaterThan(0);
     }
 
@@ -41,7 +41,7 @@ public class ApiSmokeTests(ApiFixture api)
         var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
         var employeeId = (await db.EmployeeProfiles.FirstAsync()).UserId;
         var clientId = (await db.Users.FirstAsync(u => u.Email == "klijent@ottoman.local")).Id;
-        var start = new DateTime(2030, 1, 7, 9, 0, 0, DateTimeKind.Utc);
+        var start = new DateTime(2035, 6, 4, 9, 0, 0, DateTimeKind.Utc); // far from dates used by availability tests
 
         Reservation Make() => new()
         {
