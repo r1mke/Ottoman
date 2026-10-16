@@ -32,6 +32,9 @@ public class RateLimitOptions
     public int ForgotPerHour { get; set; } = 5;
     public int RefreshPerMinute { get; set; } = 30;
     public int OrdersPerHour { get; set; } = 30;
+
+    /// <summary>Every signed-in user (or address, if anonymous) may change data this many times a minute.</summary>
+    public int WritesPerMinute { get; set; } = 120;
 }
 
 public static class ClaimsExtensions
@@ -80,6 +83,9 @@ public static class AuthSetup
         services.AddAuthorizationBuilder()
             .AddPolicy(Policies.AdminOnly, p => p.RequireRole(Roles.Admin))
             .AddPolicy(Policies.Staff, p => p.RequireRole(Roles.Admin, Roles.Employee))
+            // Deny by default: an endpoint nobody remembered to protect still demands a signed-in user.
+            // Public ones must say so with [AllowAnonymous].
+            .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
             .AddPolicy(Policies.ClientOnly, p => p.RequireRole(Roles.Client));
 
         services.Configure<RateLimitOptions>(config.GetSection(RateLimitOptions.Section));
@@ -96,6 +102,25 @@ public static class AuthSetup
                     status = 429,
                 }, ct);
             };
+
+            // A general ceiling on anything that changes data, on top of the stricter per-endpoint limits below.
+            limiter.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>
+            {
+                var opt = http.RequestServices.GetRequiredService<IOptions<RateLimitOptions>>().Value;
+                var writes = HttpMethods.IsPost(http.Request.Method) || HttpMethods.IsPut(http.Request.Method) ||
+                             HttpMethods.IsPatch(http.Request.Method) || HttpMethods.IsDelete(http.Request.Method);
+                // The payment webhook is authenticated by its signature, not by who calls it.
+                var webhook = http.Request.Path.StartsWithSegments("/api/v1/payments/webhook");
+                if (!opt.Enabled || !writes || webhook) return RateLimitPartition.GetNoLimiter("none");
+
+                var who = http.User.FindFirstValue("sub") ?? http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return RateLimitPartition.GetFixedWindowLimiter($"writes:{who}", _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = opt.WritesPerMinute,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                });
+            });
 
             void Add(string name, Func<RateLimitOptions, (int Permits, TimeSpan Window)> pick) =>
                 limiter.AddPolicy(name, http =>

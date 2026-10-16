@@ -325,14 +325,15 @@ class _DayRow {
 }
 
 class _WorkingHoursDialogState extends State<WorkingHoursDialog> {
-  static const _dayNames = [
-    'Nedjelja',
-    'Ponedjeljak',
-    'Utorak',
-    'Srijeda',
-    'Četvrtak',
-    'Petak',
-    'Subota',
+  // Index = .NET DayOfWeek (0 = Sunday).
+  static List<String> _dayNames(AppLocalizations t) => [
+    t.daySunday,
+    t.dayMonday,
+    t.dayTuesday,
+    t.dayWednesday,
+    t.dayThursday,
+    t.dayFriday,
+    t.daySaturday,
   ];
   // Monday first in the UI; values match .NET DayOfWeek (0 = Sunday).
   static const _order = [1, 2, 3, 4, 5, 6, 0];
@@ -433,7 +434,9 @@ class _WorkingHoursDialogState extends State<WorkingHoursDialog> {
                                   onChanged: (v) =>
                                       setState(() => r.enabled = v),
                                 ),
-                                Expanded(child: Text(_dayNames[r.dayOfWeek])),
+                                Expanded(
+                                  child: Text(_dayNames(t)[r.dayOfWeek]),
+                                ),
                               ],
                             ),
                           ),

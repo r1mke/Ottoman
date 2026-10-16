@@ -1262,6 +1262,48 @@ abstract class AppLocalizations {
   /// **'Zatvori'**
   String get close;
 
+  /// No description provided for @daySunday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nedjelja'**
+  String get daySunday;
+
+  /// No description provided for @dayMonday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ponedjeljak'**
+  String get dayMonday;
+
+  /// No description provided for @dayTuesday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Utorak'**
+  String get dayTuesday;
+
+  /// No description provided for @dayWednesday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Srijeda'**
+  String get dayWednesday;
+
+  /// No description provided for @dayThursday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Četvrtak'**
+  String get dayThursday;
+
+  /// No description provided for @dayFriday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Petak'**
+  String get dayFriday;
+
+  /// No description provided for @daySaturday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Subota'**
+  String get daySaturday;
+
   /// No description provided for @reviews.
   ///
   /// In bs, this message translates to:

@@ -106,6 +106,7 @@ public static class DependencyInjection
         services.AddSingleton<IReportExporter, ReportExporter>();
         services.AddScoped<IRecommendationService, RecommendationService>();
         services.AddScoped<ReminderService>();
+        services.AddScoped<Ottoman.Infrastructure.Outbox.OutboxCleanup>();
 
         services.Configure<SeedOptions>(config.GetSection(SeedOptions.Section));
         services.AddScoped<DatabaseSeeder>();

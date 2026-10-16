@@ -608,6 +608,27 @@ class AppLocalizationsBs extends AppLocalizations {
   String get close => 'Zatvori';
 
   @override
+  String get daySunday => 'Nedjelja';
+
+  @override
+  String get dayMonday => 'Ponedjeljak';
+
+  @override
+  String get dayTuesday => 'Utorak';
+
+  @override
+  String get dayWednesday => 'Srijeda';
+
+  @override
+  String get dayThursday => 'Četvrtak';
+
+  @override
+  String get dayFriday => 'Petak';
+
+  @override
+  String get daySaturday => 'Subota';
+
+  @override
   String get reviews => 'Recenzije';
 
   @override
