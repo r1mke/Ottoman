@@ -89,12 +89,21 @@ class _ServicesPageState extends State<ServicesPage> {
                       subtitle: Text(
                         '${t.minutesShort(s.durationMinutes)} · ${s.price.toStringAsFixed(2)} ${t.currencyShort}',
                       ),
-                      leading: Chip(
-                        label: Text(s.isActive ? t.active : t.inactive),
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: NetworkPicture(
+                          key: Key('service_picture_${s.id}'),
+                          url: s.imageUrl,
+                          width: 48,
+                          height: 48,
+                          fallbackIcon: Icons.content_cut,
+                        ),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          Chip(label: Text(s.isActive ? t.active : t.inactive)),
+                          const SizedBox(width: 8),
                           IconButton(
                             tooltip: t.edit,
                             icon: const Icon(Icons.edit_outlined),

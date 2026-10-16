@@ -155,6 +155,11 @@ void main() {
     expect(find.text('Šišanje'), findsOneWidget);
     expect(find.text('Stara usluga'), findsOneWidget);
     expect(find.text('Neaktivno'), findsOneWidget);
+    expect(
+      find.byKey(const Key('service_picture_1')),
+      findsOneWidget,
+      reason: 'services show their picture too',
+    );
   });
 
   testWidgets(

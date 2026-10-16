@@ -278,24 +278,40 @@ class _Table extends StatelessWidget {
                         key: ValueKey('product_row_${p.id}'),
                         cells: [
                           DataCell(
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  p.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: NetworkPicture(
+                                    key: Key('product_picture_${p.id}'),
+                                    url: p.imageUrl,
+                                    width: 44,
+                                    height: 44,
+                                    fallbackIcon: Icons.inventory_2_outlined,
                                   ),
                                 ),
-                                if (p.brandName != null)
-                                  Text(
-                                    p.brandName!,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: scheme.outline,
+                                const SizedBox(width: 12),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      p.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
-                                  ),
+                                    if (p.brandName != null)
+                                      Text(
+                                        p.brandName!,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: scheme.outline,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),

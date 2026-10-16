@@ -189,6 +189,9 @@ void main() {
     expect(find.byKey(const Key('low_2')), findsOneWidget);
     expect(find.byKey(const Key('low_1')), findsNothing);
     expect(find.text('2 proizvoda'), findsOneWidget);
+    // Every product row carries its picture (a placeholder when it has none).
+    expect(find.byKey(const Key('product_picture_1')), findsOneWidget);
+    expect(find.byKey(const Key('product_picture_2')), findsOneWidget);
   });
 
   testWidgets('products: the low-stock filter is sent to the server', (
