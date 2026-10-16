@@ -654,4 +654,138 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get yourReply => 'Vaš odgovor';
+
+  @override
+  String get periodToday => 'Danas';
+
+  @override
+  String get period7 => '7 dana';
+
+  @override
+  String get period30 => '30 dana';
+
+  @override
+  String get periodThisMonth => 'Ovaj mjesec';
+
+  @override
+  String get periodLastMonth => 'Prošli mjesec';
+
+  @override
+  String get periodThisYear => 'Ova godina';
+
+  @override
+  String get periodCustom => 'Odaberi period';
+
+  @override
+  String get kpiRevenue => 'Ukupni prihod';
+
+  @override
+  String get kpiServices => 'Prihod od usluga';
+
+  @override
+  String get kpiProducts => 'Prihod od proizvoda';
+
+  @override
+  String get kpiAppointments => 'Završeni termini';
+
+  @override
+  String get kpiOrders => 'Narudžbe';
+
+  @override
+  String get kpiNewClients => 'Novi klijenti';
+
+  @override
+  String get kpiAverageTicket => 'Prosječan račun';
+
+  @override
+  String get kpiNoShow => 'Nije došlo';
+
+  @override
+  String get kpiCancelled => 'Otkazano';
+
+  @override
+  String get vsPrevious => 'u odnosu na prethodni period';
+
+  @override
+  String get revenueOverTime => 'Prihod kroz vrijeme';
+
+  @override
+  String get topServices => 'Najtraženije usluge';
+
+  @override
+  String get topProducts => 'Najprodavaniji proizvodi';
+
+  @override
+  String get employeePerformance => 'Učinak uposlenika';
+
+  @override
+  String get completedShort => 'Završeno';
+
+  @override
+  String get noShowShort => 'Nije došao';
+
+  @override
+  String get cancelledShort => 'Otkazano';
+
+  @override
+  String get revenueShort => 'Prihod';
+
+  @override
+  String get ratingShort => 'Ocjena';
+
+  @override
+  String get export => 'Izvezi';
+
+  @override
+  String get exportCsv => 'CSV';
+
+  @override
+  String get exportExcel => 'Excel';
+
+  @override
+  String get exportPdf => 'PDF';
+
+  @override
+  String savedTo(String path) {
+    return 'Spremljeno: $path';
+  }
+
+  @override
+  String get showInFolder => 'Prikaži';
+
+  @override
+  String get reportRevenue => 'Prihod';
+
+  @override
+  String get reportEmployees => 'Uposlenici';
+
+  @override
+  String get reportServices => 'Usluge';
+
+  @override
+  String get reportProducts => 'Proizvodi';
+
+  @override
+  String get reportReservations => 'Termini';
+
+  @override
+  String get reportOrders => 'Narudžbe';
+
+  @override
+  String get reportCustom => 'Prilagođeni izvještaj';
+
+  @override
+  String get chooseSource => 'Izvor podataka';
+
+  @override
+  String get chooseFields => 'Polja';
+
+  @override
+  String get runReport => 'Prikaži izvještaj';
+
+  @override
+  String get allStatusesOption => 'Svi statusi';
+
+  @override
+  String get noDataForPeriod => 'Nema podataka za odabrani period.';
 }

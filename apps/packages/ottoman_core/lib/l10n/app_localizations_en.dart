@@ -655,4 +655,138 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourReply => 'Your reply';
+
+  @override
+  String get periodToday => 'Today';
+
+  @override
+  String get period7 => '7 days';
+
+  @override
+  String get period30 => '30 days';
+
+  @override
+  String get periodThisMonth => 'This month';
+
+  @override
+  String get periodLastMonth => 'Last month';
+
+  @override
+  String get periodThisYear => 'This year';
+
+  @override
+  String get periodCustom => 'Pick a period';
+
+  @override
+  String get kpiRevenue => 'Total revenue';
+
+  @override
+  String get kpiServices => 'Services revenue';
+
+  @override
+  String get kpiProducts => 'Products revenue';
+
+  @override
+  String get kpiAppointments => 'Completed appointments';
+
+  @override
+  String get kpiOrders => 'Orders';
+
+  @override
+  String get kpiNewClients => 'New clients';
+
+  @override
+  String get kpiAverageTicket => 'Average ticket';
+
+  @override
+  String get kpiNoShow => 'No-show';
+
+  @override
+  String get kpiCancelled => 'Cancelled';
+
+  @override
+  String get vsPrevious => 'vs previous period';
+
+  @override
+  String get revenueOverTime => 'Revenue over time';
+
+  @override
+  String get topServices => 'Top services';
+
+  @override
+  String get topProducts => 'Best-selling products';
+
+  @override
+  String get employeePerformance => 'Employee performance';
+
+  @override
+  String get completedShort => 'Completed';
+
+  @override
+  String get noShowShort => 'No-show';
+
+  @override
+  String get cancelledShort => 'Cancelled';
+
+  @override
+  String get revenueShort => 'Revenue';
+
+  @override
+  String get ratingShort => 'Rating';
+
+  @override
+  String get export => 'Export';
+
+  @override
+  String get exportCsv => 'CSV';
+
+  @override
+  String get exportExcel => 'Excel';
+
+  @override
+  String get exportPdf => 'PDF';
+
+  @override
+  String savedTo(String path) {
+    return 'Saved: $path';
+  }
+
+  @override
+  String get showInFolder => 'Show';
+
+  @override
+  String get reportRevenue => 'Revenue';
+
+  @override
+  String get reportEmployees => 'Employees';
+
+  @override
+  String get reportServices => 'Services';
+
+  @override
+  String get reportProducts => 'Products';
+
+  @override
+  String get reportReservations => 'Appointments';
+
+  @override
+  String get reportOrders => 'Orders';
+
+  @override
+  String get reportCustom => 'Custom report';
+
+  @override
+  String get chooseSource => 'Data source';
+
+  @override
+  String get chooseFields => 'Fields';
+
+  @override
+  String get runReport => 'Show report';
+
+  @override
+  String get allStatusesOption => 'All statuses';
+
+  @override
+  String get noDataForPeriod => 'No data for the selected period.';
 }

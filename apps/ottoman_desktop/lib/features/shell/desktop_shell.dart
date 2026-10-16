@@ -6,6 +6,8 @@ import '../employees/employees_page.dart';
 import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
 import '../products/products_page.dart';
+import '../reports/overview_page.dart';
+import '../reports/reports_page.dart';
 import '../reviews/reviews_page.dart';
 import '../services/services_page.dart';
 
@@ -17,6 +19,7 @@ class ShellDeps {
     required this.shop,
     required this.notifications,
     required this.reviews,
+    required this.reports,
     required this.user,
   });
 
@@ -25,6 +28,7 @@ class ShellDeps {
   final ShopApi shop;
   final NotificationsApi notifications;
   final ReviewsApi reviews;
+  final ReportsApi reports;
   final AppUser user;
 }
 
@@ -68,9 +72,15 @@ class _DesktopShellState extends State<DesktopShell> {
     widget.auth.api,
   );
   late final ReviewsApi _reviews = ReviewsApi(widget.auth.api);
+  late final ReportsApi _reports = ReportsApi(widget.auth.api);
 
   static final _sections = <_Section>[
-    _Section(Icons.dashboard_outlined, (t) => t.overview, adminOnly: true),
+    _Section(
+      Icons.dashboard_outlined,
+      (t) => t.overview,
+      adminOnly: true,
+      body: (d) => OverviewPage(api: d.reports),
+    ),
     _Section(
       Icons.schedule_outlined,
       (t) => t.appointments,
@@ -80,7 +90,12 @@ class _DesktopShellState extends State<DesktopShell> {
         isAdmin: d.user.isAdmin,
       ),
     ),
-    _Section(Icons.payments_outlined, (t) => t.earnings, adminOnly: true),
+    _Section(
+      Icons.payments_outlined,
+      (t) => t.earnings,
+      adminOnly: true,
+      body: (d) => EarningsPage(api: d.reports),
+    ),
     _Section(
       Icons.list_alt_outlined,
       (t) => t.services,
@@ -119,7 +134,12 @@ class _DesktopShellState extends State<DesktopShell> {
       adminOnly: true,
       body: (d) => EmployeesPage(catalog: d.catalog),
     ),
-    _Section(Icons.insert_chart_outlined, (t) => t.reports, adminOnly: true),
+    _Section(
+      Icons.insert_chart_outlined,
+      (t) => t.reports,
+      adminOnly: true,
+      body: (d) => ReportsPage(api: d.reports),
+    ),
     _Section(Icons.person_outline, (t) => t.myProfile),
   ];
 
@@ -201,6 +221,7 @@ class _DesktopShellState extends State<DesktopShell> {
                           shop: _shop,
                           notifications: _notifications,
                           reviews: _reviews,
+                          reports: _reports,
                           user: user,
                         ),
                       ) ??
