@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using Ottoman.Application.Auth;
 using Ottoman.Application.Clients;
 using Ottoman.Application.Common;
 using Ottoman.Domain;
+using Ottoman.Domain.Entities;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Identity;
 
-public class ClientQueries(OttomanDbContext db) : IClientQueries
+public class ClientQueries(OttomanDbContext db, IAccessGate gate, TimeProvider clock) : IClientQueries
 {
     public async Task<PagedResult<ClientListItem>> ListAsync(string? search, PageQuery page, CancellationToken ct)
     {
@@ -34,4 +36,88 @@ public class ClientQueries(OttomanDbContext db) : IClientQueries
 
         return new PagedResult<ClientListItem>(items, total);
     }
+
+    public async Task<Result<ClientDetail>> GetAsync(string id, CancellationToken ct)
+    {
+        if (!await IsClientAsync(id, ct)) return Result<ClientDetail>.NotFound();
+
+        var u = await db.Users.AsNoTracking().Where(x => x.Id == id)
+            .Select(x => new { x.Id, x.FirstName, x.LastName, x.Email, x.PhoneNumber, x.RegisteredAtUtc, x.IsBlocked })
+            .FirstAsync(ct);
+
+        var now = clock.GetUtcNow().UtcDateTime;
+        var reservations = db.Reservations.AsNoTracking().Where(r => r.ClientId == id);
+        var completed = reservations.Where(r => r.Status == ReservationStatus.Completed);
+        var fulfilled = db.Orders.AsNoTracking().Where(o => o.ClientId == id && o.Status == OrderStatus.Fulfilled);
+
+        var stats = new ClientStats(
+            Visits: await completed.CountAsync(ct),
+            NoShows: await reservations.CountAsync(r => r.Status == ReservationStatus.NoShow, ct),
+            Cancelled: await reservations.CountAsync(r => r.Status == ReservationStatus.Cancelled, ct),
+            Upcoming: await reservations.CountAsync(
+                r => r.StartUtc >= now && (r.Status == ReservationStatus.Pending || r.Status == ReservationStatus.Confirmed), ct),
+            ServicesSpent: await completed.SumAsync(r => (decimal?)r.TotalPrice, ct) ?? 0m,
+            Orders: await fulfilled.CountAsync(ct),
+            ProductsSpent: await fulfilled.SumAsync(o => (decimal?)o.TotalPrice, ct) ?? 0m,
+            LastVisitUtc: await completed.MaxAsync(r => (DateTime?)r.StartUtc, ct));
+
+        var recent = await reservations.OrderByDescending(r => r.StartUtc).ThenByDescending(r => r.Id).Take(10)
+            .Select(r => new
+            {
+                r.Id,
+                r.StartUtc,
+                r.Status,
+                r.EmployeeId,
+                r.TotalPrice,
+                Services = r.Items.Select(i => i.ServiceName).ToList(),
+            }).ToListAsync(ct);
+        var employeeIds = recent.Select(r => r.EmployeeId).Distinct().ToList();
+        var names = await db.Users.AsNoTracking().Where(x => employeeIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.FirstName, x.LastName }).ToDictionaryAsync(x => x.Id, x => $"{x.FirstName} {x.LastName}".Trim(), ct);
+
+        var orders = await db.Orders.AsNoTracking().Where(o => o.ClientId == id)
+            .OrderByDescending(o => o.CreatedAtUtc).ThenByDescending(o => o.Id).Take(10)
+            .Select(o => new
+            {
+                o.Id,
+                o.CreatedAtUtc,
+                o.Status,
+                o.TotalPrice,
+                Items = o.Items.Select(i => new { i.Quantity, i.ProductName }).ToList(),
+            }).ToListAsync(ct);
+
+        return Result<ClientDetail>.Ok(new ClientDetail(
+            u.Id, $"{u.FirstName} {u.LastName}".Trim(), u.Email!, u.PhoneNumber, u.RegisteredAtUtc, u.IsBlocked, stats,
+            recent.Select(r => new ClientReservationRow(
+                r.Id, r.StartUtc, r.Status.ToString(), names.GetValueOrDefault(r.EmployeeId, "-"),
+                string.Join(", ", r.Services), r.TotalPrice)).ToList(),
+            orders.Select(o => new ClientOrderRow(
+                o.Id, o.CreatedAtUtc, o.Status.ToString(), o.TotalPrice,
+                string.Join(", ", o.Items.Select(i => $"{i.Quantity}x {i.ProductName}")))).ToList()));
+    }
+
+    public async Task<Result<ClientListItem>> SetBlockedAsync(string id, bool blocked, CancellationToken ct)
+    {
+        if (!await IsClientAsync(id, ct)) return Result<ClientListItem>.NotFound();
+
+        // One statement each, so a concurrent login cannot slip a fresh session in between.
+        await db.Users.Where(u => u.Id == id).ExecuteUpdateAsync(s => s.SetProperty(u => u.IsBlocked, blocked), ct);
+        if (blocked)
+        {
+            var now = clock.GetUtcNow().UtcDateTime;
+            await db.RefreshTokens.Where(t => t.UserId == id && t.RevokedUtc == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedUtc, now), ct);
+        }
+        gate.Invalidate(id);
+
+        var item = await db.Users.AsNoTracking().Where(x => x.Id == id).Select(x => new ClientListItem(
+            x.Id, (x.FirstName + " " + x.LastName).Trim(), x.Email!, x.PhoneNumber, x.RegisteredAtUtc, x.IsBlocked)).FirstAsync(ct);
+        return Result<ClientListItem>.Ok(item);
+    }
+
+    private async Task<bool> IsClientAsync(string id, CancellationToken ct) =>
+        await (from ur in db.UserRoles
+               join role in db.Roles on ur.RoleId equals role.Id
+               where ur.UserId == id && role.Name == Roles.Client
+               select ur.UserId).AnyAsync(ct);
 }

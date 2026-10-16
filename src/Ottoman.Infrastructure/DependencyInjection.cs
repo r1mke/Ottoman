@@ -82,6 +82,8 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IOutbox, DbOutbox>();
+        services.AddMemoryCache();
+        services.AddSingleton<IAccessGate, UserAccessGate>();
         services.AddScoped<IClientQueries, ClientQueries>();
         services.AddScoped<IServiceCatalog, ServiceCatalog>();
         services.AddScoped<IEmployeeService, EmployeeManagement>();

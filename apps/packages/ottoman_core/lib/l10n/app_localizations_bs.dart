@@ -825,4 +825,65 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get savePictureFirst =>
       'Slike se mogu dodati nakon što se stavka spremi.';
+
+  @override
+  String get clientSearchHint => 'Pretraži po imenu, emailu ili telefonu';
+
+  @override
+  String get clientRegistered => 'Registrovan';
+
+  @override
+  String get clientBlocked => 'Blokiran';
+
+  @override
+  String get clientBlock => 'Blokiraj';
+
+  @override
+  String get clientUnblock => 'Odblokiraj';
+
+  @override
+  String clientBlockQuestion(String name) {
+    return 'Blokirati klijenta $name? Odmah će biti odjavljen i neće se moći prijaviti dok ga ne odblokirate.';
+  }
+
+  @override
+  String clientUnblockQuestion(String name) {
+    return 'Odblokirati klijenta $name?';
+  }
+
+  @override
+  String get clientVisits => 'Posjete';
+
+  @override
+  String get clientNoShows => 'Nije došao';
+
+  @override
+  String get clientCancelled => 'Otkazano';
+
+  @override
+  String get clientUpcoming => 'Predstojeći termini';
+
+  @override
+  String get clientSpentServices => 'Potrošeno na usluge';
+
+  @override
+  String get clientSpentProducts => 'Potrošeno na proizvode';
+
+  @override
+  String get clientLastVisit => 'Zadnja posjeta';
+
+  @override
+  String get clientNever => 'Još nije dolazio';
+
+  @override
+  String get clientRecentReservations => 'Posljednji termini';
+
+  @override
+  String get clientRecentOrders => 'Posljednje narudžbe';
+
+  @override
+  String get previousPage => 'Prethodna stranica';
+
+  @override
+  String get nextPage => 'Sljedeća stranica';
 }

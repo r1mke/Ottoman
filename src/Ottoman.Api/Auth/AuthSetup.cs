@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Ottoman.Application.Auth;
 using Ottoman.Domain;
 using Ottoman.Infrastructure.Auth;
 
@@ -77,6 +78,19 @@ public static class AuthSetup
                     NameClaimType = "sub",
                     RoleClaimType = "role",
                     ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+                };
+
+                // A valid signature is not enough: a blocked or deleted account must stop working at once,
+                // not when its 15-minute token runs out.
+                bearer.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var userId = context.Principal?.FindFirstValue("sub");
+                        var gate = context.HttpContext.RequestServices.GetRequiredService<IAccessGate>();
+                        if (userId is null || !await gate.IsAllowedAsync(userId, context.HttpContext.RequestAborted))
+                            context.Fail("The account is blocked or no longer exists.");
+                    },
                 };
             });
 

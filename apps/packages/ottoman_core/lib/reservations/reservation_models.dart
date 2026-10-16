@@ -133,17 +133,25 @@ class ClientItem {
     required this.fullName,
     required this.email,
     this.phone,
+    this.registeredAtUtc,
+    this.isBlocked = false,
   });
 
   final String id;
   final String fullName;
   final String email;
   final String? phone;
+  final DateTime? registeredAtUtc;
+  final bool isBlocked;
 
   factory ClientItem.fromJson(Map<String, dynamic> j) => ClientItem(
     id: j['id'] as String,
     fullName: j['fullName'] as String,
     email: j['email'] as String,
     phone: j['phone'] as String?,
+    registeredAtUtc: j['registeredAtUtc'] == null
+        ? null
+        : DateTime.parse(j['registeredAtUtc'] as String),
+    isBlocked: (j['isBlocked'] as bool?) ?? false,
   );
 }

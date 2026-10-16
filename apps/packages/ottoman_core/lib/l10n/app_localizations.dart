@@ -1693,6 +1693,120 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Slike se mogu dodati nakon što se stavka spremi.'**
   String get savePictureFirst;
+
+  /// No description provided for @clientSearchHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraži po imenu, emailu ili telefonu'**
+  String get clientSearchHint;
+
+  /// No description provided for @clientRegistered.
+  ///
+  /// In bs, this message translates to:
+  /// **'Registrovan'**
+  String get clientRegistered;
+
+  /// No description provided for @clientBlocked.
+  ///
+  /// In bs, this message translates to:
+  /// **'Blokiran'**
+  String get clientBlocked;
+
+  /// No description provided for @clientBlock.
+  ///
+  /// In bs, this message translates to:
+  /// **'Blokiraj'**
+  String get clientBlock;
+
+  /// No description provided for @clientUnblock.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odblokiraj'**
+  String get clientUnblock;
+
+  /// No description provided for @clientBlockQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Blokirati klijenta {name}? Odmah će biti odjavljen i neće se moći prijaviti dok ga ne odblokirate.'**
+  String clientBlockQuestion(String name);
+
+  /// No description provided for @clientUnblockQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odblokirati klijenta {name}?'**
+  String clientUnblockQuestion(String name);
+
+  /// No description provided for @clientVisits.
+  ///
+  /// In bs, this message translates to:
+  /// **'Posjete'**
+  String get clientVisits;
+
+  /// No description provided for @clientNoShows.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nije došao'**
+  String get clientNoShows;
+
+  /// No description provided for @clientCancelled.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkazano'**
+  String get clientCancelled;
+
+  /// No description provided for @clientUpcoming.
+  ///
+  /// In bs, this message translates to:
+  /// **'Predstojeći termini'**
+  String get clientUpcoming;
+
+  /// No description provided for @clientSpentServices.
+  ///
+  /// In bs, this message translates to:
+  /// **'Potrošeno na usluge'**
+  String get clientSpentServices;
+
+  /// No description provided for @clientSpentProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Potrošeno na proizvode'**
+  String get clientSpentProducts;
+
+  /// No description provided for @clientLastVisit.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zadnja posjeta'**
+  String get clientLastVisit;
+
+  /// No description provided for @clientNever.
+  ///
+  /// In bs, this message translates to:
+  /// **'Još nije dolazio'**
+  String get clientNever;
+
+  /// No description provided for @clientRecentReservations.
+  ///
+  /// In bs, this message translates to:
+  /// **'Posljednji termini'**
+  String get clientRecentReservations;
+
+  /// No description provided for @clientRecentOrders.
+  ///
+  /// In bs, this message translates to:
+  /// **'Posljednje narudžbe'**
+  String get clientRecentOrders;
+
+  /// No description provided for @previousPage.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prethodna stranica'**
+  String get previousPage;
+
+  /// No description provided for @nextPage.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sljedeća stranica'**
+  String get nextPage;
 }
 
 class _AppLocalizationsDelegate
