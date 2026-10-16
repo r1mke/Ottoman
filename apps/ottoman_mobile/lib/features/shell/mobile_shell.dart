@@ -27,6 +27,7 @@ class MobileShell extends StatefulWidget {
     this.catalogOverride,
     this.shopOverride,
     this.cardPayment = const UnavailableCardPayment(),
+    this.push,
   });
 
   final AuthController auth;
@@ -38,6 +39,9 @@ class MobileShell extends StatefulWidget {
 
   /// Card payments need the Stripe SDK; until one is plugged in, card checkout is hidden.
   final CardPaymentLauncher cardPayment;
+
+  /// Registers this phone for push messages; null in tests and when push is unavailable.
+  final PushRegistration? push;
 
   @override
   State<MobileShell> createState() => _MobileShellState();
@@ -62,12 +66,18 @@ class _MobileShellState extends State<MobileShell> {
   late final ShopApi _shop = widget.shopOverride ?? ShopApi(widget.auth.api);
   int _unread = 0;
   Timer? _poll;
+  StreamSubscription<PushNote>? _pushNotes;
   final CartController _cart = CartController();
 
   @override
   void initState() {
     super.initState();
     _refreshUnread();
+    final push = widget.push;
+    if (push != null) {
+      push.start();
+      _pushNotes = push.notes.listen(_onPush);
+    }
     _poll = Timer.periodic(
       const Duration(seconds: 60),
       (_) => _refreshUnread(),
@@ -76,6 +86,22 @@ class _MobileShellState extends State<MobileShell> {
     widget.cardPayment.prepare().then((_) {
       if (mounted) setState(() {});
     });
+  }
+
+  /// A push arrived while the app is open: the system does not show it, so show it here and refresh the bell.
+  void _onPush(PushNote note) {
+    _refreshUnread();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          key: const Key('push_snack'),
+          content: Text(
+            note.body.isEmpty ? note.title : '${note.title}\n${note.body}',
+          ),
+        ),
+      );
   }
 
   Future<void> _refreshUnread() async {
@@ -90,6 +116,7 @@ class _MobileShellState extends State<MobileShell> {
   @override
   void dispose() {
     _poll?.cancel();
+    _pushNotes?.cancel();
     _cart.dispose();
     super.dispose();
   }

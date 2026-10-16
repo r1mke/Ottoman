@@ -44,3 +44,14 @@ public class ProcessedEvent
     public long OutboxMessageId { get; set; }
     public DateTime ProcessedAtUtc { get; set; }
 }
+
+/// <summary>A phone that can receive push messages for a user. The token is unique: a phone belongs to whoever signed in last.</summary>
+public class DeviceToken
+{
+    public long Id { get; set; }
+    public string UserId { get; set; } = null!;
+    public string Token { get; set; } = null!;
+    public string Platform { get; set; } = null!;
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime LastSeenUtc { get; set; }
+}

@@ -34,6 +34,9 @@ class AuthController extends ChangeNotifier {
   final Set<String>? allowedRoles;
   late final ApiClient api;
 
+  /// Runs before the server is told about a logout, while the session is still valid (e.g. forget the push token).
+  Future<void> Function()? beforeLogout;
+
   AuthStatus _status = AuthStatus.unknown;
   AuthSession? _session;
   Future<bool>? _refreshing;
@@ -92,6 +95,11 @@ class AuthController extends ChangeNotifier {
   );
 
   Future<void> logout() async {
+    try {
+      await beforeLogout?.call();
+    } on Object {
+      // Housekeeping must never block signing out.
+    }
     final refresh = await storage.readRefreshToken();
     if (refresh != null) {
       try {

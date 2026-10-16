@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Ottoman.Application.Notifications;
+using Ottoman.Application.Push;
 using Ottoman.Contracts;
 using Ottoman.Domain;
 using Ottoman.Domain.Entities;
@@ -21,6 +22,7 @@ namespace Ottoman.Infrastructure.Notifications;
 public class EventProcessor(
     OttomanDbContext db,
     IEmailSender email,
+    IPushSender push,
     TimeProvider clock,
     ILogger<EventProcessor> log)
 {
@@ -50,6 +52,9 @@ public class EventProcessor(
                 EmailTemplate.Html(r.Message.Title, r.Message.Body), r.Message.Body, ct);
 
         await MarkProcessedAsync(outboxId, resolved.Where(x => x.Message.InApp && x.UserId != null).ToList(), ct);
+
+        // The mail and the inbox rows are committed; a push is a courtesy on top and never fails the event.
+        await PushAsync(resolved, ct);
     }
 
     // ---------------------------------------------------------------- composing
@@ -125,7 +130,7 @@ public class EventProcessor(
         var userIds = await db.UserNotifications.AsNoTracking()
             .Where(n => n.AnnouncementId == announcementId).Select(n => n.UserId).ToListAsync(ct);
         // InApp is false: the row already exists, writing it again would show the message twice.
-        return userIds.Select(id => new Message(a.Title, a.Body, "Announcement", UserId: id, InApp: false)).ToList();
+        return userIds.Select(id => new Message(a.Title, a.Body, "Announcement", UserId: id, InApp: false, SendEmail: a.SendEmail)).ToList();
     }
 
     private static T Read<T>(string json) =>
@@ -207,6 +212,40 @@ public class EventProcessor(
             where role.Name == Roles.Admin && !u.IsBlocked
             select new { u.Id, u.Email, u.FirstName, u.LastName }).ToListAsync(ct);
         return rows.Select(r => (r.Id, (string?)r.Email, $"{r.FirstName} {r.LastName}".Trim())).ToList();
+    }
+
+    // ---------------------------------------------------------------- push
+
+    private async Task PushAsync(IReadOnlyList<Resolved> recipients, CancellationToken ct)
+    {
+        try
+        {
+            var targets = recipients.Where(r => r.UserId != null && PushPolicy.ShouldPush(r.Message.Kind)).ToList();
+            if (targets.Count == 0) return;
+
+            var ids = targets.Select(t => t.UserId!).Distinct().ToList();
+            var devices = await db.DeviceTokens.AsNoTracking().Where(d => ids.Contains(d.UserId))
+                .Select(d => new { d.UserId, d.Token }).ToListAsync(ct);
+            if (devices.Count == 0) return;
+
+            var dead = new HashSet<string>();
+            foreach (var t in targets)
+            {
+                var message = new PushMessage(t.Message.Title, t.Message.Body, t.Message.Kind);
+                foreach (var d in devices.Where(d => d.UserId == t.UserId))
+                    if (await push.SendAsync(d.Token, message, ct) == PushOutcome.InvalidToken) dead.Add(d.Token);
+            }
+
+            if (dead.Count > 0)
+            {
+                await db.DeviceTokens.Where(d => dead.Contains(d.Token)).ExecuteDeleteAsync(ct);
+                log.LogInformation("Forgot {Count} dead device token(s)", dead.Count);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            log.LogWarning(ex, "Push step failed; the event itself was handled");
+        }
     }
 
     // ---------------------------------------------------------------- persistence

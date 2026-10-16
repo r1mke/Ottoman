@@ -103,6 +103,7 @@ services:
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in deploy/.env (min 32 chars)}
       Payments__SecretKey: ${STRIPE_SECRET_KEY:-}
       Payments__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-}
+      Firebase__ServiceAccountJson: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}

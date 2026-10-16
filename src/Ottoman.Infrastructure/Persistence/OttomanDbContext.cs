@@ -27,6 +27,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<ReservationReminder> ReservationReminders => Set<ReservationReminder>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Payment> Payments => Set<Payment>();
@@ -176,6 +177,15 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             // One review per client and target: the database enforces it, edits go through PUT.
             e.HasIndex(x => new { x.ClientId, x.TargetType, x.TargetKey }).IsUnique();
             e.HasIndex(x => new { x.TargetType, x.TargetKey, x.IsHidden });
+        });
+
+        b.Entity<DeviceToken>(e =>
+        {
+            e.Property(x => x.Token).HasMaxLength(512);
+            e.Property(x => x.Platform).HasMaxLength(20);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.Token).IsUnique();
+            e.HasIndex(x => x.UserId);
         });
 
         b.Entity<UserNotification>(e =>

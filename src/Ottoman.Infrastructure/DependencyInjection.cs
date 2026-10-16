@@ -12,6 +12,7 @@ using Ottoman.Application.Images;
 using Ottoman.Application.Notifications;
 using Ottoman.Application.Orders;
 using Ottoman.Application.Payments;
+using Ottoman.Application.Push;
 using Ottoman.Application.Recommendations;
 using Ottoman.Application.Reports;
 using Ottoman.Application.Reservations;
@@ -29,6 +30,7 @@ using Ottoman.Infrastructure.Orders;
 using Ottoman.Infrastructure.Outbox;
 using Ottoman.Infrastructure.Payments;
 using Ottoman.Infrastructure.Persistence;
+using Ottoman.Infrastructure.Push;
 using Ottoman.Infrastructure.Recommendations;
 using Ottoman.Infrastructure.Reports;
 using Ottoman.Infrastructure.Reservations;
@@ -118,6 +120,19 @@ public static class DependencyInjection
             // No Cloudinary account: pictures are accepted and validated but go nowhere.
             services.AddSingleton<FakeImageStore>();
             services.AddSingleton<IImageStore>(sp => sp.GetRequiredService<FakeImageStore>());
+        }
+        services.Configure<PushOptions>(config.GetSection(PushOptions.Section));
+        services.AddScoped<IDeviceRegistry, DeviceRegistry>();
+        if (config.GetSection(PushOptions.Section).Get<PushOptions>() is { Configured: true })
+        {
+            services.AddHttpClient(FcmPushSender.ClientName, c => c.Timeout = TimeSpan.FromSeconds(15));
+            services.AddSingleton<IPushSender, FcmPushSender>();
+        }
+        else
+        {
+            // No Firebase key: pushes are recorded in memory, nothing leaves the machine.
+            services.AddSingleton<FakePushSender>();
+            services.AddSingleton<IPushSender>(sp => sp.GetRequiredService<FakePushSender>());
         }
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReviewService, ReviewService>();
