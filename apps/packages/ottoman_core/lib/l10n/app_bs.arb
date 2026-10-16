@@ -293,6 +293,12 @@
   "clientRecentReservations": "Posljednji termini",
   "clientRecentOrders": "Posljednje narudžbe",
   "previousPage": "Prethodna stranica",
-  "nextPage": "Sljedeća stranica"
+  "nextPage": "Sljedeća stranica",
+  "auditLog": "Dnevnik aktivnosti",
+  "auditSearchHint": "Pretraži po osobi, radnji ili zapisu",
+  "auditWhen": "Vrijeme",
+  "auditWho": "Ko",
+  "auditWhat": "Radnja",
+  "auditTarget": "Zapis"
 
 }

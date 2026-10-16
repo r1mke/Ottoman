@@ -163,9 +163,11 @@ class ShopApi {
     required String paymentMethod,
     String? deliveryAddress,
     String? note,
+    String? idempotencyKey,
   }) async => ShopOrder.fromJson(
     await _api.post<Map<String, dynamic>>(
       '/api/v1/orders',
+      idempotencyKey: idempotencyKey,
       body: {
         'items': [
           for (final e in quantities.entries)

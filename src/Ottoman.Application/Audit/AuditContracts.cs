@@ -1,0 +1,60 @@
+using Ottoman.Application.Common;
+
+namespace Ottoman.Application.Audit;
+
+/// <summary>What one staff action looked like from the outside. Never contains request bodies or secrets.</summary>
+public record AuditRecord(
+    string UserId,
+    string Role,
+    string Method,
+    string Action,
+    string Route,
+    string Target,
+    int StatusCode,
+    string? Ip);
+
+public record AuditEntryDto(
+    long Id,
+    DateTime AtUtc,
+    string UserId,
+    string UserName,
+    string Role,
+    string Method,
+    string Action,
+    string Route,
+    string Target,
+    int StatusCode,
+    string? Ip);
+
+public record AuditQuery(string? Search, string? UserId, DateTime? FromUtc, DateTime? ToUtc);
+
+public interface IAuditLog
+{
+    /// <summary>
+    /// Writes the entry on its own connection. The action it describes has already happened, so a failure here
+    /// is logged loudly and swallowed: failing the caller's request would not undo anything.
+    /// </summary>
+    Task RecordAsync(AuditRecord record, CancellationToken ct);
+}
+
+public interface IAuditQueries
+{
+    Task<PagedResult<AuditEntryDto>> ListAsync(AuditQuery query, PageQuery page, CancellationToken ct);
+}
+
+/// <summary>Decides which requests are worth a line in the audit log. Pure.</summary>
+public static class AuditPolicy
+{
+    /// <summary>Controllers whose writes are noise (read marks, push tokens) or are not staff actions (sign-in).</summary>
+    private static readonly string[] Ignored = ["Notifications", "Devices", "Auth", "Me", "Payments"];
+
+    public static bool ShouldRecord(string httpMethod, string controller, int statusCode, bool isStaff)
+    {
+        if (!isStaff || statusCode >= 400) return false;
+        if (httpMethod is "GET" or "HEAD" or "OPTIONS") return false;
+        return !Ignored.Contains(controller, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>How long entries are kept. A year covers a tax period and any dispute that is still alive.</summary>
+    public static readonly TimeSpan Retention = TimeSpan.FromDays(365);
+}

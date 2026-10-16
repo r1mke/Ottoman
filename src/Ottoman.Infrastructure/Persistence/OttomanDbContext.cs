@@ -28,6 +28,8 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<ReservationReminder> ReservationReminders => Set<ReservationReminder>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Payment> Payments => Set<Payment>();
@@ -177,6 +179,31 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             // One review per client and target: the database enforces it, edits go through PUT.
             e.HasIndex(x => new { x.ClientId, x.TargetType, x.TargetKey }).IsUnique();
             e.HasIndex(x => new { x.TargetType, x.TargetKey, x.IsHidden });
+        });
+
+        b.Entity<IdempotencyRecord>(e =>
+        {
+            e.Property(x => x.UserId).HasMaxLength(450);
+            e.Property(x => x.Key).HasMaxLength(64);
+            e.Property(x => x.Route).HasMaxLength(200);
+            e.Property(x => x.RequestHash).HasMaxLength(64);
+            e.Property(x => x.ContentType).HasMaxLength(100);
+            e.HasIndex(x => new { x.UserId, x.Key }).IsUnique();
+            e.HasIndex(x => x.CreatedAtUtc);
+        });
+
+        b.Entity<AuditEntry>(e =>
+        {
+            e.Property(x => x.UserId).HasMaxLength(450);
+            e.Property(x => x.UserName).HasMaxLength(200);
+            e.Property(x => x.Role).HasMaxLength(20);
+            e.Property(x => x.Method).HasMaxLength(10);
+            e.Property(x => x.Action).HasMaxLength(100);
+            e.Property(x => x.Route).HasMaxLength(200);
+            e.Property(x => x.Target).HasMaxLength(200);
+            e.Property(x => x.Ip).HasMaxLength(64);
+            e.HasIndex(x => x.AtUtc);
+            e.HasIndex(x => new { x.UserId, x.AtUtc });
         });
 
         b.Entity<DeviceToken>(e =>

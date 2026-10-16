@@ -21,7 +21,9 @@ try
         builder.Environment.IsDevelopment(),
         builder.Configuration["Jwt:SigningKey"],
         builder.Configuration.GetValue<bool>("Seed:DemoData"),
-        builder.Configuration["Seed:AdminPassword"]);
+        builder.Configuration["Seed:AdminPassword"],
+        builder.Configuration["DataProtection:KeyEncryptionSecret"],
+        builder.Configuration.GetSection("Cors:Origins").Get<string[]>());
     if (problems.Count > 0)
         throw new InvalidOperationException(
             "Unsafe configuration:" + Environment.NewLine + " - " + string.Join(Environment.NewLine + " - ", problems));
@@ -49,10 +51,25 @@ try
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddApplication();
     builder.Services.AddOttomanAuth(builder.Configuration);
-    builder.Services.AddControllers(o => o.Filters.Add<ValidationFilter>());
+    builder.Services.AddControllers(o =>
+    {
+        o.Filters.Add<ValidationFilter>();
+        o.Filters.Add<AuditFilter>();
+    });
     builder.Services.AddOpenApi();
     builder.Services.AddExceptionHandler<HttpExceptionHandler>();
     builder.Services.AddProblemDetails();
+
+    // Browsers are not a client of this API (the apps are native), so CORS is off unless exact origins are listed.
+    var corsOrigins = CorsRules.Normalize(
+        builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [], builder.Environment.IsDevelopment());
+    if (corsOrigins.Count > 0)
+        builder.Services.AddCors(o => o.AddPolicy("web", p => p
+            .WithOrigins([.. corsOrigins])
+            .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH")
+            .WithHeaders("Authorization", "Content-Type", "Idempotency-Key")
+            .WithExposedHeaders("Idempotent-Replayed")
+            .SetPreflightMaxAge(TimeSpan.FromMinutes(10))));
     builder.Services.AddHealthChecks()
         .AddSqlServer(
             builder.Configuration.GetConnectionString("Default")!,
@@ -84,6 +101,7 @@ try
         var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
         await db.Database.MigrateAsync();
         await scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
+        await scope.ServiceProvider.GetRequiredService<Ottoman.Infrastructure.Security.StoredKeyEncryption>().EnsureEncryptedAsync(default);
     }
 
     if (app.Environment.IsDevelopment())
@@ -92,6 +110,7 @@ try
         app.MapScalarApiReference().AllowAnonymous();
     }
 
+    if (corsOrigins.Count > 0) app.UseCors("web");
     app.UseAuthentication();
     app.UseAuthorization();
     // After authentication, so the general write limit can count per signed-in user instead of per address.

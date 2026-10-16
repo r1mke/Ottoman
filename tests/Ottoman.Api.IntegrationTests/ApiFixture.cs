@@ -11,6 +11,8 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
     public const string AdminEmail = "admin@ottoman.test";
     public const string AdminPassword = "Admin_Test123!";
     public const string DemoPassword = "Test123!";
+    // 32 bytes with some variety: the data protection keys of the test database are encrypted with it.
+    public static readonly string KeyEncryptionSecret = Convert.ToBase64String(Enumerable.Range(1, 32).Select(i => (byte)(i * 7)).ToArray());
     public const string WebhookSecret = "whsec_integration_tests";
 
     private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
@@ -40,6 +42,8 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("RateLimiting:Enabled", "false");
         builder.UseSetting("Payments:WebhookSecret", WebhookSecret);
         builder.UseSetting("Cloudinary:CloudName", "testcloud");
+        builder.UseSetting("Cors:Origins:0", "https://admin.example.com");
+        builder.UseSetting("DataProtection:KeyEncryptionSecret", KeyEncryptionSecret);
         builder.ConfigureServices(s =>
         {
             // The API does not send mail (the worker does); tests drive the same handler with a recording sender.

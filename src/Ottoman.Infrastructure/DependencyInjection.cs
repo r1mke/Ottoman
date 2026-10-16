@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ottoman.Application.Audit;
 using Ottoman.Application.Auth;
 using Ottoman.Application.Catalog;
 using Ottoman.Application.Clients;
@@ -36,6 +37,7 @@ using Ottoman.Infrastructure.Reports;
 using Ottoman.Infrastructure.Reservations;
 using Ottoman.Infrastructure.Reviews;
 using Ottoman.Infrastructure.Scheduling;
+using Ottoman.Infrastructure.Security;
 using Ottoman.Infrastructure.Seeding;
 using Ottoman.Infrastructure.Settings;
 using Ottoman.Infrastructure.Shop;
@@ -71,8 +73,10 @@ public static class DependencyInjection
             .AddRoles<Microsoft.AspNetCore.Identity.IdentityRole>()
             .AddEntityFrameworkStores<OttomanDbContext>()
             .AddTokenProvider<DataProtectorTokenProvider<AppUser>>(TokenOptions.DefaultProvider);
+        services.AddScoped<StoredKeyEncryption>();
         services.AddDataProtection().SetApplicationName("Ottoman")
-            .PersistKeysToDbContext<OttomanDbContext>();
+            .PersistKeysToDbContext<OttomanDbContext>()
+            .ProtectKeysWithConfiguredSecret(config.GetSection(KeyEncryptionOptions.Section).Get<KeyEncryptionOptions>() ?? new());
 
         services.AddOptions<JwtOptions>()
             .Bind(config.GetSection(JwtOptions.Section))
@@ -125,6 +129,9 @@ public static class DependencyInjection
         }
         services.Configure<PushOptions>(config.GetSection(PushOptions.Section));
         services.AddScoped<IDeviceRegistry, DeviceRegistry>();
+        services.AddSingleton<IAuditLog, Ottoman.Infrastructure.Audit.AuditLog>();
+        services.AddSingleton<Ottoman.Application.Idempotency.IIdempotencyStore, Ottoman.Infrastructure.Idempotency.IdempotencyStore>();
+        services.AddScoped<IAuditQueries, Ottoman.Infrastructure.Audit.AuditQueries>();
         if (config.GetSection(PushOptions.Section).Get<PushOptions>() is { Configured: true })
         {
             services.AddHttpClient(FcmPushSender.ClientName, c => c.Timeout = TimeSpan.FromSeconds(15));

@@ -293,6 +293,12 @@
   "clientRecentReservations": "Recent appointments",
   "clientRecentOrders": "Recent orders",
   "previousPage": "Previous page",
-  "nextPage": "Next page"
+  "nextPage": "Next page",
+  "auditLog": "Activity log",
+  "auditSearchHint": "Search by person, action or record",
+  "auditWhen": "When",
+  "auditWho": "Who",
+  "auditWhat": "Action",
+  "auditTarget": "Record"
 
 }

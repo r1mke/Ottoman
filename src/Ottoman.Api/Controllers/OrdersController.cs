@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Ottoman.Api.Auth;
+using Ottoman.Api.Filters;
 using Ottoman.Application.Common;
 using Ottoman.Application.Orders;
 using Ottoman.Application.Payments;
@@ -22,6 +23,7 @@ public class OrdersController(IOrderService orders) : ControllerBase
     [HttpPost]
     [Authorize(Roles = Roles.Client)]
     [EnableRateLimiting(Policies.OrderLimit)]
+    [Idempotent]
     public async Task<ActionResult<OrderDto>> Create(CreateOrderRequest request, CancellationToken ct)
     {
         var result = await orders.CreateAsync(User.ToActor(), request, ct);

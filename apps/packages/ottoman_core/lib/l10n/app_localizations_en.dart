@@ -887,4 +887,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextPage => 'Next page';
+
+  @override
+  String get auditLog => 'Activity log';
+
+  @override
+  String get auditSearchHint => 'Search by person, action or record';
+
+  @override
+  String get auditWhen => 'When';
+
+  @override
+  String get auditWho => 'Who';
+
+  @override
+  String get auditWhat => 'Action';
+
+  @override
+  String get auditTarget => 'Record';
 }

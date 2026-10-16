@@ -267,6 +267,11 @@ void main() {
     expect(sent['paymentMethod'], 'OnReceipt');
     expect(sent['fulfilment'], 'Pickup');
     expect(sent.keys, isNot(contains('totalPrice')));
+    expect(
+      api.last('POST', '/orders')!.headers['Idempotency-Key'],
+      matches(RegExp(r'^[0-9a-f]{32}$')),
+      reason: 'one key per intention to order, so a repeat cannot order twice',
+    );
 
     expect(find.text('Narudžba je zaprimljena.'), findsOneWidget);
     // Back on the shop with an empty basket (no badge).

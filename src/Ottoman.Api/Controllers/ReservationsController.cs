@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
+using Ottoman.Api.Filters;
 using Ottoman.Application.Common;
 using Ottoman.Application.Reservations;
 using Ottoman.Domain;
@@ -18,6 +19,7 @@ public class ReservationsController(IReservationService reservations) : Controll
     /// </summary>
     [HttpPost]
     [Authorize(Roles = $"{Roles.Client},{Roles.Admin}")]
+    [Idempotent]
     public async Task<ActionResult<ReservationDto>> Create(CreateReservationRequest request, CancellationToken ct)
     {
         var result = await reservations.CreateAsync(User.ToActor(), request, ct);
