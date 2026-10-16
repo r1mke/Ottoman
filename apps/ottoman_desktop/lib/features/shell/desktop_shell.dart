@@ -6,7 +6,27 @@ import '../employees/employees_page.dart';
 import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
 import '../products/products_page.dart';
+import '../reviews/reviews_page.dart';
 import '../services/services_page.dart';
+
+/// Everything a section may need, built once from the session.
+class ShellDeps {
+  const ShellDeps({
+    required this.catalog,
+    required this.reservations,
+    required this.shop,
+    required this.notifications,
+    required this.reviews,
+    required this.user,
+  });
+
+  final CatalogApi catalog;
+  final ReservationsApi reservations;
+  final ShopApi shop;
+  final NotificationsApi notifications;
+  final ReviewsApi reviews;
+  final AppUser user;
+}
 
 class _Section {
   const _Section(this.icon, this.label, {this.adminOnly = false, this.body});
@@ -15,14 +35,7 @@ class _Section {
   final bool adminOnly;
 
   /// Null renders the "coming soon" placeholder.
-  final Widget Function(
-    CatalogApi catalog,
-    ReservationsApi reservations,
-    ShopApi shop,
-    NotificationsApi notifications,
-    AppUser user,
-  )?
-  body;
+  final Widget Function(ShellDeps deps)? body;
 }
 
 /// Left navigation + content area. Sections are filtered by role: staff see only
@@ -54,46 +67,57 @@ class _DesktopShellState extends State<DesktopShell> {
   late final NotificationsApi _notifications = NotificationsApi(
     widget.auth.api,
   );
+  late final ReviewsApi _reviews = ReviewsApi(widget.auth.api);
 
   static final _sections = <_Section>[
     _Section(Icons.dashboard_outlined, (t) => t.overview, adminOnly: true),
     _Section(
       Icons.schedule_outlined,
       (t) => t.appointments,
-      body: (c, r, _, _, u) =>
-          AppointmentsPage(catalog: c, reservations: r, isAdmin: u.isAdmin),
+      body: (d) => AppointmentsPage(
+        catalog: d.catalog,
+        reservations: d.reservations,
+        isAdmin: d.user.isAdmin,
+      ),
     ),
     _Section(Icons.payments_outlined, (t) => t.earnings, adminOnly: true),
     _Section(
       Icons.list_alt_outlined,
       (t) => t.services,
       adminOnly: true,
-      body: (c, _, _, _, _) => ServicesPage(catalog: c),
+      body: (d) => ServicesPage(catalog: d.catalog),
     ),
     _Section(
       Icons.notifications_outlined,
       (t) => t.notifications,
       adminOnly: true,
-      body: (_, r, _, n, _) => NotificationsPage(api: n, reservations: r),
+      body: (d) =>
+          NotificationsPage(api: d.notifications, reservations: d.reservations),
     ),
     _Section(
       Icons.inventory_2_outlined,
       (t) => t.products,
       adminOnly: true,
-      body: (_, _, s, _, _) => ProductsPage(shop: s),
+      body: (d) => ProductsPage(shop: d.shop),
     ),
     _Section(
       Icons.receipt_long_outlined,
       (t) => t.orders,
       adminOnly: true,
-      body: (_, _, s, _, _) => OrdersPage(shop: s),
+      body: (d) => OrdersPage(shop: d.shop),
+    ),
+    _Section(
+      Icons.star_outline,
+      (t) => t.reviews,
+      adminOnly: true,
+      body: (d) => ReviewsPage(api: d.reviews),
     ),
     _Section(Icons.groups_outlined, (t) => t.clients, adminOnly: true),
     _Section(
       Icons.content_cut,
       (t) => t.employees,
       adminOnly: true,
-      body: (c, _, _, _, _) => EmployeesPage(catalog: c),
+      body: (d) => EmployeesPage(catalog: d.catalog),
     ),
     _Section(Icons.insert_chart_outlined, (t) => t.reports, adminOnly: true),
     _Section(Icons.person_outline, (t) => t.myProfile),
@@ -171,11 +195,14 @@ class _DesktopShellState extends State<DesktopShell> {
                 Expanded(
                   child:
                       current.body?.call(
-                        _catalog,
-                        _reservations,
-                        _shop,
-                        _notifications,
-                        user,
+                        ShellDeps(
+                          catalog: _catalog,
+                          reservations: _reservations,
+                          shop: _shop,
+                          notifications: _notifications,
+                          reviews: _reviews,
+                          user: user,
+                        ),
                       ) ??
                       EmptyState(icon: current.icon, message: t.comingSoon),
                 ),

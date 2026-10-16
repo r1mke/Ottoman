@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Ottoman.Application.Common;
+using Ottoman.Application.Recommendations;
 using Ottoman.Application.Shop;
 using Ottoman.Domain.Entities;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Shop;
 
-public class ProductCatalog(OttomanDbContext db) : IProductCatalog
+public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommendations) : IProductCatalog
 {
     // ---------------------------------------------------------------- products
 
@@ -49,6 +50,22 @@ public class ProductCatalog(OttomanDbContext db) : IProductCatalog
     {
         var p = await LoadDtoAsync(id, ct);
         return p is null || (!p.IsActive && !includeInactive) ? Result<ProductDto>.NotFound() : Result<ProductDto>.Ok(p);
+    }
+
+    public async Task<IReadOnlyList<ProductDto>> GetManyAsync(IReadOnlyList<int> ids, CancellationToken ct)
+    {
+        if (ids.Count == 0) return [];
+        var rows = await db.Products.AsNoTracking().Where(p => ids.Contains(p.Id) && p.IsActive)
+            .Select(p => new ProductDto(
+                p.Id, p.Name, p.Description,
+                p.BrandId, p.Brand != null ? p.Brand.Name : null,
+                p.CategoryId, p.Category != null ? p.Category.Name : null,
+                p.Price, p.Stock, p.LowStockThreshold,
+                p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
+                p.IsActive))
+            .ToListAsync(ct);
+        var byId = rows.ToDictionary(p => p.Id);
+        return ids.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
     }
 
     public async Task<Result<ProductDto>> CreateAsync(ProductUpsertRequest r, CancellationToken ct)
@@ -116,6 +133,7 @@ public class ProductCatalog(OttomanDbContext db) : IProductCatalog
     public async Task<Result<bool>> DeactivateAsync(int id, CancellationToken ct)
     {
         var rows = await db.Products.Where(p => p.Id == id).ExecuteUpdateAsync(s => s.SetProperty(p => p.IsActive, false), ct);
+        if (rows == 1) recommendations.Invalidate();
         return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
     }
 
@@ -167,6 +185,7 @@ public class ProductCatalog(OttomanDbContext db) : IProductCatalog
     {
         // Products keep existing without a brand (FK is SET NULL).
         var rows = await db.Brands.Where(b => b.Id == id).ExecuteDeleteAsync(ct);
+        if (rows == 1) recommendations.Invalidate();
         return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
     }
 
@@ -200,6 +219,7 @@ public class ProductCatalog(OttomanDbContext db) : IProductCatalog
     public async Task<Result<bool>> DeleteCategoryAsync(int id, CancellationToken ct)
     {
         var rows = await db.Categories.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
+        if (rows == 1) recommendations.Invalidate();
         return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
     }
 }

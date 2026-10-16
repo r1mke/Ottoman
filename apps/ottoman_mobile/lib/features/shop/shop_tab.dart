@@ -3,6 +3,7 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import 'cart_page.dart';
 import 'my_orders_page.dart';
+import 'recommended_row.dart';
 import 'product_detail_page.dart';
 
 /// The shop: search, category filter and sorting happen on the server; the basket stays on the device.
@@ -11,11 +12,15 @@ class ShopTab extends StatefulWidget {
     super.key,
     required this.shop,
     required this.cart,
+    required this.reviews,
+    required this.recommendations,
     this.cardPayment = const UnavailableCardPayment(),
   });
 
   final ShopApi shop;
   final CartController cart;
+  final ReviewsApi reviews;
+  final RecommendationsApi recommendations;
   final CardPaymentLauncher cardPayment;
 
   @override
@@ -173,6 +178,23 @@ class _ShopTabState extends State<ShopTab> {
             },
           ),
         ),
+        if (_search.text.trim().isEmpty && _categoryId == null)
+          RecommendedRow(
+            key: ValueKey('reco$_version'),
+            title: t.recommendedForYou,
+            load: widget.recommendations.products,
+            cart: widget.cart,
+            onOpen: (p) => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => ProductDetailPage(
+                  product: p,
+                  cart: widget.cart,
+                  reviews: widget.reviews,
+                  recommendations: widget.recommendations,
+                ),
+              ),
+            ),
+          ),
         Expanded(
           child: AsyncView<Paged<Product>>(
             key: ValueKey(_version),
@@ -199,6 +221,8 @@ class _ShopTabState extends State<ShopTab> {
                       builder: (_) => ProductDetailPage(
                         product: page.items[i],
                         cart: widget.cart,
+                        reviews: widget.reviews,
+                        recommendations: widget.recommendations,
                       ),
                     ),
                   ),

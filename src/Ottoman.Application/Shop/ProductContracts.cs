@@ -84,6 +84,9 @@ public interface IProductCatalog
 {
     Task<PagedResult<ProductDto>> ListAsync(ProductQuery query, PageQuery page, CancellationToken ct);
     Task<Result<ProductDto>> GetAsync(int id, bool includeInactive, CancellationToken ct);
+
+    /// <summary>Active products by id, in the order of <paramref name="ids"/> (used to show ranked recommendations).</summary>
+    Task<IReadOnlyList<ProductDto>> GetManyAsync(IReadOnlyList<int> ids, CancellationToken ct);
     Task<Result<ProductDto>> CreateAsync(ProductUpsertRequest request, CancellationToken ct);
     Task<Result<ProductDto>> UpdateAsync(int id, ProductUpsertRequest request, CancellationToken ct);
     Task<Result<ProductDto>> AdjustStockAsync(int id, int delta, CancellationToken ct);

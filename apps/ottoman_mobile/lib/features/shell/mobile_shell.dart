@@ -52,10 +52,14 @@ class _MobileShellState extends State<MobileShell> {
   late final CatalogApi _catalog =
       widget.catalogOverride ?? CatalogApi(widget.auth.api);
   late final ReservationsApi _reservations = ReservationsApi(widget.auth.api);
-  late final ShopApi _shop = widget.shopOverride ?? ShopApi(widget.auth.api);
   late final NotificationsApi _notifications = NotificationsApi(
     widget.auth.api,
   );
+  late final ReviewsApi _reviews = ReviewsApi(widget.auth.api);
+  late final RecommendationsApi _recommendations = RecommendationsApi(
+    widget.auth.api,
+  );
+  late final ShopApi _shop = widget.shopOverride ?? ShopApi(widget.auth.api);
   int _unread = 0;
   Timer? _poll;
   final CartController _cart = CartController();
@@ -127,6 +131,8 @@ class _MobileShellState extends State<MobileShell> {
         () => EmployeesTab(
           catalog: _catalog,
           reservations: _reservations,
+          reviews: _reviews,
+          recommendations: _recommendations,
           onBooked: () => setState(() => _bookingsVersion++),
         ),
       ),
@@ -141,13 +147,19 @@ class _MobileShellState extends State<MobileShell> {
         () => MyReservationsTab(
           key: ValueKey(_bookingsVersion),
           reservations: _reservations,
+          reviews: _reviews,
         ),
       ),
       _Tab(
         Icons.shopping_cart_outlined,
         (t) => t.products,
-        () =>
-            ShopTab(shop: _shop, cart: _cart, cardPayment: widget.cardPayment),
+        () => ShopTab(
+          shop: _shop,
+          cart: _cart,
+          reviews: _reviews,
+          recommendations: _recommendations,
+          cardPayment: widget.cardPayment,
+        ),
       ),
       _Tab(
         Icons.settings_outlined,

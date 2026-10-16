@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import 'password_reset_dialogs.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,47 +16,17 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   Future<void> _forgotPassword() async {
     final t = AppLocalizations.of(context);
-    final controller = TextEditingController();
     final messenger = ScaffoldMessenger.of(context);
 
-    var haveCode = false;
-    final email = await showDialog<String>(
+    final answer = await showDialog<({String email, bool haveCode})>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.forgotPassword),
-        content: TextField(
-          key: const Key('forgot_email'),
-          controller: controller,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(labelText: t.email),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(t.cancel),
-          ),
-          TextButton(
-            key: const Key('have_code'),
-            onPressed: () {
-              haveCode = true;
-              Navigator.pop(ctx, controller.text.trim());
-            },
-            child: Text(t.haveCode),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(minimumSize: const Size(96, 44)),
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: Text(t.save),
-          ),
-        ],
-      ),
+      builder: (_) => const ForgotPasswordDialog(),
     );
-    controller.dispose();
-    if (email == null || !email.contains('@')) return;
+    if (answer == null || !answer.email.contains('@')) return;
 
-    if (!haveCode) {
+    if (!answer.haveCode) {
       try {
-        await widget.auth.forgotPassword(email);
+        await widget.auth.forgotPassword(answer.email);
       } on AppException catch (e) {
         messenger.showSnackBar(SnackBar(content: Text(e.message)));
         return;
@@ -64,87 +35,13 @@ class _LoginPageState extends State<LoginPage> {
       messenger.showSnackBar(SnackBar(content: Text(t.resetEmailSent)));
     }
     if (!mounted) return;
-    await _enterCode(email);
-  }
 
-  /// Second step: the code from the e-mail plus a new password.
-  Future<void> _enterCode(String email) async {
-    final t = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final code = TextEditingController();
-    final password = TextEditingController();
-
-    final ok = await showDialog<bool>(
+    final changed = await showDialog<bool>(
       context: context,
-      builder: (ctx) {
-        String? error;
-        return StatefulBuilder(
-          builder: (ctx, setState) => AlertDialog(
-            title: Text(t.haveCode),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  key: const Key('reset_code'),
-                  controller: code,
-                  decoration: InputDecoration(labelText: t.resetCode),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('reset_password'),
-                  controller: password,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: t.newPassword,
-                    helperText: t.passwordRules,
-                    helperMaxLines: 2,
-                  ),
-                ),
-                if (error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      error!,
-                      key: const Key('reset_error'),
-                      style: TextStyle(color: Theme.of(ctx).colorScheme.error),
-                    ),
-                  ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(t.cancel),
-              ),
-              FilledButton(
-                key: const Key('reset_submit'),
-                style: FilledButton.styleFrom(minimumSize: const Size(96, 44)),
-                onPressed: () async {
-                  try {
-                    await widget.auth.resetPassword(
-                      email: email,
-                      token: code.text.trim(),
-                      newPassword: password.text,
-                    );
-                    if (ctx.mounted) Navigator.pop(ctx, true);
-                  } on AppException catch (e) {
-                    // The server says what is wrong with the password; a bad code gets a generic message.
-                    final detail = e.errors.values.expand((x) => x).join('\n');
-                    setState(
-                      () => error = detail.isEmpty ? t.resetFailed : detail,
-                    );
-                  }
-                },
-                child: Text(t.save),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (_) =>
+          ResetPasswordDialog(auth: widget.auth, email: answer.email),
     );
-    code.dispose();
-    password.dispose();
-    if (ok == true) {
+    if (changed == true) {
       messenger.showSnackBar(SnackBar(content: Text(t.passwordChanged)));
     }
   }

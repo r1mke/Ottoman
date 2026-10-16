@@ -5,19 +5,61 @@ import 'employee_services_page.dart';
 import 'slot_picker_page.dart';
 
 /// Step 1 of booking: choose a barber (mockup "Uposlenici").
-class EmployeesTab extends StatelessWidget {
+class EmployeesTab extends StatefulWidget {
   const EmployeesTab({
     super.key,
     required this.catalog,
     required this.reservations,
+    required this.reviews,
+    required this.recommendations,
     required this.onBooked,
   });
 
   final CatalogApi catalog;
   final ReservationsApi reservations;
+  final ReviewsApi reviews;
+  final RecommendationsApi recommendations;
 
   /// Called after a successful booking so other tabs can refresh.
   final VoidCallback onBooked;
+
+  @override
+  State<EmployeesTab> createState() => _EmployeesTabState();
+}
+
+class _EmployeesTabState extends State<EmployeesTab> {
+  CatalogApi get catalog => widget.catalog;
+  ReservationsApi get reservations => widget.reservations;
+  VoidCallback get onBooked => widget.onBooked;
+
+  // Ratings and suggestions are decoration: a failure must not break the list, so errors become "nothing to show".
+  late final Future<Map<String, ReviewSummary>> _ratings = widget.reviews
+      .summary(ReviewTarget.employee)
+      .catchError((_) => <String, ReviewSummary>{});
+  late final Future<List<Employee>> _recommended = widget.recommendations
+      .employees()
+      .catchError((_) => <Employee>[]);
+
+  void _open(BuildContext context, Employee employee) =>
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => EmployeeServicesPage(
+            catalog: catalog,
+            employee: employee,
+            onContinue: (ctx, services) => Navigator.of(ctx).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SlotPickerPage(
+                  catalog: catalog,
+                  reservations: reservations,
+                  employee: employee,
+                  services: services,
+                  onBooked: onBooked,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +94,52 @@ class EmployeesTab extends StatelessWidget {
                 ),
               ),
             ),
+            SliverToBoxAdapter(
+              child: FutureBuilder<List<Employee>>(
+                future: _recommended,
+                builder: (context, snap) {
+                  final picks = snap.data;
+                  if (picks == null || picks.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        child: Text(
+                          t.recommendedForYou,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 44,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: [
+                            for (final e in picks)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ActionChip(
+                                  key: Key('reco_employee_${e.id}'),
+                                  avatar: const Icon(
+                                    Icons.content_cut,
+                                    size: 16,
+                                  ),
+                                  label: Text(e.fullName),
+                                  onPressed: () => _open(context, e),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
             SliverPadding(
               padding: const EdgeInsets.all(16),
               sliver: SliverGrid.builder(
@@ -62,28 +150,15 @@ class EmployeesTab extends StatelessWidget {
                   childAspectRatio: 0.85,
                 ),
                 itemCount: employees.length,
-                itemBuilder: (context, i) => _EmployeeCard(
-                  employee: employees[i],
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => EmployeeServicesPage(
-                        catalog: catalog,
+                itemBuilder: (context, i) =>
+                    FutureBuilder<Map<String, ReviewSummary>>(
+                      future: _ratings,
+                      builder: (context, snap) => _EmployeeCard(
                         employee: employees[i],
-                        onContinue: (ctx, services) => Navigator.of(ctx).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => SlotPickerPage(
-                              catalog: catalog,
-                              reservations: reservations,
-                              employee: employees[i],
-                              services: services,
-                              onBooked: onBooked,
-                            ),
-                          ),
-                        ),
+                        rating: snap.data?[employees[i].id],
+                        onTap: () => _open(context, employees[i]),
                       ),
                     ),
-                  ),
-                ),
               ),
             ),
           ],
@@ -94,9 +169,14 @@ class EmployeesTab extends StatelessWidget {
 }
 
 class _EmployeeCard extends StatelessWidget {
-  const _EmployeeCard({required this.employee, required this.onTap});
+  const _EmployeeCard({
+    required this.employee,
+    required this.onTap,
+    this.rating,
+  });
 
   final Employee employee;
+  final ReviewSummary? rating;
   final VoidCallback onTap;
 
   @override
@@ -134,6 +214,14 @@ class _EmployeeCard extends StatelessWidget {
                 employee.title,
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
               ),
+              if (rating != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: RatingSummary(
+                    average: rating!.average,
+                    count: rating!.count,
+                  ),
+                ),
               if (employee.bio != null) ...[
                 const SizedBox(height: 6),
                 Text(

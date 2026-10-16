@@ -1261,6 +1261,102 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Zatvori'**
   String get close;
+
+  /// No description provided for @reviews.
+  ///
+  /// In bs, this message translates to:
+  /// **'Recenzije'**
+  String get reviews;
+
+  /// No description provided for @noReviews.
+  ///
+  /// In bs, this message translates to:
+  /// **'Još nema recenzija'**
+  String get noReviews;
+
+  /// No description provided for @writeReview.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ocijeni'**
+  String get writeReview;
+
+  /// No description provided for @yourRating.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vaša ocjena'**
+  String get yourRating;
+
+  /// No description provided for @yourComment.
+  ///
+  /// In bs, this message translates to:
+  /// **'Komentar (nije obavezan)'**
+  String get yourComment;
+
+  /// No description provided for @reviewSaved.
+  ///
+  /// In bs, this message translates to:
+  /// **'Hvala na recenziji!'**
+  String get reviewSaved;
+
+  /// No description provided for @pickRating.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite ocjenu.'**
+  String get pickRating;
+
+  /// No description provided for @recommendedForYou.
+  ///
+  /// In bs, this message translates to:
+  /// **'Možda vam se sviđa'**
+  String get recommendedForYou;
+
+  /// No description provided for @similarProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Slično'**
+  String get similarProducts;
+
+  /// No description provided for @hideReview.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sakrij'**
+  String get hideReview;
+
+  /// No description provided for @showReview.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži'**
+  String get showReview;
+
+  /// No description provided for @reply.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odgovori'**
+  String get reply;
+
+  /// No description provided for @salonReply.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odgovor salona'**
+  String get salonReply;
+
+  /// No description provided for @hiddenReviews.
+  ///
+  /// In bs, this message translates to:
+  /// **'Samo skrivene'**
+  String get hiddenReviews;
+
+  /// No description provided for @replySaved.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odgovor je spremljen.'**
+  String get replySaved;
+
+  /// No description provided for @yourReply.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vaš odgovor'**
+  String get yourReply;
 }
 
 class _AppLocalizationsDelegate

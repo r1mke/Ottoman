@@ -28,6 +28,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<ReservationReminder> ReservationReminders => Set<ReservationReminder>();
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
+    public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
@@ -162,6 +163,19 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.UnitPrice).HasPrecision(18, 2);
             e.HasOne<Product>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
             e.ToTable(t => t.HasCheckConstraint("CK_OrderItem_Quantity", "[Quantity] > 0"));
+        });
+
+        b.Entity<Review>(e =>
+        {
+            e.Property(x => x.TargetType).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.TargetKey).HasMaxLength(450);
+            e.Property(x => x.Comment).HasMaxLength(1000);
+            e.Property(x => x.ReplyText).HasMaxLength(1000);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Cascade);
+            e.ToTable(t => t.HasCheckConstraint("CK_Review_Rating", "[Rating] BETWEEN 1 AND 5"));
+            // One review per client and target: the database enforces it, edits go through PUT.
+            e.HasIndex(x => new { x.ClientId, x.TargetType, x.TargetKey }).IsUnique();
+            e.HasIndex(x => new { x.TargetType, x.TargetKey, x.IsHidden });
         });
 
         b.Entity<UserNotification>(e =>

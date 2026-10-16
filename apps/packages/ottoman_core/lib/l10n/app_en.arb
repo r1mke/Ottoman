@@ -199,6 +199,22 @@
   "newPassword": "New password",
   "passwordChanged": "Password changed. Please sign in.",
   "resetFailed": "The code is wrong or has expired.",
-  "close": "Close"
+  "close": "Close",
+  "reviews": "Reviews",
+  "noReviews": "No reviews yet",
+  "writeReview": "Rate",
+  "yourRating": "Your rating",
+  "yourComment": "Comment (optional)",
+  "reviewSaved": "Thank you for your review!",
+  "pickRating": "Pick a rating.",
+  "recommendedForYou": "You might like",
+  "similarProducts": "Similar",
+  "hideReview": "Hide",
+  "showReview": "Show",
+  "reply": "Reply",
+  "salonReply": "Salon reply",
+  "hiddenReviews": "Hidden only",
+  "replySaved": "Reply saved.",
+  "yourReply": "Your reply"
 
 }

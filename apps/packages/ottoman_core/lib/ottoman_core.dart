@@ -22,3 +22,6 @@ export 'shop/card_payment_launcher.dart';
 export 'shop/shop_labels.dart';
 export 'notifications/notifications_api.dart';
 export 'notifications/notification_labels.dart';
+export 'reviews/reviews_api.dart';
+export 'widgets/star_rating.dart';
+export 'widgets/review_widgets.dart';
