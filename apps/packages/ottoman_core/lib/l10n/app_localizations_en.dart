@@ -607,4 +607,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get reviews => 'Reviews';
+
+  @override
+  String get noReviews => 'No reviews yet';
+
+  @override
+  String get writeReview => 'Rate';
+
+  @override
+  String get yourRating => 'Your rating';
+
+  @override
+  String get yourComment => 'Comment (optional)';
+
+  @override
+  String get reviewSaved => 'Thank you for your review!';
+
+  @override
+  String get pickRating => 'Pick a rating.';
+
+  @override
+  String get recommendedForYou => 'You might like';
+
+  @override
+  String get similarProducts => 'Similar';
+
+  @override
+  String get hideReview => 'Hide';
+
+  @override
+  String get showReview => 'Show';
+
+  @override
+  String get reply => 'Reply';
+
+  @override
+  String get salonReply => 'Salon reply';
+
+  @override
+  String get hiddenReviews => 'Hidden only';
+
+  @override
+  String get replySaved => 'Reply saved.';
+
+  @override
+  String get yourReply => 'Your reply';
 }

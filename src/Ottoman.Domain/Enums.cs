@@ -63,3 +63,11 @@ public enum ReminderKind
     /// <summary>A couple of hours before.</summary>
     Hours = 1,
 }
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ReviewTargetType
+{
+    Employee = 0,
+    Service = 1,
+    Product = 2,
+}

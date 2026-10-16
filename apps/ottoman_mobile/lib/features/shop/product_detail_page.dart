@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../reviews/reviews_section.dart';
+import 'recommended_row.dart';
+
 class ProductDetailPage extends StatelessWidget {
   const ProductDetailPage({
     super.key,
     required this.product,
     required this.cart,
+    required this.reviews,
+    required this.recommendations,
   });
 
   final Product product;
   final CartController cart;
+  final ReviewsApi reviews;
+  final RecommendationsApi recommendations;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +89,29 @@ class ProductDetailPage extends StatelessWidget {
                 : null,
             icon: const Icon(Icons.add_shopping_cart),
             label: Text(t.addToCart),
+          ),
+          const SizedBox(height: 24),
+          ReviewsSection(
+            api: reviews,
+            targetType: ReviewTarget.product,
+            targetKey: '${p.id}',
+            title: p.name,
+          ),
+          const SizedBox(height: 16),
+          RecommendedRow(
+            title: t.similarProducts,
+            load: () => recommendations.relatedProducts(p.id),
+            cart: cart,
+            onOpen: (other) => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => ProductDetailPage(
+                  product: other,
+                  cart: cart,
+                  reviews: reviews,
+                  recommendations: recommendations,
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -21,7 +21,9 @@ class _Adapter implements HttpClientAdapter {
     calls.add(o.uri.toString());
     Object? body;
     var status = 200;
-    if (o.path.endsWith('/login')) {
+    if (o.path.contains('/recommendations') || o.path.contains('/reviews')) {
+      body = [];
+    } else if (o.path.endsWith('/login')) {
       body = {
         'accessToken': 'a',
         'refreshToken': 'r',

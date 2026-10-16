@@ -3,9 +3,14 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 /// The client's own appointments, upcoming and past, with cancellation.
 class MyReservationsTab extends StatelessWidget {
-  const MyReservationsTab({super.key, required this.reservations});
+  const MyReservationsTab({
+    super.key,
+    required this.reservations,
+    required this.reviews,
+  });
 
   final ReservationsApi reservations;
+  final ReviewsApi reviews;
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +28,16 @@ class MyReservationsTab extends StatelessWidget {
           Expanded(
             child: TabBarView(
               children: [
-                _List(reservations: reservations, upcoming: true),
-                _List(reservations: reservations, upcoming: false),
+                _List(
+                  reservations: reservations,
+                  reviews: reviews,
+                  upcoming: true,
+                ),
+                _List(
+                  reservations: reservations,
+                  reviews: reviews,
+                  upcoming: false,
+                ),
               ],
             ),
           ),
@@ -35,9 +48,14 @@ class MyReservationsTab extends StatelessWidget {
 }
 
 class _List extends StatefulWidget {
-  const _List({required this.reservations, required this.upcoming});
+  const _List({
+    required this.reservations,
+    required this.reviews,
+    required this.upcoming,
+  });
 
   final ReservationsApi reservations;
+  final ReviewsApi reviews;
   final bool upcoming;
 
   @override
@@ -80,6 +98,19 @@ class _ListState extends State<_List> {
     }
   }
 
+  Future<void> _review(Reservation r) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final saved = await showReviewDialog(
+      context,
+      api: widget.reviews,
+      targetType: ReviewTarget.employee,
+      targetKey: r.employeeId,
+      title: r.employeeName,
+    );
+    if (saved) messenger.showSnackBar(SnackBar(content: Text(t.reviewSaved)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -100,6 +131,9 @@ class _ListState extends State<_List> {
             onCancel: page.items[i].canCancel
                 ? () => _cancel(page.items[i])
                 : null,
+            onReview: page.items[i].status == ReservationStatus.completed
+                ? () => _review(page.items[i])
+                : null,
           ),
         ),
       ),
@@ -108,10 +142,18 @@ class _ListState extends State<_List> {
 }
 
 class ReservationCard extends StatelessWidget {
-  const ReservationCard({super.key, required this.reservation, this.onCancel});
+  const ReservationCard({
+    super.key,
+    required this.reservation,
+    this.onCancel,
+    this.onReview,
+  });
 
   final Reservation reservation;
   final VoidCallback? onCancel;
+
+  /// Offered for finished appointments: rate the barber.
+  final VoidCallback? onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +202,16 @@ class ReservationCard extends StatelessWidget {
               '${t.minutesShort(r.totalDurationMinutes)} · ${r.totalPrice.toStringAsFixed(2)} ${t.currencyShort}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
+            if (onReview != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  key: Key('review_${r.id}'),
+                  onPressed: onReview,
+                  icon: const Icon(Icons.star_outline),
+                  label: Text(t.writeReview),
+                ),
+              ),
             if (onCancel != null)
               Align(
                 alignment: Alignment.centerRight,

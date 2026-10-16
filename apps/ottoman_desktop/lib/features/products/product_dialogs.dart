@@ -397,32 +397,10 @@ class _NamesDialogState extends State<NamesDialog> {
   }
 
   Future<void> _rename(int id, String current) async {
-    final t = AppLocalizations.of(context);
-    final controller = TextEditingController(text: current);
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.edit),
-        content: TextField(
-          key: const Key('rename_field'),
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(labelText: t.name),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(t.cancel),
-          ),
-          FilledButton(
-            key: const Key('rename_ok'),
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: Text(t.save),
-          ),
-        ],
-      ),
+      builder: (_) => _RenameDialog(current: current),
     );
-    controller.dispose();
     if (name == null || name.isEmpty || name == current) return;
     await _run(() async {
       if (widget.isBrands) {
@@ -516,6 +494,51 @@ class _NamesDialogState extends State<NamesDialog> {
           key: const Key('names_close'),
           style: FilledButton.styleFrom(minimumSize: const Size(100, 44)),
           onPressed: () => Navigator.pop(context, _changed),
+          child: Text(t.save),
+        ),
+      ],
+    );
+  }
+}
+
+/// Owns its controller so it is disposed with the dialog, not while the dialog is still animating away.
+class _RenameDialog extends StatefulWidget {
+  const _RenameDialog({required this.current});
+
+  final String current;
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final _controller = TextEditingController(text: widget.current);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(t.edit),
+      content: TextField(
+        key: const Key('rename_field'),
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(labelText: t.name),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(t.cancel),
+        ),
+        FilledButton(
+          key: const Key('rename_ok'),
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
           child: Text(t.save),
         ),
       ],

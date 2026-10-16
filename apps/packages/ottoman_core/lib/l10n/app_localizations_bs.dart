@@ -606,4 +606,52 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get close => 'Zatvori';
+
+  @override
+  String get reviews => 'Recenzije';
+
+  @override
+  String get noReviews => 'Još nema recenzija';
+
+  @override
+  String get writeReview => 'Ocijeni';
+
+  @override
+  String get yourRating => 'Vaša ocjena';
+
+  @override
+  String get yourComment => 'Komentar (nije obavezan)';
+
+  @override
+  String get reviewSaved => 'Hvala na recenziji!';
+
+  @override
+  String get pickRating => 'Odaberite ocjenu.';
+
+  @override
+  String get recommendedForYou => 'Možda vam se sviđa';
+
+  @override
+  String get similarProducts => 'Slično';
+
+  @override
+  String get hideReview => 'Sakrij';
+
+  @override
+  String get showReview => 'Prikaži';
+
+  @override
+  String get reply => 'Odgovori';
+
+  @override
+  String get salonReply => 'Odgovor salona';
+
+  @override
+  String get hiddenReviews => 'Samo skrivene';
+
+  @override
+  String get replySaved => 'Odgovor je spremljen.';
+
+  @override
+  String get yourReply => 'Vaš odgovor';
 }

@@ -199,6 +199,22 @@
   "newPassword": "Nova lozinka",
   "passwordChanged": "Lozinka je promijenjena. Prijavite se.",
   "resetFailed": "Kod nije ispravan ili je istekao.",
-  "close": "Zatvori"
+  "close": "Zatvori",
+  "reviews": "Recenzije",
+  "noReviews": "Još nema recenzija",
+  "writeReview": "Ocijeni",
+  "yourRating": "Vaša ocjena",
+  "yourComment": "Komentar (nije obavezan)",
+  "reviewSaved": "Hvala na recenziji!",
+  "pickRating": "Odaberite ocjenu.",
+  "recommendedForYou": "Možda vam se sviđa",
+  "similarProducts": "Slično",
+  "hideReview": "Sakrij",
+  "showReview": "Prikaži",
+  "reply": "Odgovori",
+  "salonReply": "Odgovor salona",
+  "hiddenReviews": "Samo skrivene",
+  "replySaved": "Odgovor je spremljen.",
+  "yourReply": "Vaš odgovor"
 
 }

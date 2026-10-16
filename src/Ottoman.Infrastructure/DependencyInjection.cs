@@ -11,7 +11,9 @@ using Ottoman.Application.Employees;
 using Ottoman.Application.Notifications;
 using Ottoman.Application.Orders;
 using Ottoman.Application.Payments;
+using Ottoman.Application.Recommendations;
 using Ottoman.Application.Reservations;
+using Ottoman.Application.Reviews;
 using Ottoman.Application.Scheduling;
 using Ottoman.Application.Settings;
 using Ottoman.Application.Shop;
@@ -24,7 +26,9 @@ using Ottoman.Infrastructure.Orders;
 using Ottoman.Infrastructure.Outbox;
 using Ottoman.Infrastructure.Payments;
 using Ottoman.Infrastructure.Persistence;
+using Ottoman.Infrastructure.Recommendations;
 using Ottoman.Infrastructure.Reservations;
+using Ottoman.Infrastructure.Reviews;
 using Ottoman.Infrastructure.Scheduling;
 using Ottoman.Infrastructure.Seeding;
 using Ottoman.Infrastructure.Settings;
@@ -39,7 +43,12 @@ public static class DependencyInjection
         var cs = config.GetConnectionString("Default")
                  ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
 
-        services.AddDbContext<OttomanDbContext>(o => o.UseSqlServer(cs, sql => sql.EnableRetryOnFailure()));
+        services.AddSingleton<RecommendationCache>();
+        services.AddSingleton<IRecommendationCache>(sp => sp.GetRequiredService<RecommendationCache>());
+        services.AddSingleton<CatalogChangeInterceptor>();
+        services.AddDbContext<OttomanDbContext>((sp, o) => o
+            .UseSqlServer(cs, sql => sql.EnableRetryOnFailure())
+            .AddInterceptors(sp.GetRequiredService<CatalogChangeInterceptor>()));
 
         services.AddIdentityCore<AppUser>(o =>
             {
@@ -90,6 +99,8 @@ public static class DependencyInjection
             services.AddHttpClient<IPaymentGateway, StripeGateway>(c => c.BaseAddress = StripeGateway.BaseAddress);
         }
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IRecommendationService, RecommendationService>();
         services.AddScoped<ReminderService>();
 
         services.Configure<SeedOptions>(config.GetSection(SeedOptions.Section));
