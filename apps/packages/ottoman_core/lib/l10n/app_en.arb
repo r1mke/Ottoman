@@ -272,6 +272,27 @@
   "addPicture": "Add picture",
   "changePicture": "Change picture",
   "removePicture": "Remove picture",
-  "savePictureFirst": "Pictures can be added once the item is saved."
+  "savePictureFirst": "Pictures can be added once the item is saved.",
+  "clientSearchHint": "Search by name, email or phone",
+  "clientRegistered": "Registered",
+  "clientBlocked": "Blocked",
+  "clientBlock": "Block",
+  "clientUnblock": "Unblock",
+  "clientBlockQuestion": "Block client {name}? They are signed out at once and cannot sign in until unblocked.",
+  "@clientBlockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "clientUnblockQuestion": "Unblock client {name}?",
+  "@clientUnblockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "clientVisits": "Visits",
+  "clientNoShows": "No-shows",
+  "clientCancelled": "Cancelled",
+  "clientUpcoming": "Upcoming appointments",
+  "clientSpentServices": "Spent on services",
+  "clientSpentProducts": "Spent on products",
+  "clientLastVisit": "Last visit",
+  "clientNever": "Has not visited yet",
+  "clientRecentReservations": "Recent appointments",
+  "clientRecentOrders": "Recent orders",
+  "previousPage": "Previous page",
+  "nextPage": "Next page"
 
 }

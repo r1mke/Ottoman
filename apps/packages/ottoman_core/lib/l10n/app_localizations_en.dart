@@ -826,4 +826,65 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get savePictureFirst =>
       'Pictures can be added once the item is saved.';
+
+  @override
+  String get clientSearchHint => 'Search by name, email or phone';
+
+  @override
+  String get clientRegistered => 'Registered';
+
+  @override
+  String get clientBlocked => 'Blocked';
+
+  @override
+  String get clientBlock => 'Block';
+
+  @override
+  String get clientUnblock => 'Unblock';
+
+  @override
+  String clientBlockQuestion(String name) {
+    return 'Block client $name? They are signed out at once and cannot sign in until unblocked.';
+  }
+
+  @override
+  String clientUnblockQuestion(String name) {
+    return 'Unblock client $name?';
+  }
+
+  @override
+  String get clientVisits => 'Visits';
+
+  @override
+  String get clientNoShows => 'No-shows';
+
+  @override
+  String get clientCancelled => 'Cancelled';
+
+  @override
+  String get clientUpcoming => 'Upcoming appointments';
+
+  @override
+  String get clientSpentServices => 'Spent on services';
+
+  @override
+  String get clientSpentProducts => 'Spent on products';
+
+  @override
+  String get clientLastVisit => 'Last visit';
+
+  @override
+  String get clientNever => 'Has not visited yet';
+
+  @override
+  String get clientRecentReservations => 'Recent appointments';
+
+  @override
+  String get clientRecentOrders => 'Recent orders';
+
+  @override
+  String get previousPage => 'Previous page';
+
+  @override
+  String get nextPage => 'Next page';
 }

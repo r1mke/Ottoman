@@ -272,6 +272,27 @@
   "addPicture": "Dodaj sliku",
   "changePicture": "Promijeni sliku",
   "removePicture": "Ukloni sliku",
-  "savePictureFirst": "Slike se mogu dodati nakon što se stavka spremi."
+  "savePictureFirst": "Slike se mogu dodati nakon što se stavka spremi.",
+  "clientSearchHint": "Pretraži po imenu, emailu ili telefonu",
+  "clientRegistered": "Registrovan",
+  "clientBlocked": "Blokiran",
+  "clientBlock": "Blokiraj",
+  "clientUnblock": "Odblokiraj",
+  "clientBlockQuestion": "Blokirati klijenta {name}? Odmah će biti odjavljen i neće se moći prijaviti dok ga ne odblokirate.",
+  "@clientBlockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "clientUnblockQuestion": "Odblokirati klijenta {name}?",
+  "@clientUnblockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "clientVisits": "Posjete",
+  "clientNoShows": "Nije došao",
+  "clientCancelled": "Otkazano",
+  "clientUpcoming": "Predstojeći termini",
+  "clientSpentServices": "Potrošeno na usluge",
+  "clientSpentProducts": "Potrošeno na proizvode",
+  "clientLastVisit": "Zadnja posjeta",
+  "clientNever": "Još nije dolazio",
+  "clientRecentReservations": "Posljednji termini",
+  "clientRecentOrders": "Posljednje narudžbe",
+  "previousPage": "Prethodna stranica",
+  "nextPage": "Sljedeća stranica"
 
 }
