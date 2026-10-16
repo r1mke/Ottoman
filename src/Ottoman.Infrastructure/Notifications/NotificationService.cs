@@ -99,7 +99,8 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
                 CreatedAtUtc = now,
                 AnnouncementId = announcement.Id,
             }));
-            if (r.SendEmail) outbox.Enqueue(new AnnouncementPublished(announcement.Id));
+            // Always published: the worker mails it when asked to and pushes it to the recipients phones.
+            outbox.Enqueue(new AnnouncementPublished(announcement.Id));
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
         });

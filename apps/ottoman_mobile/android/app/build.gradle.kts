@@ -53,3 +53,9 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
+
+// The Firebase configuration file is a git-ignored secret-ish file. Without it (CI, a fresh clone) the app still
+// builds and runs, just without push.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}

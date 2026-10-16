@@ -10,10 +10,12 @@ class OttomanMobileApp extends StatelessWidget {
     super.key,
     required this.auth,
     this.cardPayment = const UnavailableCardPayment(),
+    this.push,
   });
 
   final AuthController auth;
   final CardPaymentLauncher cardPayment;
+  final PushRegistration? push;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,8 @@ class OttomanMobileApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: AuthGate(
         auth: auth,
-        signedIn: (_) => MobileShell(auth: auth, cardPayment: cardPayment),
+        signedIn: (_) =>
+            MobileShell(auth: auth, cardPayment: cardPayment, push: push),
         signedOut: (_) => LoginPage(auth: auth),
       ),
     );
