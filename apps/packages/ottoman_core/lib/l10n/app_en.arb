@@ -299,6 +299,10 @@
   "auditWhen": "When",
   "auditWho": "Who",
   "auditWhat": "Action",
-  "auditTarget": "Record"
+  "auditTarget": "Record",
+  "viewDay": "Day",
+  "viewWeek": "Week",
+  "previousWeek": "Previous week",
+  "nextWeek": "Next week"
 
 }

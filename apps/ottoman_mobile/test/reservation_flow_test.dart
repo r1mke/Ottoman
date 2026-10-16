@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 import 'package:ottoman_mobile/app.dart';
+import 'package:ottoman_mobile/features/reservations/employee_schedule_tab.dart';
 
 /// Scriptable fake API for the booking flow.
 class _Api implements HttpClientAdapter {
@@ -357,6 +358,95 @@ void main() {
         api.last('GET', '/reservations')!.queryParameters['toDate'],
         tomorrow,
       ); // a single day
+    },
+  );
+
+  testWidgets(
+    'the employee can switch to a whole week, grouped by day, and page by weeks',
+    (tester) async {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final monday = DateTime(
+        today.year,
+        today.month,
+        today.day - (today.weekday - 1),
+      );
+      String iso(DateTime d) =>
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      final tue = DateTime(monday.year, monday.month, monday.day + 1, 10);
+      final thu = DateTime(monday.year, monday.month, monday.day + 3, 9);
+      final api = _Api(role: 'Employee')
+        ..reservations = [
+          _Api.reservation(id: 1, startUtc: tue.toUtc()),
+          _Api.reservation(id: 2, startUtc: thu.toUtc()),
+        ];
+      await _start(tester, api);
+
+      // Day view: a single day, no day headers.
+      expect(find.byKey(const Key('mode_day')), findsOneWidget);
+      expect(find.textContaining('day_header'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('mode_week')));
+      await tester.pumpAndSettle();
+
+      final week = api.last('GET', '/reservations')!.queryParameters;
+      expect(week['fromDate'], iso(monday));
+      expect(
+        week['toDate'],
+        iso(DateTime(monday.year, monday.month, monday.day + 6)),
+      );
+      expect(
+        find.byKey(Key('day_header_${tue.year}-${tue.month}-${tue.day}')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(Key('day_header_${thu.year}-${thu.month}-${thu.day}')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Utorak, ${tue.day.toString().padLeft(2, '0')}.${tue.month.toString().padLeft(2, '0')}.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('next_day')));
+      await tester.pumpAndSettle();
+      final next = api.last('GET', '/reservations')!.queryParameters;
+      expect(
+        next['fromDate'],
+        iso(DateTime(monday.year, monday.month, monday.day + 7)),
+      );
+      expect(
+        next['toDate'],
+        iso(DateTime(monday.year, monday.month, monday.day + 13)),
+      );
+
+      await tester.tap(find.byKey(const Key('mode_day')));
+      await tester.pumpAndSettle();
+      final single = api.last('GET', '/reservations')!.queryParameters;
+      expect(single['fromDate'], single['toDate'], reason: 'back to one day');
+    },
+  );
+
+  test(
+    'the week always runs Monday to Sunday, also across a month and a year',
+    () {
+      // 2031-01-01 is a Wednesday: its week starts in December 2030.
+      final (from, to) = weekContaining(DateTime(2031, 1, 1));
+      expect(from, DateTime(2030, 12, 30));
+      expect(to, DateTime(2031, 1, 5));
+      final (m, s) = weekContaining(DateTime(2030, 1, 7)); // a Monday
+      expect(m, DateTime(2030, 1, 7));
+      expect(s, DateTime(2030, 1, 13));
+      final (m2, s2) = weekContaining(DateTime(2030, 1, 13)); // a Sunday
+      expect(m2, DateTime(2030, 1, 7));
+      expect(s2, DateTime(2030, 1, 13));
+      // the day the clocks go back: still Monday to Sunday
+      final (m3, s3) = weekContaining(DateTime(2030, 10, 27));
+      expect(m3.weekday, DateTime.monday);
+      expect(s3.weekday, DateTime.sunday);
+      expect(s3, DateTime(2030, 10, 27));
     },
   );
 }

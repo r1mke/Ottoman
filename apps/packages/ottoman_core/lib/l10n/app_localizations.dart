@@ -1843,6 +1843,30 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Zapis'**
   String get auditTarget;
+
+  /// No description provided for @viewDay.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dan'**
+  String get viewDay;
+
+  /// No description provided for @viewWeek.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sedmica'**
+  String get viewWeek;
+
+  /// No description provided for @previousWeek.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prethodna sedmica'**
+  String get previousWeek;
+
+  /// No description provided for @nextWeek.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sljedeća sedmica'**
+  String get nextWeek;
 }
 
 class _AppLocalizationsDelegate

@@ -905,4 +905,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get auditTarget => 'Record';
+
+  @override
+  String get viewDay => 'Day';
+
+  @override
+  String get viewWeek => 'Week';
+
+  @override
+  String get previousWeek => 'Previous week';
+
+  @override
+  String get nextWeek => 'Next week';
 }

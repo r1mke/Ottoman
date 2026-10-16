@@ -904,4 +904,16 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get auditTarget => 'Zapis';
+
+  @override
+  String get viewDay => 'Dan';
+
+  @override
+  String get viewWeek => 'Sedmica';
+
+  @override
+  String get previousWeek => 'Prethodna sedmica';
+
+  @override
+  String get nextWeek => 'Sljedeća sedmica';
 }

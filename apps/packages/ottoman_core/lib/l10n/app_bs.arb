@@ -299,6 +299,10 @@
   "auditWhen": "Vrijeme",
   "auditWho": "Ko",
   "auditWhat": "Radnja",
-  "auditTarget": "Zapis"
+  "auditTarget": "Zapis",
+  "viewDay": "Dan",
+  "viewWeek": "Sedmica",
+  "previousWeek": "Prethodna sedmica",
+  "nextWeek": "Sljedeća sedmica"
 
 }
