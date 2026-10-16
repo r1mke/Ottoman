@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
@@ -10,6 +12,7 @@ import '../reports/overview_page.dart';
 import '../reports/reports_page.dart';
 import '../reviews/reviews_page.dart';
 import '../services/services_page.dart';
+import 'sidebar.dart';
 
 /// Everything a section may need, built once from the session.
 class ShellDeps {
@@ -33,10 +36,19 @@ class ShellDeps {
 }
 
 class _Section {
-  const _Section(this.icon, this.label, {this.adminOnly = false, this.body});
+  const _Section(
+    this.icon,
+    this.label, {
+    this.adminOnly = false,
+    this.body,
+    this.badge,
+  });
   final IconData icon;
   final String Function(AppLocalizations) label;
   final bool adminOnly;
+
+  /// Which live count (see [_DesktopShellState._refreshBadges]) this entry shows.
+  final String? badge;
 
   /// Null renders the "coming soon" placeholder.
   final Widget Function(ShellDeps deps)? body;
@@ -74,6 +86,63 @@ class _DesktopShellState extends State<DesktopShell> {
   late final ReviewsApi _reviews = ReviewsApi(widget.auth.api);
   late final ReportsApi _reports = ReportsApi(widget.auth.api);
 
+  /// Live counts for the sidebar: unread messages, products at or under their stock threshold,
+  /// and orders waiting to be handed over. Only an admin sees these sections, so only an admin asks.
+  Map<String, int> _badges = const {};
+  Timer? _poll;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.auth.user?.isAdmin ?? false) {
+      _refreshBadges();
+      _poll = Timer.periodic(
+        const Duration(seconds: 60),
+        (_) => _refreshBadges(),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshBadges() async {
+    if (!(widget.auth.user?.isAdmin ?? false)) return;
+    Future<int> safe(Future<int> Function() load) async {
+      try {
+        return await load();
+      } on Object {
+        // A badge is a convenience; a failed count just shows nothing.
+        return 0;
+      }
+    }
+
+    final counts = await Future.wait([
+      safe(_notifications.unreadCount),
+      safe(
+        () async =>
+            (await _shop.products(lowStock: true, pageSize: 1)).totalCount,
+      ),
+      safe(
+        () async => (await _shop.orders(
+          status: OrderStatus.placed,
+          pageSize: 1,
+        )).totalCount,
+      ),
+    ]);
+    if (!mounted) return;
+    setState(
+      () => _badges = {
+        'notifications': counts[0],
+        'products': counts[1],
+        'orders': counts[2],
+      },
+    );
+  }
+
   static final _sections = <_Section>[
     _Section(
       Icons.dashboard_outlined,
@@ -106,6 +175,7 @@ class _DesktopShellState extends State<DesktopShell> {
       Icons.notifications_outlined,
       (t) => t.notifications,
       adminOnly: true,
+      badge: 'notifications',
       body: (d) =>
           NotificationsPage(api: d.notifications, reservations: d.reservations),
     ),
@@ -113,12 +183,14 @@ class _DesktopShellState extends State<DesktopShell> {
       Icons.inventory_2_outlined,
       (t) => t.products,
       adminOnly: true,
+      badge: 'products',
       body: (d) => ProductsPage(shop: d.shop),
     ),
     _Section(
       Icons.receipt_long_outlined,
       (t) => t.orders,
       adminOnly: true,
+      badge: 'orders',
       body: (d) => OrdersPage(shop: d.shop),
     ),
     _Section(
@@ -156,60 +228,34 @@ class _DesktopShellState extends State<DesktopShell> {
     return Scaffold(
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: index,
-            onDestinationSelected: (i) => setState(() => _index = i),
-            labelType: NavigationRailLabelType.all,
-            leading: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                t.appName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 2,
-                ),
-              ),
-            ),
-            trailing: Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: IconButton(
-                    key: const Key('logout'),
-                    tooltip: t.logout,
-                    icon: const Icon(Icons.logout),
-                    onPressed: widget.auth.logout,
-                  ),
-                ),
-              ),
-            ),
-            destinations: [
+          Sidebar(
+            selected: index,
+            onSelect: (i) {
+              setState(() => _index = i);
+              _refreshBadges();
+            },
+            userName: user.fullName,
+            onLogout: widget.auth.logout,
+            items: [
               for (final s in visible)
-                NavigationRailDestination(
-                  icon: Icon(s.icon),
-                  label: Text(s.label(t)),
+                SidebarItem(
+                  icon: s.icon,
+                  label: s.label(t),
+                  badge: _badges[s.badge] ?? 0,
                 ),
             ],
           ),
-          const VerticalDivider(width: 1),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 24, 32, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          current.label(t),
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      Text(t.signedInAs(user.fullName)),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(36, 28, 36, 8),
+                  child: Text(
+                    current.label(t),
+                    key: const Key('page_title'),
+                    style: Theme.of(context).textTheme.headlineMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                 ),
                 Expanded(

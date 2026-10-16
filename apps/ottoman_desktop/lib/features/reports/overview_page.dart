@@ -63,9 +63,7 @@ class _Dashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
+          _KpiGrid(
             children: [
               _KpiCard(
                 id: 'revenue',
@@ -73,10 +71,11 @@ class _Dashboard extends StatelessWidget {
                 value: money(t, d.revenue.value),
                 change: d.revenue.changePercent,
                 t: t,
-                emphasis: true,
+                accent: WorkspaceColors.ink,
               ),
               _KpiCard(
                 id: 'services',
+                accent: WorkspaceColors.amber,
                 title: t.kpiServices,
                 value: money(t, d.servicesRevenue.value),
                 change: d.servicesRevenue.changePercent,
@@ -84,6 +83,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'products',
+                accent: WorkspaceColors.amber,
                 title: t.kpiProducts,
                 value: money(t, d.productsRevenue.value),
                 change: d.productsRevenue.changePercent,
@@ -91,6 +91,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'appointments',
+                accent: WorkspaceColors.info,
                 title: t.kpiAppointments,
                 value: d.appointments.value.toStringAsFixed(0),
                 change: d.appointments.changePercent,
@@ -98,6 +99,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'orders',
+                accent: WorkspaceColors.info,
                 title: t.kpiOrders,
                 value: d.orders.value.toStringAsFixed(0),
                 change: d.orders.changePercent,
@@ -105,6 +107,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'clients',
+                accent: WorkspaceColors.info,
                 title: t.kpiNewClients,
                 value: d.newClients.value.toStringAsFixed(0),
                 change: d.newClients.changePercent,
@@ -118,6 +121,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'noshow',
+                accent: WorkspaceColors.danger,
                 title: t.kpiNoShow,
                 value: '${d.noShowRate}%',
                 t: t,
@@ -219,6 +223,8 @@ class _Dashboard extends StatelessWidget {
           ?.copyWith(fontWeight: FontWeight.w700);
 }
 
+/// One headline number: a white card with a coloured top edge, the figure, and how it moved against the
+/// previous period (green up, red down). The top colour groups related figures at a glance.
 class _KpiCard extends StatelessWidget {
   const _KpiCard({
     required this.id,
@@ -226,7 +232,7 @@ class _KpiCard extends StatelessWidget {
     required this.value,
     required this.t,
     this.change,
-    this.emphasis = false,
+    this.accent = WorkspaceColors.neutral,
   });
 
   final String id;
@@ -234,72 +240,68 @@ class _KpiCard extends StatelessWidget {
   final String value;
   final double? change;
   final AppLocalizations t;
-  final bool emphasis;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: 230,
-      child: Card(
-        key: Key('kpi_$id'),
-        color: emphasis ? scheme.primary : null,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: emphasis ? scheme.onPrimary : scheme.outline,
-                  fontSize: 12,
-                ),
+    return Card(
+      key: Key('kpi_$id'),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: accent, width: 4)),
+        ),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: WorkspaceColors.muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(height: 6),
-              Text(
-                value,
-                key: Key('kpi_value_$id'),
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: emphasis ? scheme.onPrimary : null,
-                ),
-              ),
-              const SizedBox(height: 4),
-              if (change != null)
-                Row(
-                  children: [
-                    Icon(
-                      change! >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                      size: 14,
-                      color: _color(change!, emphasis, scheme),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              key: Key('kpi_value_$id'),
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            if (change != null)
+              Row(
+                children: [
+                  Icon(
+                    change! >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                    size: 14,
+                    color: _color(change!),
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${change!.abs().toStringAsFixed(1)}%',
+                    key: Key('kpi_change_$id'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: _color(change!),
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${change!.abs().toStringAsFixed(1)}%',
-                      key: Key('kpi_change_$id'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: _color(change!, emphasis, scheme),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                const SizedBox(height: 16),
-            ],
-          ),
+                  ),
+                ],
+              )
+            else
+              const SizedBox(height: 16),
+          ],
         ),
       ),
     );
   }
 
-  static Color _color(double change, bool emphasis, ColorScheme scheme) {
-    if (emphasis) return scheme.onPrimary;
-    return change >= 0 ? Colors.green.shade700 : Colors.red.shade700;
-  }
+  static Color _color(double change) =>
+      change >= 0 ? WorkspaceColors.success : WorkspaceColors.danger;
 }
 
 class _RankedList extends StatelessWidget {
@@ -336,31 +338,55 @@ class _RankedList extends StatelessWidget {
             if (items.isEmpty)
               Text(t.noDataForPeriod)
             else
-              for (final i in items)
+              for (var rank = 0; rank < items.length; rank++)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${i.name} · ${i.quantity}×',
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      Container(
+                        width: 28,
+                        height: 28,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: WorkspaceColors.amberSoft,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${rank + 1}',
+                          style: const TextStyle(
+                            color: WorkspaceColors.amberInk,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
                           ),
-                          Text(
-                            money(t, i.revenue),
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: top == 0 ? 0 : i.revenue / top,
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(3),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${items[rank].name} · ${items[rank].quantity}×',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            LinearProgressIndicator(
+                              value: top == 0 ? 0 : items[rank].revenue / top,
+                              minHeight: 4,
+                              color: WorkspaceColors.amber,
+                              backgroundColor: WorkspaceColors.canvas,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        money(t, items[rank].revenue),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ],
                   ),
@@ -382,8 +408,8 @@ class RevenueChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final servicesColor = scheme.primary;
-    final productsColor = Colors.amber.shade700;
+    const servicesColor = WorkspaceColors.ink;
+    const productsColor = WorkspaceColors.amber;
     final every = (series.length / 10).ceil().clamp(1, 1000);
     final maxY = series.map((s) => s.total).reduce((a, b) => a > b ? a : b);
 
@@ -468,4 +494,33 @@ class RevenueChart extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Lays the headline cards out as an even grid that fills the row (as many columns as fit), all the same size.
+class _KpiGrid extends StatelessWidget {
+  const _KpiGrid({required this.children});
+
+  static const _gap = 16.0;
+  static const _minWidth = 210.0;
+  static const _height = 116.0;
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      final columns = ((box.maxWidth + _gap) / (_minWidth + _gap))
+          .floor()
+          .clamp(1, 6);
+      final width = (box.maxWidth - _gap * (columns - 1)) / columns;
+      return Wrap(
+        spacing: _gap,
+        runSpacing: _gap,
+        children: [
+          for (final c in children)
+            SizedBox(width: width, height: _height, child: c),
+        ],
+      );
+    },
+  );
 }
