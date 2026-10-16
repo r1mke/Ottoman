@@ -25,3 +25,5 @@ export 'notifications/notification_labels.dart';
 export 'reviews/reviews_api.dart';
 export 'widgets/star_rating.dart';
 export 'widgets/review_widgets.dart';
+export 'reports/reports_api.dart';
+export 'reports/date_range.dart';

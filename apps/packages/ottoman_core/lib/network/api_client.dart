@@ -1,6 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import 'app_exception.dart';
+
+/// A file returned by the API (e.g. an exported report).
+class DownloadedFile {
+  const DownloadedFile(this.bytes, this.fileName);
+  final Uint8List bytes;
+  final String fileName;
+}
 
 typedef TokenReader = Future<String?> Function();
 
@@ -39,6 +48,44 @@ class ApiClient {
       _send(() => dio.put<dynamic>(path, data: body));
 
   Future<T> delete<T>(String path) => _send(() => dio.delete<dynamic>(path));
+
+  /// Downloads a file (report export). Goes through the same auth/refresh handling as every other call.
+  Future<DownloadedFile> download(
+    String path, {
+    Map<String, dynamic>? query,
+    Object? body,
+    String method = 'GET',
+  }) async {
+    try {
+      final res = await dio.request<List<int>>(
+        path,
+        data: body,
+        queryParameters: query,
+        options: Options(method: method, responseType: ResponseType.bytes),
+      );
+      return DownloadedFile(
+        Uint8List.fromList(res.data ?? const []),
+        _fileNameFrom(res.headers.value('content-disposition')) ?? 'izvjestaj',
+      );
+    } on DioException catch (e) {
+      throw AppException.fromDio(e);
+    }
+  }
+
+  /// `attachment; filename=x.csv; filename*=UTF-8''x.csv` -> `x.csv`. The name only ever decorates a local file,
+  /// so anything that is not a plain file name is replaced.
+  static String? _fileNameFrom(String? header) {
+    if (header == null) return null;
+    final match = RegExp(
+      r'''filename\*?=(?:UTF-8'')?"?([^";]+)"?''',
+      caseSensitive: false,
+    ).firstMatch(header);
+    final name = match?.group(1);
+    if (name == null) return null;
+    final clean = Uri.decodeComponent(name)
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    return clean.isEmpty ? null : clean;
+  }
 
   Future<T> _send<T>(Future<Response<dynamic>> Function() call) async {
     try {

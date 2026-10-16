@@ -1357,6 +1357,270 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Vaš odgovor'**
   String get yourReply;
+
+  /// No description provided for @periodToday.
+  ///
+  /// In bs, this message translates to:
+  /// **'Danas'**
+  String get periodToday;
+
+  /// No description provided for @period7.
+  ///
+  /// In bs, this message translates to:
+  /// **'7 dana'**
+  String get period7;
+
+  /// No description provided for @period30.
+  ///
+  /// In bs, this message translates to:
+  /// **'30 dana'**
+  String get period30;
+
+  /// No description provided for @periodThisMonth.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ovaj mjesec'**
+  String get periodThisMonth;
+
+  /// No description provided for @periodLastMonth.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prošli mjesec'**
+  String get periodLastMonth;
+
+  /// No description provided for @periodThisYear.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ova godina'**
+  String get periodThisYear;
+
+  /// No description provided for @periodCustom.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberi period'**
+  String get periodCustom;
+
+  /// No description provided for @kpiRevenue.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukupni prihod'**
+  String get kpiRevenue;
+
+  /// No description provided for @kpiServices.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prihod od usluga'**
+  String get kpiServices;
+
+  /// No description provided for @kpiProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prihod od proizvoda'**
+  String get kpiProducts;
+
+  /// No description provided for @kpiAppointments.
+  ///
+  /// In bs, this message translates to:
+  /// **'Završeni termini'**
+  String get kpiAppointments;
+
+  /// No description provided for @kpiOrders.
+  ///
+  /// In bs, this message translates to:
+  /// **'Narudžbe'**
+  String get kpiOrders;
+
+  /// No description provided for @kpiNewClients.
+  ///
+  /// In bs, this message translates to:
+  /// **'Novi klijenti'**
+  String get kpiNewClients;
+
+  /// No description provided for @kpiAverageTicket.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prosječan račun'**
+  String get kpiAverageTicket;
+
+  /// No description provided for @kpiNoShow.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nije došlo'**
+  String get kpiNoShow;
+
+  /// No description provided for @kpiCancelled.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkazano'**
+  String get kpiCancelled;
+
+  /// No description provided for @vsPrevious.
+  ///
+  /// In bs, this message translates to:
+  /// **'u odnosu na prethodni period'**
+  String get vsPrevious;
+
+  /// No description provided for @revenueOverTime.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prihod kroz vrijeme'**
+  String get revenueOverTime;
+
+  /// No description provided for @topServices.
+  ///
+  /// In bs, this message translates to:
+  /// **'Najtraženije usluge'**
+  String get topServices;
+
+  /// No description provided for @topProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Najprodavaniji proizvodi'**
+  String get topProducts;
+
+  /// No description provided for @employeePerformance.
+  ///
+  /// In bs, this message translates to:
+  /// **'Učinak uposlenika'**
+  String get employeePerformance;
+
+  /// No description provided for @completedShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Završeno'**
+  String get completedShort;
+
+  /// No description provided for @noShowShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nije došao'**
+  String get noShowShort;
+
+  /// No description provided for @cancelledShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otkazano'**
+  String get cancelledShort;
+
+  /// No description provided for @revenueShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prihod'**
+  String get revenueShort;
+
+  /// No description provided for @ratingShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ocjena'**
+  String get ratingShort;
+
+  /// No description provided for @export.
+  ///
+  /// In bs, this message translates to:
+  /// **'Izvezi'**
+  String get export;
+
+  /// No description provided for @exportCsv.
+  ///
+  /// In bs, this message translates to:
+  /// **'CSV'**
+  String get exportCsv;
+
+  /// No description provided for @exportExcel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Excel'**
+  String get exportExcel;
+
+  /// No description provided for @exportPdf.
+  ///
+  /// In bs, this message translates to:
+  /// **'PDF'**
+  String get exportPdf;
+
+  /// No description provided for @savedTo.
+  ///
+  /// In bs, this message translates to:
+  /// **'Spremljeno: {path}'**
+  String savedTo(String path);
+
+  /// No description provided for @showInFolder.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži'**
+  String get showInFolder;
+
+  /// No description provided for @reportRevenue.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prihod'**
+  String get reportRevenue;
+
+  /// No description provided for @reportEmployees.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uposlenici'**
+  String get reportEmployees;
+
+  /// No description provided for @reportServices.
+  ///
+  /// In bs, this message translates to:
+  /// **'Usluge'**
+  String get reportServices;
+
+  /// No description provided for @reportProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Proizvodi'**
+  String get reportProducts;
+
+  /// No description provided for @reportReservations.
+  ///
+  /// In bs, this message translates to:
+  /// **'Termini'**
+  String get reportReservations;
+
+  /// No description provided for @reportOrders.
+  ///
+  /// In bs, this message translates to:
+  /// **'Narudžbe'**
+  String get reportOrders;
+
+  /// No description provided for @reportCustom.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prilagođeni izvještaj'**
+  String get reportCustom;
+
+  /// No description provided for @chooseSource.
+  ///
+  /// In bs, this message translates to:
+  /// **'Izvor podataka'**
+  String get chooseSource;
+
+  /// No description provided for @chooseFields.
+  ///
+  /// In bs, this message translates to:
+  /// **'Polja'**
+  String get chooseFields;
+
+  /// No description provided for @runReport.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži izvještaj'**
+  String get runReport;
+
+  /// No description provided for @allStatusesOption.
+  ///
+  /// In bs, this message translates to:
+  /// **'Svi statusi'**
+  String get allStatusesOption;
+
+  /// No description provided for @noDataForPeriod.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema podataka za odabrani period.'**
+  String get noDataForPeriod;
 }
 
 class _AppLocalizationsDelegate

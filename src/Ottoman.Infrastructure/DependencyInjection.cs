@@ -12,6 +12,7 @@ using Ottoman.Application.Notifications;
 using Ottoman.Application.Orders;
 using Ottoman.Application.Payments;
 using Ottoman.Application.Recommendations;
+using Ottoman.Application.Reports;
 using Ottoman.Application.Reservations;
 using Ottoman.Application.Reviews;
 using Ottoman.Application.Scheduling;
@@ -27,6 +28,7 @@ using Ottoman.Infrastructure.Outbox;
 using Ottoman.Infrastructure.Payments;
 using Ottoman.Infrastructure.Persistence;
 using Ottoman.Infrastructure.Recommendations;
+using Ottoman.Infrastructure.Reports;
 using Ottoman.Infrastructure.Reservations;
 using Ottoman.Infrastructure.Reviews;
 using Ottoman.Infrastructure.Scheduling;
@@ -100,6 +102,8 @@ public static class DependencyInjection
         }
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddSingleton<IReportExporter, ReportExporter>();
         services.AddScoped<IRecommendationService, RecommendationService>();
         services.AddScoped<ReminderService>();
 
