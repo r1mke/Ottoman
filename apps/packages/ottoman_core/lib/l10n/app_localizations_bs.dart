@@ -928,4 +928,14 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get nextWeek => 'Sljedeća sedmica';
+
+  @override
+  String get cancelReasonLabel => 'Razlog otkazivanja';
+
+  @override
+  String get cancelReasonOptionalLabel => 'Razlog (nije obavezan)';
+
+  @override
+  String get cancelReasonRequired =>
+      'Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti.';
 }

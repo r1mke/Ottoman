@@ -301,6 +301,50 @@ void main() {
     },
   );
 
+  testWidgets('a client may explain the cancellation but does not have to', (
+    tester,
+  ) async {
+    final api = _Api()..reservations = [_Api.reservation()];
+    await _start(tester, api);
+    await tester.tap(find.text('Termini').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('cancel_1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Razlog (nije obavezan)'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('cancel_reason')),
+      ' Promjena planova ',
+    );
+    await tester.tap(find.byKey(const Key('confirm_cancel')));
+    await tester.pumpAndSettle();
+
+    final sent = api.last('POST', '/cancel')!.data as Map;
+    expect(sent['reason'], 'Promjena planova');
+  });
+
+  testWidgets('an empty reason is sent as no reason and the dialog has an X', (
+    tester,
+  ) async {
+    final api = _Api()..reservations = [_Api.reservation()];
+    await _start(tester, api);
+    await tester.tap(find.text('Termini').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('cancel_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('dialog_close')));
+    await tester.pumpAndSettle();
+    expect(api.count('POST', '/cancel'), 0);
+
+    await tester.tap(find.byKey(const Key('cancel_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_cancel')));
+    await tester.pumpAndSettle();
+    final sent = api.last('POST', '/cancel')!.data as Map;
+    expect(sent['reason'], isNull);
+  });
+
   testWidgets('a refused cancellation shows the server reason', (tester) async {
     final api = _Api()
       ..cancelStatus = 409

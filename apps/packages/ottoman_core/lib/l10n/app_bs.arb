@@ -307,6 +307,9 @@
   "currentPassword": "Trenutna lozinka",
   "repeatPassword": "Ponovite novu lozinku",
   "passwordsDoNotMatch": "Lozinke se ne podudaraju.",
-  "nextWeek": "Sljedeća sedmica"
+  "nextWeek": "Sljedeća sedmica",
+  "cancelReasonLabel": "Razlog otkazivanja",
+  "cancelReasonOptionalLabel": "Razlog (nije obavezan)",
+  "cancelReasonRequired": "Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti."
 
 }

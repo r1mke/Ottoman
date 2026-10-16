@@ -307,6 +307,9 @@
   "currentPassword": "Current password",
   "repeatPassword": "Repeat the new password",
   "passwordsDoNotMatch": "The passwords do not match.",
-  "nextWeek": "Next week"
+  "nextWeek": "Next week",
+  "cancelReasonLabel": "Reason for cancelling",
+  "cancelReasonOptionalLabel": "Reason (optional)",
+  "cancelReasonRequired": "Enter a reason (at least 3 characters). The client receives it in a notification."
 
 }

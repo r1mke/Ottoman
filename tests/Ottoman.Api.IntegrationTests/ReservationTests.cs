@@ -406,8 +406,10 @@ public class ReservationTests(ApiFixture api)
 
         // Admin can still cancel it; a second cancel is then refused for everyone.
         var admin = await Admin();
-        (await admin.PostAsJsonAsync($"/api/v1/reservations/{soon}/cancel", new CancelReservationRequest(null))).StatusCode.Should().Be(HttpStatusCode.OK);
-        (await admin.PostAsJsonAsync($"/api/v1/reservations/{soon}/cancel", new CancelReservationRequest(null))).StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await admin.PostAsJsonAsync($"/api/v1/reservations/{soon}/cancel", new CancelReservationRequest(null))).StatusCode
+            .Should().Be(HttpStatusCode.BadRequest, "the salon must explain a cancellation to the client");
+        (await admin.PostAsJsonAsync($"/api/v1/reservations/{soon}/cancel", new CancelReservationRequest("Frizer je bolestan"))).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await admin.PostAsJsonAsync($"/api/v1/reservations/{soon}/cancel", new CancelReservationRequest("Opet"))).StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
     [Fact]

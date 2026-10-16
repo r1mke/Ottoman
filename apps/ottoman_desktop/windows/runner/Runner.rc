@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "ba.ottoman" "\0"
-            VALUE "FileDescription", "ottoman_desktop" "\0"
+            VALUE "FileDescription", "Ottoman" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ottoman_desktop" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 ba.ottoman. All rights reserved." "\0"
             VALUE "OriginalFilename", "ottoman_desktop.exe" "\0"
-            VALUE "ProductName", "ottoman_desktop" "\0"
+            VALUE "ProductName", "Ottoman" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -59,32 +59,15 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
   }
 
   Future<void> _cancel(Reservation r) async {
-    final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.cancelBooking),
-        content: Text(
-          '${r.clientName} · ${r.localDate} ${r.localTime}\n\n${t.cancelBookingQuestion}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(t.no),
-          ),
-          FilledButton(
-            key: const Key('confirm_cancel'),
-            style: FilledButton.styleFrom(minimumSize: const Size(96, 44)),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.yes),
-          ),
-        ],
-      ),
+    final reason = await showCancelReasonDialog(
+      context,
+      summary: '${r.clientName} · ${r.localDate} ${r.localTime}',
+      reasonRequired: true,
     );
-    if (ok != true) return;
+    if (reason == null) return;
     try {
-      await widget.reservations.cancel(r.id);
+      await widget.reservations.cancel(r.id, reason: reason);
     } on AppException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }

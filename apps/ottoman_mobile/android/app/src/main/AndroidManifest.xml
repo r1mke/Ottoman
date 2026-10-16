@@ -3,7 +3,8 @@
     <!-- Android 13+ asks before showing notifications. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="ottoman_mobile"
+        android:label="Ottoman"
+        android:usesCleartextTraffic="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -929,4 +929,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextWeek => 'Next week';
+
+  @override
+  String get cancelReasonLabel => 'Reason for cancelling';
+
+  @override
+  String get cancelReasonOptionalLabel => 'Reason (optional)';
+
+  @override
+  String get cancelReasonRequired =>
+      'Enter a reason (at least 3 characters). The client receives it in a notification.';
 }

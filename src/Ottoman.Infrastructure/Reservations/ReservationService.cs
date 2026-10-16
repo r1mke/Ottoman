@@ -204,6 +204,9 @@ public class ReservationService(
         var res = await db.Reservations.Include(r => r.Slots).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (res is null || !CanSee(actor, res)) return Result<ReservationDto>.NotFound("Rezervacija nije pronađena.");
 
+        if (target == ReservationStatus.Cancelled && CancellationRules.ReasonProblem(actor.Kind, reason) is { } problem)
+            return Result<ReservationDto>.Invalid(problem);
+
         var settings = await db.SalonSettings.AsNoTracking().SingleAsync(ct);
         var now = Now;
         var decision = ReservationStateMachine.Can(res.Status, target, actor.Kind, now, res.StartUtc, settings.CancelWindowMinutes);

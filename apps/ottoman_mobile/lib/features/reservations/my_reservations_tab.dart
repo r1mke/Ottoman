@@ -66,30 +66,18 @@ class _ListState extends State<_List> {
   int _version = 0;
 
   Future<void> _cancel(Reservation r) async {
-    final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.cancelBooking),
-        content: Text(t.cancelBookingQuestion),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(t.no),
-          ),
-          FilledButton(
-            key: const Key('confirm_cancel'),
-            style: FilledButton.styleFrom(minimumSize: const Size(96, 44)),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.yes),
-          ),
-        ],
-      ),
+    final reason = await showCancelReasonDialog(
+      context,
+      summary: '${r.localDate} ${r.localTime}',
+      reasonRequired: false,
     );
-    if (ok != true) return;
+    if (reason == null) return;
     try {
-      await widget.reservations.cancel(r.id);
+      await widget.reservations.cancel(
+        r.id,
+        reason: reason.isEmpty ? null : reason,
+      );
       if (mounted) setState(() => _version++);
     } on AppException catch (e) {
       // The server states why (e.g. inside the cancellation window).

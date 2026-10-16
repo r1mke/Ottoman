@@ -239,6 +239,10 @@ void main() {
       isEmpty,
     ); // nothing sent before confirming
 
+    await tester.enterText(
+      find.byKey(const Key('cancel_reason')),
+      'Frizer je bolestan',
+    );
     await tester.tap(find.byKey(const Key('confirm_cancel')));
     await tester.pumpAndSettle();
 
@@ -248,12 +252,70 @@ void main() {
     );
   });
 
+  testWidgets(
+    'the salon must give a reason, and it is sent with the cancellation',
+    (tester) async {
+      final api = await _open(tester, 'Admin');
+      await tester.tap(find.byKey(const Key('cancel_1')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('confirm_cancel')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti.',
+        ),
+        findsOneWidget,
+        reason: 'the message is shown under the field',
+      );
+      expect(api.where('POST', '/cancel'), isEmpty);
+
+      await tester.enterText(find.byKey(const Key('cancel_reason')), 'ab');
+      await tester.tap(find.byKey(const Key('confirm_cancel')));
+      await tester.pumpAndSettle();
+      expect(
+        api.where('POST', '/cancel'),
+        isEmpty,
+        reason: 'two characters are not a reason',
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('cancel_reason')),
+        '  Frizer je bolestan ',
+      );
+      await tester.tap(find.byKey(const Key('confirm_cancel')));
+      await tester.pumpAndSettle();
+
+      final sent = api.where('POST', '/cancel').single.data as Map;
+      expect(sent['reason'], 'Frizer je bolestan');
+    },
+  );
+
+  testWidgets('the cancel dialog closes with the X and changes nothing', (
+    tester,
+  ) async {
+    final api = await _open(tester, 'Admin');
+    await tester.tap(find.byKey(const Key('cancel_1')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('dialog_close')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('confirm_cancel')), findsNothing);
+    expect(api.where('POST', '/cancel'), isEmpty);
+  });
+
   testWidgets('a refused cancellation shows the server reason', (tester) async {
     final api = await _open(tester, 'Admin');
     api.cancelStatus = 409;
 
     await tester.tap(find.byKey(const Key('cancel_1')));
     await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('cancel_reason')),
+      'Frizer je bolestan',
+    );
     await tester.tap(find.byKey(const Key('confirm_cancel')));
     await tester.pumpAndSettle();
 

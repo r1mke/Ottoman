@@ -1891,6 +1891,24 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Sljedeća sedmica'**
   String get nextWeek;
+
+  /// No description provided for @cancelReasonLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Razlog otkazivanja'**
+  String get cancelReasonLabel;
+
+  /// No description provided for @cancelReasonOptionalLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Razlog (nije obavezan)'**
+  String get cancelReasonOptionalLabel;
+
+  /// No description provided for @cancelReasonRequired.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti.'**
+  String get cancelReasonRequired;
 }
 
 class _AppLocalizationsDelegate
