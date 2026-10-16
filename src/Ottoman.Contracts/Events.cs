@@ -29,3 +29,8 @@ public record OrderPaid(int OrderId, string ClientId, decimal TotalPrice);
 public record OrderCancelled(int OrderId, string ClientId, string CancelledBy);
 
 public record ProductLowStock(int ProductId, string Name, int Stock, int Threshold);
+
+/// <param name="Kind">"Day" or "Hours".</param>
+public record ReservationReminderDue(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, string Kind);
+
+public record AnnouncementPublished(int AnnouncementId);

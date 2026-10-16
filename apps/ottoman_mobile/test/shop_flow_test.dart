@@ -271,8 +271,11 @@ void main() {
     expect(find.text('Narudžba je zaprimljena.'), findsOneWidget);
     // Back on the shop with an empty basket (no badge).
     expect(find.byKey(const Key('product_search')), findsOneWidget);
-    expect(find.byType(Badge), findsOneWidget);
-    expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isFalse);
+    final cartBadge = find.descendant(
+      of: find.byKey(const Key('open_cart')),
+      matching: find.byType(Badge),
+    );
+    expect(tester.widget<Badge>(cartBadge).isLabelVisible, isFalse);
   });
 
   Future<_Api> checkoutWithCard(

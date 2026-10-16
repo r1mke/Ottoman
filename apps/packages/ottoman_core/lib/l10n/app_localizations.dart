@@ -1135,6 +1135,132 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Bez'**
   String get none;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema obavijesti'**
+  String get noNotifications;
+
+  /// No description provided for @markAllRead.
+  ///
+  /// In bs, this message translates to:
+  /// **'Označi sve kao pročitano'**
+  String get markAllRead;
+
+  /// No description provided for @audienceAll.
+  ///
+  /// In bs, this message translates to:
+  /// **'Svi'**
+  String get audienceAll;
+
+  /// No description provided for @audienceClients.
+  ///
+  /// In bs, this message translates to:
+  /// **'Klijenti'**
+  String get audienceClients;
+
+  /// No description provided for @audienceEmployees.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uposlenici'**
+  String get audienceEmployees;
+
+  /// No description provided for @audienceUser.
+  ///
+  /// In bs, this message translates to:
+  /// **'Jedan korisnik'**
+  String get audienceUser;
+
+  /// No description provided for @audience.
+  ///
+  /// In bs, this message translates to:
+  /// **'Publika'**
+  String get audience;
+
+  /// No description provided for @messageTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naslov'**
+  String get messageTitle;
+
+  /// No description provided for @messageBody.
+  ///
+  /// In bs, this message translates to:
+  /// **'Poruka'**
+  String get messageBody;
+
+  /// No description provided for @alsoSendEmail.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pošalji i na email'**
+  String get alsoSendEmail;
+
+  /// No description provided for @send.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pošalji'**
+  String get send;
+
+  /// No description provided for @announcementSent.
+  ///
+  /// In bs, this message translates to:
+  /// **'Poruka je poslana.'**
+  String get announcementSent;
+
+  /// No description provided for @sentMessages.
+  ///
+  /// In bs, this message translates to:
+  /// **'Poslane poruke'**
+  String get sentMessages;
+
+  /// No description provided for @recipientsCount.
+  ///
+  /// In bs, this message translates to:
+  /// **'{count} primalaca'**
+  String recipientsCount(int count);
+
+  /// No description provided for @newMessage.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nova poruka'**
+  String get newMessage;
+
+  /// No description provided for @haveCode.
+  ///
+  /// In bs, this message translates to:
+  /// **'Imam kod'**
+  String get haveCode;
+
+  /// No description provided for @resetCode.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kod iz maila'**
+  String get resetCode;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nova lozinka'**
+  String get newPassword;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In bs, this message translates to:
+  /// **'Lozinka je promijenjena. Prijavite se.'**
+  String get passwordChanged;
+
+  /// No description provided for @resetFailed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kod nije ispravan ili je istekao.'**
+  String get resetFailed;
+
+  /// No description provided for @close.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zatvori'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

@@ -46,3 +46,20 @@ public enum PaymentStatus
     Failed = 2,
     Refunded = 3,
 }
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum AnnouncementAudience
+{
+    All = 0,
+    Clients = 1,
+    Employees = 2,
+    User = 3,
+}
+
+public enum ReminderKind
+{
+    /// <summary>About a day before the appointment.</summary>
+    Day = 0,
+    /// <summary>A couple of hours before.</summary>
+    Hours = 1,
+}

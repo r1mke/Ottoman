@@ -24,10 +24,24 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<ReservationSlot> ReservationSlots => Set<ReservationSlot>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<ReservationReminder> ReservationReminders => Set<ReservationReminder>();
+    public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey> DataProtectionKeys => Set<Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey>();
+
+    /// <summary>
+    /// SQL Server returns datetime2 with an unspecified kind, which serialises without a "Z" and which clients then
+    /// read as local time. Every timestamp in this system is UTC, so say so when reading.
+    /// </summary>
+    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+    {
+        builder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        builder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
+    }
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -150,6 +164,39 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.ToTable(t => t.HasCheckConstraint("CK_OrderItem_Quantity", "[Quantity] > 0"));
         });
 
+        b.Entity<UserNotification>(e =>
+        {
+            e.Property(x => x.Title).HasMaxLength(120);
+            e.Property(x => x.Body).HasMaxLength(2000);
+            e.Property(x => x.Kind).HasMaxLength(50);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Announcement>().WithMany().HasForeignKey(x => x.AnnouncementId).OnDelete(DeleteBehavior.SetNull);
+            // The inbox query: a user's newest messages, unread first when filtered.
+            e.HasIndex(x => new { x.UserId, x.ReadAtUtc, x.CreatedAtUtc });
+        });
+
+        b.Entity<Announcement>(e =>
+        {
+            e.Property(x => x.Title).HasMaxLength(120);
+            e.Property(x => x.Body).HasMaxLength(2000);
+            e.Property(x => x.Audience).HasConversion<string>().HasMaxLength(20);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<ReservationReminder>(e =>
+        {
+            e.Property(x => x.Kind).HasConversion<string>().HasMaxLength(10);
+            e.HasOne<Reservation>().WithMany().HasForeignKey(x => x.ReservationId).OnDelete(DeleteBehavior.Cascade);
+            // The database guarantees at most one reminder of each kind per appointment.
+            e.HasIndex(x => new { x.ReservationId, x.Kind }).IsUnique();
+        });
+
+        b.Entity<ProcessedEvent>(e =>
+        {
+            e.HasKey(x => x.OutboxMessageId);
+            e.Property(x => x.OutboxMessageId).ValueGeneratedNever();
+        });
+
         b.Entity<RefreshToken>(e =>
         {
             e.Property(x => x.TokenHash).HasMaxLength(128);
@@ -164,3 +211,11 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
         });
     }
 }
+
+public class UtcDateTimeConverter() : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
+    v => v.Kind == DateTimeKind.Local ? v.ToUniversalTime() : v,
+    v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+public class NullableUtcDateTimeConverter() : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, DateTime?>(
+    v => v.HasValue && v.Value.Kind == DateTimeKind.Local ? v.Value.ToUniversalTime() : v,
+    v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);

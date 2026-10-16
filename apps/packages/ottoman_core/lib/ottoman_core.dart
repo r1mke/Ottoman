@@ -20,3 +20,5 @@ export 'shop/shop_api.dart';
 export 'shop/cart_controller.dart';
 export 'shop/card_payment_launcher.dart';
 export 'shop/shop_labels.dart';
+export 'notifications/notifications_api.dart';
+export 'notifications/notification_labels.dart';
