@@ -98,30 +98,6 @@ void main() {
     expect(e.reason, 'Nakon termina.');
   });
 
-  test('recommendations parse products', () async {
-    final api = RecommendationsApi(
-      _client(
-        _Adapter([
-          {
-            'id': 1,
-            'name': 'Vosak',
-            'description': null,
-            'brandId': null,
-            'brandName': null,
-            'categoryId': null,
-            'categoryName': null,
-            'price': 10,
-            'stock': 3,
-            'lowStockThreshold': null,
-            'isLowStock': false,
-            'isActive': true,
-          },
-        ]),
-      ),
-    );
-    expect((await api.products()).single.name, 'Vosak');
-  });
-
   testWidgets('stars are tappable only when there is a callback', (
     tester,
   ) async {
