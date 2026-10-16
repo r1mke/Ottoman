@@ -886,4 +886,22 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get nextPage => 'Sljedeća stranica';
+
+  @override
+  String get auditLog => 'Dnevnik aktivnosti';
+
+  @override
+  String get auditSearchHint => 'Pretraži po osobi, radnji ili zapisu';
+
+  @override
+  String get auditWhen => 'Vrijeme';
+
+  @override
+  String get auditWho => 'Ko';
+
+  @override
+  String get auditWhat => 'Radnja';
+
+  @override
+  String get auditTarget => 'Zapis';
 }

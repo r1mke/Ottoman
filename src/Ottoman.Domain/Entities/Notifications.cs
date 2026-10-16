@@ -55,3 +55,19 @@ public class DeviceToken
     public DateTime CreatedAtUtc { get; set; }
     public DateTime LastSeenUtc { get; set; }
 }
+
+/// <summary>One line of the staff audit trail. No foreign key to the user: history must outlive the account.</summary>
+public class AuditEntry
+{
+    public long Id { get; set; }
+    public DateTime AtUtc { get; set; }
+    public string UserId { get; set; } = null!;
+    public string UserName { get; set; } = null!;
+    public string Role { get; set; } = null!;
+    public string Method { get; set; } = null!;
+    public string Action { get; set; } = null!;
+    public string Route { get; set; } = null!;
+    public string Target { get; set; } = null!;
+    public int StatusCode { get; set; }
+    public string? Ip { get; set; }
+}

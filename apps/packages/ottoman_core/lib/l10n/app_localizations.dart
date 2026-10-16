@@ -1807,6 +1807,42 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Sljedeća stranica'**
   String get nextPage;
+
+  /// No description provided for @auditLog.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dnevnik aktivnosti'**
+  String get auditLog;
+
+  /// No description provided for @auditSearchHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraži po osobi, radnji ili zapisu'**
+  String get auditSearchHint;
+
+  /// No description provided for @auditWhen.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vrijeme'**
+  String get auditWhen;
+
+  /// No description provided for @auditWho.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ko'**
+  String get auditWho;
+
+  /// No description provided for @auditWhat.
+  ///
+  /// In bs, this message translates to:
+  /// **'Radnja'**
+  String get auditWhat;
+
+  /// No description provided for @auditTarget.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zapis'**
+  String get auditTarget;
 }
 
 class _AppLocalizationsDelegate

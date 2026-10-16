@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 import '../appointments/appointments_page.dart';
+import '../audit/audit_page.dart';
 import '../clients/clients_page.dart';
 import '../employees/employees_page.dart';
 import '../notifications/notifications_page.dart';
@@ -25,6 +26,7 @@ class ShellDeps {
     required this.reviews,
     required this.reports,
     required this.clients,
+    required this.audit,
     required this.user,
   });
 
@@ -35,6 +37,7 @@ class ShellDeps {
   final ReviewsApi reviews;
   final ReportsApi reports;
   final ClientsApi clients;
+  final AuditApi audit;
   final AppUser user;
 }
 
@@ -89,6 +92,7 @@ class _DesktopShellState extends State<DesktopShell> {
   late final ReviewsApi _reviews = ReviewsApi(widget.auth.api);
   late final ReportsApi _reports = ReportsApi(widget.auth.api);
   late final ClientsApi _clients = ClientsApi(widget.auth.api);
+  late final AuditApi _audit = AuditApi(widget.auth.api);
 
   /// Live counts for the sidebar: unread messages, products at or under their stock threshold,
   /// and orders waiting to be handed over. Only an admin sees these sections, so only an admin asks.
@@ -221,6 +225,12 @@ class _DesktopShellState extends State<DesktopShell> {
       adminOnly: true,
       body: (d) => ReportsPage(api: d.reports),
     ),
+    _Section(
+      Icons.history,
+      (t) => t.auditLog,
+      adminOnly: true,
+      body: (d) => AuditPage(api: d.audit),
+    ),
     _Section(Icons.person_outline, (t) => t.myProfile),
   ];
 
@@ -278,6 +288,7 @@ class _DesktopShellState extends State<DesktopShell> {
                           reviews: _reviews,
                           reports: _reports,
                           clients: _clients,
+                          audit: _audit,
                           user: user,
                         ),
                       ) ??

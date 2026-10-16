@@ -49,7 +49,11 @@ try
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddApplication();
     builder.Services.AddOttomanAuth(builder.Configuration);
-    builder.Services.AddControllers(o => o.Filters.Add<ValidationFilter>());
+    builder.Services.AddControllers(o =>
+    {
+        o.Filters.Add<ValidationFilter>();
+        o.Filters.Add<AuditFilter>();
+    });
     builder.Services.AddOpenApi();
     builder.Services.AddExceptionHandler<HttpExceptionHandler>();
     builder.Services.AddProblemDetails();

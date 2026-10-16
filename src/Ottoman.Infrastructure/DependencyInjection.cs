@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Ottoman.Application.Audit;
 using Ottoman.Application.Auth;
 using Ottoman.Application.Catalog;
 using Ottoman.Application.Clients;
@@ -125,6 +126,8 @@ public static class DependencyInjection
         }
         services.Configure<PushOptions>(config.GetSection(PushOptions.Section));
         services.AddScoped<IDeviceRegistry, DeviceRegistry>();
+        services.AddSingleton<IAuditLog, Ottoman.Infrastructure.Audit.AuditLog>();
+        services.AddScoped<IAuditQueries, Ottoman.Infrastructure.Audit.AuditQueries>();
         if (config.GetSection(PushOptions.Section).Get<PushOptions>() is { Configured: true })
         {
             services.AddHttpClient(FcmPushSender.ClientName, c => c.Timeout = TimeSpan.FromSeconds(15));
