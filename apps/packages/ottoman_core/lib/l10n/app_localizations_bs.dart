@@ -103,7 +103,24 @@ class AppLocalizationsBs extends AppLocalizations {
   String get requiredField => 'Obavezno polje';
 
   @override
-  String get invalidEmail => 'Unesite ispravan email';
+  String get invalidEmail => 'Unesite email u formatu ime@domena.ba';
+
+  @override
+  String get invalidPhone =>
+      'Unesite telefon u formatu 061 123 456 ili +387 61 123 456 (6 do 15 cifara).';
+
+  @override
+  String get invalidName =>
+      'Unesite 2 do 50 slova (dozvoljeni su razmak, tačka, apostrof i crtica).';
+
+  @override
+  String get invalidPrice =>
+      'Unesite cijenu veću od 0, najviše dvije decimale (npr. 12,50).';
+
+  @override
+  String invalidWholeNumber(int min, int max) {
+    return 'Unesite cijeli broj od $min do $max.';
+  }
 
   @override
   String get passwordRules =>

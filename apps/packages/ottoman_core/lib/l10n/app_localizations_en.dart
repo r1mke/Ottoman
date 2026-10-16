@@ -104,7 +104,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requiredField => 'Required';
 
   @override
-  String get invalidEmail => 'Enter a valid email';
+  String get invalidEmail => 'Enter an email in the format name@domain.com';
+
+  @override
+  String get invalidPhone =>
+      'Enter a phone number such as 061 123 456 or +387 61 123 456 (6 to 15 digits).';
+
+  @override
+  String get invalidName =>
+      'Enter 2 to 50 letters (spaces, dots, apostrophes and hyphens are allowed).';
+
+  @override
+  String get invalidPrice =>
+      'Enter a price above 0 with at most two decimals (e.g. 12.50).';
+
+  @override
+  String invalidWholeNumber(int min, int max) {
+    return 'Enter a whole number from $min to $max.';
+  }
 
   @override
   String get passwordRules =>

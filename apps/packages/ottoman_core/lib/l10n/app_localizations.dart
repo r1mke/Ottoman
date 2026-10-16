@@ -287,8 +287,32 @@ abstract class AppLocalizations {
   /// No description provided for @invalidEmail.
   ///
   /// In bs, this message translates to:
-  /// **'Unesite ispravan email'**
+  /// **'Unesite email u formatu ime@domena.ba'**
   String get invalidEmail;
+
+  /// No description provided for @invalidPhone.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite telefon u formatu 061 123 456 ili +387 61 123 456 (6 do 15 cifara).'**
+  String get invalidPhone;
+
+  /// No description provided for @invalidName.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite 2 do 50 slova (dozvoljeni su razmak, tačka, apostrof i crtica).'**
+  String get invalidName;
+
+  /// No description provided for @invalidPrice.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite cijenu veću od 0, najviše dvije decimale (npr. 12,50).'**
+  String get invalidPrice;
+
+  /// No description provided for @invalidWholeNumber.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite cijeli broj od {min} do {max}.'**
+  String invalidWholeNumber(int min, int max);
 
   /// No description provided for @passwordRules.
   ///
