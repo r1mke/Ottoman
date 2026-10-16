@@ -52,6 +52,36 @@ class CatalogApi {
   Future<void> deactivateService(int id) =>
       _api.delete<dynamic>('/api/v1/services/$id');
 
+  Future<Service> setServiceImage(
+    int id,
+    List<int> bytes,
+    String filename,
+  ) async => Service.fromJson(
+    await _api.put<Map<String, dynamic>>(
+      '/api/v1/services/$id/image',
+      body: imageForm(bytes, filename),
+    ),
+  );
+
+  Future<Service> clearServiceImage(int id) async => Service.fromJson(
+    await _api.delete<Map<String, dynamic>>('/api/v1/services/$id/image'),
+  );
+
+  Future<Employee> setEmployeePhoto(
+    String id,
+    List<int> bytes,
+    String filename,
+  ) async => Employee.fromJson(
+    await _api.put<Map<String, dynamic>>(
+      '/api/v1/employees/$id/photo',
+      body: imageForm(bytes, filename),
+    ),
+  );
+
+  Future<Employee> clearEmployeePhoto(String id) async => Employee.fromJson(
+    await _api.delete<Map<String, dynamic>>('/api/v1/employees/$id/photo'),
+  );
+
   // ---- employees
 
   Future<List<Employee>> employees({bool includeInactive = false}) async {

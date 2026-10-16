@@ -49,7 +49,7 @@ class _Adapter implements HttpClientAdapter {
             'fullName': 'Kerim Begić',
             'title': 'Master Barber',
             'bio': 'Majstor u usponu',
-            'photoKey': null,
+            'photoUrl': null,
             'isActive': true,
             'serviceIds': [1, 2],
             'email': null,
@@ -65,7 +65,7 @@ class _Adapter implements HttpClientAdapter {
           'description': null,
           'price': 25,
           'durationMinutes': 30,
-          'imageKey': null,
+          'imageUrl': null,
           'isActive': true,
         },
         {
@@ -74,7 +74,7 @@ class _Adapter implements HttpClientAdapter {
           'description': null,
           'price': 15,
           'durationMinutes': 30,
-          'imageKey': null,
+          'imageUrl': null,
           'isActive': true,
         },
       ];

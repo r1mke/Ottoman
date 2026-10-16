@@ -1,13 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Ottoman.Application.Common;
+using Ottoman.Application.Images;
 using Ottoman.Application.Recommendations;
 using Ottoman.Application.Shop;
 using Ottoman.Domain.Entities;
+using Ottoman.Infrastructure.Images;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Shop;
 
-public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommendations) : IProductCatalog
+public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommendations, ImageUrlBuilder images) : IProductCatalog
 {
     // ---------------------------------------------------------------- products
 
@@ -41,9 +43,10 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
                 p.CategoryId, p.Category != null ? p.Category.Name : null,
                 p.Price, p.Stock, p.LowStockThreshold,
                 p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
-                p.IsActive))
+                p.IsActive, null,
+                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList()))
             .ToListAsync(ct);
-        return new PagedResult<ProductDto>(items, total);
+        return new PagedResult<ProductDto>(items.Select(Resolve).ToList(), total);
     }
 
     public async Task<Result<ProductDto>> GetAsync(int id, bool includeInactive, CancellationToken ct)
@@ -62,9 +65,10 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
                 p.CategoryId, p.Category != null ? p.Category.Name : null,
                 p.Price, p.Stock, p.LowStockThreshold,
                 p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
-                p.IsActive))
+                p.IsActive, null,
+                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList()))
             .ToListAsync(ct);
-        var byId = rows.ToDictionary(p => p.Id);
+        var byId = rows.Select(Resolve).ToDictionary(p => p.Id);
         return ids.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
     }
 
@@ -144,16 +148,27 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         return null;
     }
 
-    private Task<ProductDto?> LoadDtoAsync(int id, CancellationToken ct) =>
-        db.Products.AsNoTracking().Where(p => p.Id == id)
+    private async Task<ProductDto?> LoadDtoAsync(int id, CancellationToken ct)
+    {
+        var dto = await db.Products.AsNoTracking().Where(p => p.Id == id)
             .Select(p => new ProductDto(
                 p.Id, p.Name, p.Description,
                 p.BrandId, p.Brand != null ? p.Brand.Name : null,
                 p.CategoryId, p.Category != null ? p.Category.Name : null,
                 p.Price, p.Stock, p.LowStockThreshold,
                 p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
-                p.IsActive))
+                p.IsActive, null,
+                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList()))
             .FirstOrDefaultAsync(ct);
+        return dto is null ? null : Resolve(dto);
+    }
+
+    /// <summary>The queries carry storage keys; this turns them into delivery URLs and picks the first as the cover.</summary>
+    private ProductDto Resolve(ProductDto p)
+    {
+        var pictures = p.Images.Select(i => new ProductImageDto(i.Id, images.Url(i.Url) ?? "")).Where(i => i.Url != "").ToList();
+        return p with { Images = pictures, ImageUrl = pictures.FirstOrDefault()?.Url };
+    }
 
     // ---------------------------------------------------------------- brands
 

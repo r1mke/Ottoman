@@ -2,15 +2,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
+using Ottoman.Application.Images;
 using Ottoman.Domain;
 using Ottoman.Domain.Entities;
 using Ottoman.Domain.Scheduling;
 using Ottoman.Infrastructure.Identity;
+using Ottoman.Infrastructure.Images;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Employees;
 
-public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users, TimeProvider clock) : IEmployeeService
+public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users, TimeProvider clock, ImageUrlBuilder images) : IEmployeeService
 {
     // ------------------------------------------------------------------ read
 
@@ -41,8 +43,8 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
             .ToList();
     }
 
-    private static EmployeeDto ToDto(EmployeeProfile p, AppUser u, bool includePrivate) => new(
-        p.UserId, u.FirstName, u.LastName, u.FullName, p.Title, p.Bio, p.PhotoKey, p.IsActive,
+    private EmployeeDto ToDto(EmployeeProfile p, AppUser u, bool includePrivate) => new(
+        p.UserId, u.FirstName, u.LastName, u.FullName, p.Title, p.Bio, images.Url(p.PhotoKey), p.IsActive,
         p.Services.Select(s => s.ServiceId).OrderBy(x => x).ToList(),
         includePrivate ? u.Email : null,
         includePrivate ? u.PhoneNumber : null);

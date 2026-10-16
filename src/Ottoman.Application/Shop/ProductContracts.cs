@@ -30,7 +30,11 @@ public record ProductDto(
     int Stock,
     int? LowStockThreshold,
     bool IsLowStock,
-    bool IsActive);
+    bool IsActive,
+    string? ImageUrl,
+    IReadOnlyList<ProductImageDto> Images);
+
+public record ProductImageDto(int Id, string Url);
 
 /// <summary>Stock is set here only when the product is created; afterwards use the atomic adjust endpoint.</summary>
 public record ProductUpsertRequest(

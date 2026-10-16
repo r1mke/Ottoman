@@ -19,11 +19,9 @@ class _EmployeesPageState extends State<EmployeesPage> {
   void _refresh() => setState(() => _version++);
 
   Future<void> _open(Widget dialog) async {
-    final changed = await showDialog<bool>(
-      context: context,
-      builder: (_) => dialog,
-    );
-    if (changed == true) _refresh();
+    await showDialog<bool>(context: context, builder: (_) => dialog);
+    // A picture change is saved immediately, so refresh even when the dialog was only closed.
+    if (mounted) _refresh();
   }
 
   @override
@@ -59,8 +57,9 @@ class _EmployeesPageState extends State<EmployeesPage> {
                   return Card(
                     child: ListTile(
                       key: Key('employee_row_${e.id}'),
-                      leading: CircleAvatar(
-                        child: Text(e.firstName.characters.first),
+                      leading: PersonAvatar(
+                        initials: e.initials,
+                        photoUrl: e.photoUrl,
                       ),
                       title: Text(
                         e.fullName,

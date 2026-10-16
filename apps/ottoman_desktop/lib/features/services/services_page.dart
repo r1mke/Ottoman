@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../images/picture_editor.dart';
+
 /// Admin: services and prices. Deactivation is a soft delete (past bookings keep their snapshot).
 class ServicesPage extends StatefulWidget {
   const ServicesPage({super.key, required this.catalog});
@@ -17,13 +19,12 @@ class _ServicesPageState extends State<ServicesPage> {
   void _refresh() => setState(() => _version++);
 
   Future<void> _edit([Service? service]) async {
-    final saved = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       builder: (_) => ServiceDialog(catalog: widget.catalog, service: service),
     );
-    if (saved == true) {
-      _refresh();
-    }
+    // Pictures change on the server straight away, so the list is refreshed even when the dialog was cancelled.
+    if (mounted) _refresh();
   }
 
   Future<void> _toggle(Service s) async {
@@ -123,16 +124,26 @@ class _ServicesPageState extends State<ServicesPage> {
 }
 
 class ServiceDialog extends StatefulWidget {
-  const ServiceDialog({super.key, required this.catalog, this.service});
+  const ServiceDialog({
+    super.key,
+    required this.catalog,
+    this.service,
+    this.chooser = const FileImageChooser(),
+  });
 
   final CatalogApi catalog;
   final Service? service;
+  final ImageChooser chooser;
 
   @override
   State<ServiceDialog> createState() => _ServiceDialogState();
 }
 
 class _ServiceDialogState extends State<ServiceDialog> {
+  static List<EditablePicture> _pictures(String? url) => [
+    if (url != null) EditablePicture('service', url),
+  ];
+
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.service?.name);
   late final _description = TextEditingController(
@@ -253,6 +264,34 @@ class _ServiceDialogState extends State<ServiceDialog> {
                   value: _active,
                   onChanged: (v) => setState(() => _active = v),
                 ),
+                const SizedBox(height: 8),
+                if (widget.service == null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      t.savePictureFirst,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  )
+                else
+                  PictureEditor(
+                    key: const Key('service_pictures'),
+                    chooser: widget.chooser,
+                    fallbackIcon: Icons.content_cut,
+                    pictures: _pictures(widget.service!.imageUrl),
+                    onAdd: (img) async => _pictures(
+                      (await widget.catalog.setServiceImage(
+                        widget.service!.id,
+                        img.bytes,
+                        img.name,
+                      )).imageUrl,
+                    ),
+                    onRemove: (_) async => _pictures(
+                      (await widget.catalog.clearServiceImage(
+                        widget.service!.id,
+                      )).imageUrl,
+                    ),
+                  ),
                 if (_error != null)
                   Align(
                     alignment: Alignment.centerLeft,

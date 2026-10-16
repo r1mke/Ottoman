@@ -39,6 +39,7 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-0123456789-abcdef");
         builder.UseSetting("RateLimiting:Enabled", "false");
         builder.UseSetting("Payments:WebhookSecret", WebhookSecret);
+        builder.UseSetting("Cloudinary:CloudName", "testcloud");
         builder.ConfigureServices(s =>
         {
             // The API does not send mail (the worker does); tests drive the same handler with a recording sender.

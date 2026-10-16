@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../images/picture_editor.dart';
+
 String _message(AppException e) {
   final detail = e.errors.values.expand((x) => x).join('\n');
   return detail.isEmpty ? e.message : detail;
@@ -8,16 +10,26 @@ String _message(AppException e) {
 
 /// Create (no [employee]) or edit an employee.
 class EmployeeDialog extends StatefulWidget {
-  const EmployeeDialog({super.key, required this.catalog, this.employee});
+  const EmployeeDialog({
+    super.key,
+    required this.catalog,
+    this.employee,
+    this.chooser = const FileImageChooser(),
+  });
 
   final CatalogApi catalog;
   final Employee? employee;
+  final ImageChooser chooser;
 
   @override
   State<EmployeeDialog> createState() => _EmployeeDialogState();
 }
 
 class _EmployeeDialogState extends State<EmployeeDialog> {
+  static List<EditablePicture> _pictures(String? url) => [
+    if (url != null) EditablePicture('photo', url),
+  ];
+
   final _form = GlobalKey<FormState>();
   late final _first = TextEditingController(text: widget.employee?.firstName);
   late final _last = TextEditingController(text: widget.employee?.lastName);
@@ -161,6 +173,27 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
                     value: _active,
                     onChanged: (v) => setState(() => _active = v),
                   ),
+                if (!_isNew) ...[
+                  const SizedBox(height: 8),
+                  PictureEditor(
+                    key: const Key('employee_pictures'),
+                    chooser: widget.chooser,
+                    fallbackIcon: Icons.person_outline,
+                    pictures: _pictures(widget.employee!.photoUrl),
+                    onAdd: (img) async => _pictures(
+                      (await widget.catalog.setEmployeePhoto(
+                        widget.employee!.id,
+                        img.bytes,
+                        img.name,
+                      )).photoUrl,
+                    ),
+                    onRemove: (_) async => _pictures(
+                      (await widget.catalog.clearEmployeePhoto(
+                        widget.employee!.id,
+                      )).photoUrl,
+                    ),
+                  ),
+                ],
                 if (_error != null)
                   Align(
                     alignment: Alignment.centerLeft,

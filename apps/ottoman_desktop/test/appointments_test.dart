@@ -101,7 +101,7 @@ class _Api implements HttpClientAdapter {
           'fullName': 'Kerim Begić',
           'title': 'Master',
           'bio': null,
-          'photoKey': null,
+          'photoUrl': null,
           'isActive': true,
           'serviceIds': [1],
           'email': null,

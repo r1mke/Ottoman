@@ -55,6 +55,15 @@ class _EmployeeServicesPageState extends State<EmployeeServicesPage> {
                       return Card(
                         child: CheckboxListTile(
                           key: Key('service_${s.id}'),
+                          secondary: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: NetworkPicture(
+                              url: s.imageUrl,
+                              width: 48,
+                              height: 48,
+                              fallbackIcon: Icons.content_cut,
+                            ),
+                          ),
                           value: on,
                           onChanged: (v) => setState(
                             () => v!

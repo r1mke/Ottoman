@@ -267,6 +267,11 @@
   "chooseFields": "Polja",
   "runReport": "Prikaži izvještaj",
   "allStatusesOption": "Svi statusi",
-  "noDataForPeriod": "Nema podataka za odabrani period."
+  "noDataForPeriod": "Nema podataka za odabrani period.",
+  "pictures": "Slike",
+  "addPicture": "Dodaj sliku",
+  "changePicture": "Promijeni sliku",
+  "removePicture": "Ukloni sliku",
+  "savePictureFirst": "Slike se mogu dodati nakon što se stavka spremi."
 
 }

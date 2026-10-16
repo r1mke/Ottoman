@@ -809,4 +809,20 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get noDataForPeriod => 'Nema podataka za odabrani period.';
+
+  @override
+  String get pictures => 'Slike';
+
+  @override
+  String get addPicture => 'Dodaj sliku';
+
+  @override
+  String get changePicture => 'Promijeni sliku';
+
+  @override
+  String get removePicture => 'Ukloni sliku';
+
+  @override
+  String get savePictureFirst =>
+      'Slike se mogu dodati nakon što se stavka spremi.';
 }

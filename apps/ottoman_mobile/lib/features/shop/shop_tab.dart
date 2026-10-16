@@ -262,14 +262,14 @@ class ProductCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: NetworkPicture(
+                  url: p.imageUrl,
+                  width: 64,
+                  height: 64,
+                  fallbackIcon: Icons.inventory_2_outlined,
                 ),
-                child: Icon(Icons.inventory_2_outlined, color: scheme.outline),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Ottoman.Application.Catalog;
 using Ottoman.Application.Common;
+using Ottoman.Application.Images;
 using Ottoman.Domain.Entities;
+using Ottoman.Infrastructure.Images;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Catalog;
 
-public class ServiceCatalog(OttomanDbContext db) : IServiceCatalog
+public class ServiceCatalog(OttomanDbContext db, ImageUrlBuilder images) : IServiceCatalog
 {
     public async Task<IReadOnlyList<ServiceDto>> ListAsync(string? employeeId, bool includeInactive, CancellationToken ct)
     {
@@ -15,7 +17,8 @@ public class ServiceCatalog(OttomanDbContext db) : IServiceCatalog
         if (employeeId is not null)
             query = query.Where(s => db.EmployeeServices.Any(es => es.ServiceId == s.Id && es.EmployeeId == employeeId));
 
-        return await query.OrderBy(s => s.Name).Select(s => ToDto(s)).ToListAsync(ct);
+        var rows = await query.OrderBy(s => s.Name).ToListAsync(ct);
+        return rows.Select(ToDto).ToList();
     }
 
     public async Task<Result<ServiceDto>> GetAsync(int id, CancellationToken ct)
@@ -71,6 +74,6 @@ public class ServiceCatalog(OttomanDbContext db) : IServiceCatalog
         return Result<bool>.Ok(true);
     }
 
-    private static ServiceDto ToDto(Service s) =>
-        new(s.Id, s.Name, s.Description, s.Price, s.DurationMinutes, s.ImageKey, s.IsActive);
+    private ServiceDto ToDto(Service s) =>
+        new(s.Id, s.Name, s.Description, s.Price, s.DurationMinutes, images.Url(s.ImageKey), s.IsActive);
 }
