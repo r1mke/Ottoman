@@ -13,7 +13,7 @@ class RecommendedRow extends StatelessWidget {
   });
 
   final String title;
-  final Future<List<Product>> Function() load;
+  final Future<List<Recommended<Product>>> Function() load;
   final CartController cart;
   final void Function(Product) onOpen;
 
@@ -21,7 +21,7 @@ class RecommendedRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    return FutureBuilder<List<Product>>(
+    return FutureBuilder<List<Recommended<Product>>>(
       future: load(),
       builder: (context, snap) {
         final items = snap.data;
@@ -38,16 +38,17 @@ class RecommendedRow extends StatelessWidget {
               ),
             ),
             SizedBox(
-              height: 118,
+              height: 190,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: items.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (context, i) {
-                  final p = items[i];
+                  final p = items[i].item;
+                  final reason = items[i].reason;
                   return SizedBox(
-                    width: 150,
+                    width: 176,
                     child: Card(
                       key: Key('reco_${p.id}'),
                       clipBehavior: Clip.antiAlias,
@@ -75,6 +76,20 @@ class RecommendedRow extends StatelessWidget {
                                     fontSize: 11,
                                   ),
                                 ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  reason,
+                                  key: Key('reco_reason_${p.id}'),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: scheme.primary,
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
                               const Spacer(),
                               Row(
                                 children: [

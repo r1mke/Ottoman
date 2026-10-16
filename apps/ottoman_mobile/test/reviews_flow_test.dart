@@ -106,11 +106,39 @@ class _Api implements HttpClientAdapter {
         },
       };
     } else if (path.endsWith('/recommendations/employees')) {
-      body = [_employee];
+      body = [
+        {
+          'item': _employee,
+          'reason': {
+            'kind': 'SimilarToInterest',
+            'sourceName': 'Tarik Mujkić',
+            'text':
+                'Jer ste bili kod frizera Tarik Mujkić - slični pojmovi: fade',
+          },
+        },
+      ];
     } else if (path.endsWith('/recommendations/products')) {
-      body = [_product(2, 'Preporučeni vosak')];
+      body = [
+        {
+          'item': _product(2, 'Preporučeni vosak'),
+          'reason': {
+            'kind': 'SimilarToInterest',
+            'sourceName': 'Dandy Pomade',
+            'text': 'Jer ste kupili „Dandy Pomade“ - ista kategorija (Voskovi)',
+          },
+        },
+      ];
     } else if (path.endsWith('/related')) {
-      body = [_product(3, 'Slični gel')];
+      body = [
+        {
+          'item': _product(3, 'Slični gel'),
+          'reason': {
+            'kind': 'SimilarToItem',
+            'sourceName': 'Vosak',
+            'text': 'Slično kao „Vosak“ - isti brend (Dandy)',
+          },
+        },
+      ];
     } else if (path.endsWith('/reviews/summary')) {
       body = [
         {'targetKey': 'e1', 'average': 4.5, 'count': 2},
@@ -201,6 +229,17 @@ void main() {
 
     expect(find.text('Možda vam se sviđa'), findsOneWidget);
     expect(find.byKey(const Key('reco_employee_e1')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('reco_reason_e1')),
+        matching: find.textContaining('Jer ste bili kod frizera'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('Jer ste bili kod frizera Tarik Mujkić'),
+      findsOneWidget,
+    );
     expect(find.text('4.5 (2)'), findsOneWidget);
   });
 
@@ -212,6 +251,11 @@ void main() {
 
     expect(find.byKey(const Key('reco_2')), findsOneWidget);
     expect(find.text('Preporučeni vosak'), findsOneWidget);
+    expect(find.byKey(const Key('reco_reason_2')), findsOneWidget);
+    expect(
+      find.textContaining('Jer ste kupili „Dandy Pomade“'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('product_1')));
     await tester.pumpAndSettle();
@@ -225,6 +269,7 @@ void main() {
     expect(find.text('Hvala!'), findsOneWidget);
     expect(find.text('Ana A.'), findsOneWidget);
     expect(find.text('Slični gel'), findsOneWidget);
+    expect(find.textContaining('Slično kao „Vosak“'), findsOneWidget);
   });
 
   testWidgets('a client who may review writes one: stars are required', (

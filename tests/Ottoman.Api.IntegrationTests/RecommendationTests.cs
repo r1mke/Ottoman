@@ -31,8 +31,11 @@ public class RecommendationTests(ApiFixture api)
     private static Task<HttpResponseMessage> Buy(HttpClient http, int productId) =>
         http.PostAsJsonAsync("/api/v1/orders", new { items = new[] { new { productId, quantity = 1 } }, fulfilment = "Pickup", paymentMethod = "OnReceipt" });
 
-    private static Task<List<ProductDto>?> Recommended(HttpClient http, int count = 10) =>
-        http.GetFromJsonAsync<List<ProductDto>>($"/api/v1/recommendations/products?count={count}");
+    private static async Task<List<T>> Items<T>(HttpClient http, string url) =>
+        (await http.GetFromJsonAsync<List<Ottoman.Application.Recommendations.Recommended<T>>>(url))!.Select(r => r.Item).ToList();
+
+    private static Task<List<ProductDto>> Recommended(HttpClient http, int count = 10) =>
+        Items<ProductDto>(http, $"/api/v1/recommendations/products?count={count}");
 
     [Fact]
     public async Task Recommendations_need_a_login()
@@ -53,6 +56,46 @@ public class RecommendationTests(ApiFixture api)
 
         recs.Select(p => p.Id).Should().NotContain(oil.Id, "they already own it");
         recs.First().Id.Should().Be(balm.Id, "same category, same use");
+    }
+
+    [Fact]
+    public async Task Every_recommendation_explains_itself_with_facts_from_the_comparison()
+    {
+        var (_, client) = await NewClient();
+        var oil = await ProductNamed(client, "Dandy Beard Oil");
+        var balm = await ProductNamed(client, "Proraso Beard Balm");
+        (await Buy(client, oil.Id)).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var recs = (await client.GetFromJsonAsync<List<Ottoman.Application.Recommendations.Recommended<ProductDto>>>("/api/v1/recommendations/products?count=6"))!;
+
+        var forBalm = recs.Single(r => r.Item.Id == balm.Id).Reason;
+        forBalm.Kind.Should().Be("SimilarToInterest");
+        forBalm.SourceName.Should().Be(oil.Name);
+        forBalm.Text.Should().Contain(oil.Name).And.Contain("Jer ste kupili").And.Contain("ista kategorija");
+        recs.Should().OnlyContain(r => r.Reason.Text.Length > 0, "no recommendation is shown without a reason");
+    }
+
+    [Fact]
+    public async Task A_client_without_history_is_told_the_list_is_about_popularity()
+    {
+        var (_, client) = await NewClient();
+
+        var recs = (await client.GetFromJsonAsync<List<Ottoman.Application.Recommendations.Recommended<ProductDto>>>("/api/v1/recommendations/products?count=5"))!;
+
+        recs.Should().NotBeEmpty();
+        recs.Should().OnlyContain(r => r.Reason.Kind == "Popular" && r.Reason.Text.StartsWith("Popularno u salonu"));
+    }
+
+    [Fact]
+    public async Task Similar_products_say_what_they_are_similar_to()
+    {
+        var (_, client) = await NewClient();
+        var pomade = await ProductNamed(client, "Vosak za kosu Dandy Shaping Pomade");
+
+        var related = (await client.GetFromJsonAsync<List<Ottoman.Application.Recommendations.Recommended<ProductDto>>>($"/api/v1/products/{pomade.Id}/related?count=3"))!;
+
+        related.Should().NotBeEmpty();
+        related.Should().OnlyContain(r => r.Reason.Kind == "SimilarToItem" && r.Reason.Text.StartsWith("Slično kao") && r.Reason.Text.Contains(pomade.Name));
     }
 
     [Fact]
@@ -77,7 +120,7 @@ public class RecommendationTests(ApiFixture api)
         var pomade = await ProductNamed(client, "Vosak za kosu Dandy Shaping Pomade");
         var clay = await ProductNamed(client, "Dandy Matt Clay");
 
-        var related = (await client.GetFromJsonAsync<List<ProductDto>>($"/api/v1/products/{pomade.Id}/related?count=4"))!;
+        var related = (await Items<ProductDto>(client, $"/api/v1/products/{pomade.Id}/related?count=4"));
 
         related.Select(p => p.Id).Should().NotContain(pomade.Id);
         related.Take(2).Select(p => p.Id).Should().Contain(clay.Id);
@@ -92,19 +135,19 @@ public class RecommendationTests(ApiFixture api)
         var oil = await ProductNamed(client, "Dandy Beard Oil");
         var token = Guid.NewGuid().ToString("N")[..8];
 
-        var before = (await client.GetFromJsonAsync<List<ProductDto>>($"/api/v1/products/{oil.Id}/related?count=20"))!;
+        var before = (await Items<ProductDto>(client, $"/api/v1/products/{oil.Id}/related?count=20"));
         var name = $"Dandy Beard Wash {token}";
         var created = await admin.PostAsJsonAsync("/api/v1/products",
             new ProductUpsertRequest(name, "Ulje i šampon za bradu", oil.BrandId, oil.CategoryId, 15m, 5, null));
         var wash = (await created.Content.ReadFromJsonAsync<ProductDto>())!;
 
         before.Select(p => p.Id).Should().NotContain(wash.Id);
-        var after = (await client.GetFromJsonAsync<List<ProductDto>>($"/api/v1/products/{oil.Id}/related?count=20"))!;
+        var after = (await Items<ProductDto>(client, $"/api/v1/products/{oil.Id}/related?count=20"));
         after.Select(p => p.Id).Should().Contain(wash.Id);
 
         // deactivating goes through a bulk update; it must invalidate too
         (await admin.DeleteAsync($"/api/v1/products/{wash.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
-        var gone = (await client.GetFromJsonAsync<List<ProductDto>>($"/api/v1/products/{oil.Id}/related?count=20"))!;
+        var gone = (await Items<ProductDto>(client, $"/api/v1/products/{oil.Id}/related?count=20"));
         gone.Select(p => p.Id).Should().NotContain(wash.Id);
     }
 
@@ -141,7 +184,7 @@ public class RecommendationTests(ApiFixture api)
         var sisanje = services.Single(s => s.Name == "Šišanje");
         var kerim = (await client.GetFromJsonAsync<List<EmployeeDto>>("/api/v1/employees"))!.Single(e => e.FirstName == "Kerim");
 
-        var cold = (await client.GetFromJsonAsync<List<ServiceDto>>("/api/v1/recommendations/services?count=3"))!;
+        var cold = (await Items<ServiceDto>(client, "/api/v1/recommendations/services?count=3"));
         cold.Should().NotBeEmpty().And.OnlyContain(s => s.IsActive);
 
         await using (var scope = api.Services.CreateAsyncScope())
@@ -163,10 +206,10 @@ public class RecommendationTests(ApiFixture api)
             await db.SaveChangesAsync();
         }
 
-        var warm = (await client.GetFromJsonAsync<List<ServiceDto>>("/api/v1/recommendations/services?count=3"))!;
+        var warm = (await Items<ServiceDto>(client, "/api/v1/recommendations/services?count=3"));
         warm.First().Id.Should().Be(sisanje.Id, "a haircut is most like another haircut");
 
-        var barbers = (await client.GetFromJsonAsync<List<EmployeeDto>>("/api/v1/recommendations/employees?count=4"))!;
+        var barbers = (await Items<EmployeeDto>(client, "/api/v1/recommendations/employees?count=4"));
         barbers.Should().NotBeEmpty().And.OnlyContain(e => e.IsActive);
         barbers.First().Id.Should().Be(kerim.Id, "they have been to Kerim");
         barbers.Should().OnlyContain(e => e.Email == null, "private contact data stays private");

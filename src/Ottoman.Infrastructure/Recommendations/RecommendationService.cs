@@ -42,7 +42,7 @@ public class RecommendationService(
 
     // ---------------------------------------------------------------- products
 
-    public async Task<IReadOnlyList<ProductDto>> ProductsAsync(string userId, int count, CancellationToken ct)
+    public async Task<IReadOnlyList<Recommended<ProductDto>>> ProductsAsync(string userId, int count, CancellationToken ct)
     {
         var index = await ProductIndexAsync();
         var inStock = (await db.Products.AsNoTracking().Where(p => p.IsActive && p.Stock > 0).Select(p => p.Id).ToListAsync(ct)).ToHashSet();
@@ -57,15 +57,15 @@ public class RecommendationService(
         var popular = await PopularProductsAsync(ct);
 
         var ranked = Recommender.ForUser(index.Index, interactions, Now, inStock, bought, popular, count);
-        return await products.GetManyAsync(ranked.Select(r => r.Id).ToList(), ct);
+        return await WithProductReasonsAsync(ranked, ct);
     }
 
-    public async Task<IReadOnlyList<ProductDto>> RelatedProductsAsync(int productId, int count, CancellationToken ct)
+    public async Task<IReadOnlyList<Recommended<ProductDto>>> RelatedProductsAsync(int productId, int count, CancellationToken ct)
     {
         var index = await ProductIndexAsync();
         var inStock = (await db.Products.AsNoTracking().Where(p => p.IsActive && p.Stock > 0).Select(p => p.Id).ToListAsync(ct)).ToHashSet();
         var related = Recommender.Related(index.Index, productId, inStock, count);
-        return await products.GetManyAsync(related.Select(r => r.Id).ToList(), ct);
+        return await WithProductReasonsAsync(related, ct);
     }
 
     private Task<CachedIndex> ProductIndexAsync() => cache.GetOrBuildAsync("products", async () =>
@@ -91,7 +91,7 @@ public class RecommendationService(
 
     // ---------------------------------------------------------------- services
 
-    public async Task<IReadOnlyList<ServiceDto>> ServicesAsync(string userId, int count, CancellationToken ct)
+    public async Task<IReadOnlyList<Recommended<ServiceDto>>> ServicesAsync(string userId, int count, CancellationToken ct)
     {
         var index = await ServiceIndexAsync();
         var active = await services.ListAsync(null, false, ct);
@@ -114,7 +114,11 @@ public class RecommendationService(
         // A service can be booked again, so what they already had is not hidden.
         var ranked = Recommender.ForUser(index.Index, interactions, Now, candidates, new HashSet<int>(), popular, count);
         var byId = active.ToDictionary(s => s.Id);
-        return ranked.Where(r => byId.ContainsKey(r.Id)).Select(r => byId[r.Id]).ToList();
+        var sourceIds = ranked.Select(r => r.Reason?.SourceItemId).OfType<int>().Distinct().ToList();
+        var names = await db.Services.AsNoTracking().Where(s => sourceIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+        return ranked.Where(r => byId.ContainsKey(r.Id))
+            .Select(r => new Recommended<ServiceDto>(byId[r.Id], ReasonText.Compose(r.Reason ?? Reason.Popular, SourceName(names, r.Reason), RecommendedKind.Service)))
+            .ToList();
     }
 
     private Task<CachedIndex> ServiceIndexAsync() => cache.GetOrBuildAsync("services", async () =>
@@ -126,7 +130,7 @@ public class RecommendationService(
 
     // ---------------------------------------------------------------- barbers
 
-    public async Task<IReadOnlyList<EmployeeDto>> EmployeesAsync(string userId, int count, CancellationToken ct)
+    public async Task<IReadOnlyList<Recommended<EmployeeDto>>> EmployeesAsync(string userId, int count, CancellationToken ct)
     {
         var index = await EmployeeIndexAsync();
         var active = await employees.ListAsync(false, false, ct);
@@ -150,7 +154,18 @@ public class RecommendationService(
 
         var ranked = Recommender.ForUser(index.Index, interactions, Now, candidates, new HashSet<int>(), popular, count);
         var byKey = active.ToDictionary(e => e.Id);
-        return ranked.Select(r => byKey[index.KeyById[r.Id]]).ToList();
+        var sourceKeys = ranked.Select(r => r.Reason?.SourceItemId).OfType<int>().Select(id => index.KeyById[id]).Distinct().ToList();
+        var names = await db.Users.AsNoTracking().Where(u => sourceKeys.Contains(u.Id))
+            .Select(u => new { u.Id, u.FirstName, u.LastName }).ToListAsync(ct);
+        var nameByKey = names.ToDictionary(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim());
+        return ranked
+            .Select(r => new Recommended<EmployeeDto>(
+                byKey[index.KeyById[r.Id]],
+                ReasonText.Compose(
+                    r.Reason ?? Reason.Popular,
+                    r.Reason?.SourceItemId is { } s && nameByKey.TryGetValue(index.KeyById[s], out var name) ? name : null,
+                    RecommendedKind.Barber)))
+            .ToList();
     }
 
     /// <summary>A barber is described by what they do: their title, bio and the services they perform.</summary>
@@ -169,6 +184,21 @@ public class RecommendationService(
         return new CachedIndex(ItemIndex.Build(items), ordered.Select((p, i) => (Key: p.UserId, Id: i + 1)).ToDictionary(x => x.Id, x => x.Key));
     });
 
+
+    private async Task<IReadOnlyList<Recommended<ProductDto>>> WithProductReasonsAsync(IReadOnlyList<Scored> ranked, CancellationToken ct)
+    {
+        var dtos = await products.GetManyAsync(ranked.Select(r => r.Id).ToList(), ct);
+        var sourceIds = ranked.Select(r => r.Reason?.SourceItemId).OfType<int>().Distinct().ToList();
+        var names = await db.Products.AsNoTracking().Where(p => sourceIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name, ct);
+        var byId = dtos.ToDictionary(d => d.Id);
+        return ranked.Where(r => byId.ContainsKey(r.Id))
+            .Select(r => new Recommended<ProductDto>(
+                byId[r.Id], ReasonText.Compose(r.Reason ?? Reason.Popular, SourceName(names, r.Reason), RecommendedKind.Product)))
+            .ToList();
+    }
+
+    private static string? SourceName(Dictionary<int, string> names, Reason? reason) =>
+        reason?.SourceItemId is { } id && names.TryGetValue(id, out var name) ? name : null;
     // ---------------------------------------------------------------- shared
 
     private async Task<List<Interaction>> ReviewInteractionsAsync(

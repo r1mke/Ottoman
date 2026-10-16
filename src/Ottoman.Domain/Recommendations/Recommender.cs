@@ -62,8 +62,27 @@ public sealed class ItemIndex
     public const double PriceBandWeight = 0.5;
 
     private readonly Dictionary<int, SparseVector> _vectors;
+    private readonly IReadOnlyDictionary<int, ItemFeatures> _features;
+    private readonly IReadOnlyDictionary<int, HashSet<string>> _tokens;
+    private readonly IReadOnlyDictionary<string, double> _idf;
+    private readonly IReadOnlyDictionary<int, int> _bands;
+    private readonly IReadOnlyDictionary<string, string> _display;
 
-    private ItemIndex(Dictionary<int, SparseVector> vectors) => _vectors = vectors;
+    private ItemIndex(
+        Dictionary<int, SparseVector> vectors,
+        IReadOnlyDictionary<int, ItemFeatures> features,
+        IReadOnlyDictionary<int, HashSet<string>> tokens,
+        IReadOnlyDictionary<string, double> idf,
+        IReadOnlyDictionary<int, int> bands,
+        IReadOnlyDictionary<string, string> display)
+    {
+        _vectors = vectors;
+        _features = features;
+        _tokens = tokens;
+        _idf = idf;
+        _bands = bands;
+        _display = display;
+    }
 
     public IReadOnlyDictionary<int, SparseVector> Vectors => _vectors;
 
@@ -100,7 +119,52 @@ public sealed class ItemIndex
 
             vectors[item.Id] = vector;
         }
-        return new ItemIndex(vectors);
+        var idfByToken = documentFrequency.ToDictionary(kv => kv.Key, kv => Math.Log((n + 1.0) / (kv.Value + 1.0)) + 1);
+        return new ItemIndex(
+            vectors,
+            items.ToDictionary(i => i.Id),
+            tokenized.ToDictionary(kv => kv.Key, kv => kv.Value.ToHashSet()),
+            idfByToken,
+            priceBands,
+            DisplayWords(items));
+    }
+
+    /// <summary>
+    /// What two items have in common: the same category or brand, the same price band, and the rarest words they share.
+    /// This is what the engine actually compared, so the explanation shown to the user is never invented.
+    /// </summary>
+    public Reason Explain(int sourceId, int candidateId, ReasonKind kind)
+    {
+        var s = _features[sourceId];
+        var c = _features[candidateId];
+        var words = _tokens[sourceId].Intersect(_tokens[candidateId])
+            .OrderByDescending(w => _idf[w]).ThenBy(w => w, StringComparer.Ordinal)
+            .Take(3).Select(w => _display.GetValueOrDefault(w, w)).ToList();
+        return new Reason(
+            kind,
+            sourceId,
+            SameKey(s.Category, c.Category) ? c.Category : null,
+            SameKey(s.Brand, c.Brand) ? c.Brand : null,
+            _bands.TryGetValue(sourceId, out var a) && _bands.TryGetValue(candidateId, out var b) && a == b,
+            words);
+    }
+
+    private static bool SameKey(string? a, string? b) =>
+        !string.IsNullOrWhiteSpace(a) && !string.IsNullOrWhiteSpace(b) && Key(a) == Key(b);
+
+    /// <summary>The word as people wrote it (with č, š, ž), for showing; matching always uses the stripped token.</summary>
+    private static Dictionary<string, string> DisplayWords(IReadOnlyList<ItemFeatures> items)
+    {
+        var map = new Dictionary<string, string>();
+        foreach (var item in items)
+        {
+            foreach (var raw in item.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                var tokens = TextNormalizer.Tokens(raw);
+                if (tokens.Count == 1) map.TryAdd(tokens[0], raw.Trim('.', ',', ';', ':', '!', '?', '(', ')', '"').ToLowerInvariant());
+            }
+        }
+        return map;
     }
 
     private static string Key(string s) => TextNormalizer.StripDiacritics(s).Trim().ToLowerInvariant();
@@ -117,7 +181,31 @@ public sealed class ItemIndex
     }
 }
 
-public sealed record Scored(int Id, double Score);
+public enum ReasonKind
+{
+    /// <summary>It resembles something the person bought, booked or rated well.</summary>
+    SimilarToInterest,
+
+    /// <summary>It resembles the item currently being looked at ("similar products").</summary>
+    SimilarToItem,
+
+    /// <summary>The person has no usable history yet, so this is what is popular in the salon.</summary>
+    Popular,
+}
+
+/// <summary>Why an item was recommended: which earlier item it resembles and what they share.</summary>
+public sealed record Reason(
+    ReasonKind Kind,
+    int? SourceItemId = null,
+    string? SharedCategory = null,
+    string? SharedBrand = null,
+    bool SamePriceBand = false,
+    IReadOnlyList<string>? SharedWords = null)
+{
+    public static Reason Popular { get; } = new(ReasonKind.Popular);
+}
+
+public sealed record Scored(int Id, double Score, Reason? Reason = null);
 
 public static class Recommender
 {
@@ -160,7 +248,7 @@ public static class Recommender
 
         var ranked = candidates
             .Where(id => !exclude.Contains(id) && index.Vectors.ContainsKey(id))
-            .Select(id => new Scored(id, profile.Cosine(index.Vectors[id])))
+            .Select(id => new Scored(id, profile.Cosine(index.Vectors[id]), ExplainFor(index, interactions, nowUtc, id)))
             .Where(s => s.Score > 1e-9)
             .OrderByDescending(s => s.Score).ThenBy(s => s.Id)
             .Take(count)
@@ -171,7 +259,24 @@ public static class Recommender
         return popular
             .Where(id => candidates.Contains(id) && !exclude.Contains(id))
             .Where(id => !index.Vectors.TryGetValue(id, out var v) || profile.Cosine(v) >= -1e-9)
-            .Take(count).Select(id => new Scored(id, 0)).ToList();
+            .Take(count).Select(id => new Scored(id, 0, Reason.Popular)).ToList();
+    }
+
+    /// <summary>
+    /// Names the earlier item that pulled this recommendation the most: the liked item with the largest
+    /// (weight x recency x similarity to the candidate). Disliked items never count as a reason.
+    /// </summary>
+    private static Reason ExplainFor(ItemIndex index, IReadOnlyCollection<Interaction> interactions, DateTime nowUtc, int candidateId)
+    {
+        var candidate = index.Vectors[candidateId];
+        var best = interactions
+            .Where(i => i.Weight > 0 && i.ItemId != candidateId && index.Vectors.ContainsKey(i.ItemId))
+            .Select(i => (i.ItemId, Pull: i.Weight * Decay(i.AtUtc, nowUtc) * candidate.Cosine(index.Vectors[i.ItemId])))
+            .Where(x => x.Pull > 1e-9)
+            .OrderByDescending(x => x.Pull).ThenBy(x => x.ItemId)
+            .Select(x => (int?)x.ItemId)
+            .FirstOrDefault();
+        return best is { } source ? index.Explain(source, candidateId, ReasonKind.SimilarToInterest) : Reason.Popular;
     }
 
     /// <summary>"Similar items": the nearest neighbours of one item, never the item itself.</summary>
@@ -180,7 +285,7 @@ public static class Recommender
         if (!index.Vectors.TryGetValue(itemId, out var anchor)) return [];
         return candidates
             .Where(id => id != itemId && index.Vectors.ContainsKey(id))
-            .Select(id => new Scored(id, anchor.Cosine(index.Vectors[id])))
+            .Select(id => new Scored(id, anchor.Cosine(index.Vectors[id]), index.Explain(itemId, id, ReasonKind.SimilarToItem)))
             .Where(s => s.Score > 1e-9)
             .OrderByDescending(s => s.Score).ThenBy(s => s.Id)
             .Take(count)

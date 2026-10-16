@@ -186,32 +186,56 @@ class ReviewsApi {
 }
 
 /// "You might like" lists and similar products.
+/// A suggestion together with the reason the server gives for it ("Jer ste kupili ..."). The reason is built from
+/// what the engine actually compared, so it can be shown as it is.
+class Recommended<T> {
+  const Recommended(this.item, {required this.reason, required this.kind});
+
+  final T item;
+
+  /// One sentence for the client.
+  final String reason;
+
+  /// SimilarToInterest, SimilarToItem or Popular.
+  final String kind;
+
+  factory Recommended.fromJson(
+    Map<String, dynamic> j,
+    T Function(Map<String, dynamic>) parse,
+  ) {
+    final reason = j['reason'] as Map<String, dynamic>;
+    return Recommended(
+      parse(j['item'] as Map<String, dynamic>),
+      reason: reason['text'] as String,
+      kind: reason['kind'] as String,
+    );
+  }
+}
+
 class RecommendationsApi {
   RecommendationsApi(this._api);
 
   final ApiClient _api;
 
-  Future<List<Product>> products({int count = 6}) async =>
-      (await _api.get<List<dynamic>>(
-        '/api/v1/recommendations/products',
-        query: {'count': count},
-      )).map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+  Future<List<Recommended<Product>>> products({int count = 6}) =>
+      _list('/api/v1/recommendations/products', count, Product.fromJson);
 
-  Future<List<Service>> services({int count = 6}) async =>
-      (await _api.get<List<dynamic>>(
-        '/api/v1/recommendations/services',
-        query: {'count': count},
-      )).map((e) => Service.fromJson(e as Map<String, dynamic>)).toList();
+  Future<List<Recommended<Service>>> services({int count = 6}) =>
+      _list('/api/v1/recommendations/services', count, Service.fromJson);
 
-  Future<List<Employee>> employees({int count = 4}) async =>
-      (await _api.get<List<dynamic>>(
-        '/api/v1/recommendations/employees',
-        query: {'count': count},
-      )).map((e) => Employee.fromJson(e as Map<String, dynamic>)).toList();
+  Future<List<Recommended<Employee>>> employees({int count = 4}) =>
+      _list('/api/v1/recommendations/employees', count, Employee.fromJson);
 
-  Future<List<Product>> relatedProducts(int productId, {int count = 4}) async =>
-      (await _api.get<List<dynamic>>(
-        '/api/v1/products/$productId/related',
-        query: {'count': count},
-      )).map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+  Future<List<Recommended<Product>>> relatedProducts(
+    int productId, {
+    int count = 4,
+  }) => _list('/api/v1/products/$productId/related', count, Product.fromJson);
+
+  Future<List<Recommended<T>>> _list<T>(
+    String path,
+    int count,
+    T Function(Map<String, dynamic>) parse,
+  ) async => (await _api.get<List<dynamic>>(path, query: {'count': count}))
+      .map((e) => Recommended.fromJson(e as Map<String, dynamic>, parse))
+      .toList();
 }

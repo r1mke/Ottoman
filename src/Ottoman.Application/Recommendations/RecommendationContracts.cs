@@ -6,16 +6,16 @@ namespace Ottoman.Application.Recommendations;
 
 /// <summary>
 /// Content-based recommendations ("you might like"). The same engine runs three times: over products, services and barbers.
-/// Everything returned is currently available (active, and in stock for products).
+/// Everything returned is currently available (active, and in stock for products) and carries the reason it was chosen.
 /// </summary>
 public interface IRecommendationService
 {
-    Task<IReadOnlyList<ProductDto>> ProductsAsync(string userId, int count, CancellationToken ct);
-    Task<IReadOnlyList<ServiceDto>> ServicesAsync(string userId, int count, CancellationToken ct);
-    Task<IReadOnlyList<EmployeeDto>> EmployeesAsync(string userId, int count, CancellationToken ct);
+    Task<IReadOnlyList<Recommended<ProductDto>>> ProductsAsync(string userId, int count, CancellationToken ct);
+    Task<IReadOnlyList<Recommended<ServiceDto>>> ServicesAsync(string userId, int count, CancellationToken ct);
+    Task<IReadOnlyList<Recommended<EmployeeDto>>> EmployeesAsync(string userId, int count, CancellationToken ct);
 
     /// <summary>"Similar products" for a detail page.</summary>
-    Task<IReadOnlyList<ProductDto>> RelatedProductsAsync(int productId, int count, CancellationToken ct);
+    Task<IReadOnlyList<Recommended<ProductDto>>> RelatedProductsAsync(int productId, int count, CancellationToken ct);
 }
 
 /// <summary>

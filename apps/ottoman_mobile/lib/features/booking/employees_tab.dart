@@ -36,9 +36,10 @@ class _EmployeesTabState extends State<EmployeesTab> {
   late final Future<Map<String, ReviewSummary>> _ratings = widget.reviews
       .summary(ReviewTarget.employee)
       .catchError((_) => <String, ReviewSummary>{});
-  late final Future<List<Employee>> _recommended = widget.recommendations
+  late final Future<List<Recommended<Employee>>> _recommended = widget
+      .recommendations
       .employees()
-      .catchError((_) => <Employee>[]);
+      .catchError((_) => <Recommended<Employee>>[]);
 
   void _open(BuildContext context, Employee employee) =>
       Navigator.of(context).push(
@@ -95,7 +96,7 @@ class _EmployeesTabState extends State<EmployeesTab> {
               ),
             ),
             SliverToBoxAdapter(
-              child: FutureBuilder<List<Employee>>(
+              child: FutureBuilder<List<Recommended<Employee>>>(
                 future: _recommended,
                 builder: (context, snap) {
                   final picks = snap.data;
@@ -114,22 +115,69 @@ class _EmployeesTabState extends State<EmployeesTab> {
                         ),
                       ),
                       SizedBox(
-                        height: 44,
+                        height: 104,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           children: [
-                            for (final e in picks)
+                            for (final pick in picks)
                               Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ActionChip(
-                                  key: Key('reco_employee_${e.id}'),
-                                  avatar: const Icon(
-                                    Icons.content_cut,
-                                    size: 16,
+                                padding: const EdgeInsets.only(right: 10),
+                                child: SizedBox(
+                                  width: 240,
+                                  child: Card(
+                                    key: Key('reco_employee_${pick.item.id}'),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      onTap: () => _open(context, pick.item),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.content_cut,
+                                                  size: 16,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Expanded(
+                                                  child: Text(
+                                                    pick.item.fullName,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              pick.reason,
+                                              key: Key(
+                                                'reco_reason_${pick.item.id}',
+                                              ),
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
+                                                fontSize: 12,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  label: Text(e.fullName),
-                                  onPressed: () => _open(context, e),
                                 ),
                               ),
                           ],
