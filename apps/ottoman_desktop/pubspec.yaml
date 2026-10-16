@@ -72,6 +72,13 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Manrope (SIL Open Font License, see assets/fonts/OFL.txt): the typeface of the desktop workspace look.
+  # One variable font file serves every weight.
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Variable.ttf
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

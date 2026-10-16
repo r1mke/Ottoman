@@ -30,3 +30,4 @@ export 'reports/date_range.dart';
 export 'widgets/network_picture.dart';
 export 'widgets/person_avatar.dart';
 export 'push/push_registration.dart';
+export 'theme/workspace_theme.dart';

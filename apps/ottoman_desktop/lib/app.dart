@@ -14,8 +14,7 @@ class OttomanDesktopApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       onGenerateTitle: (c) => AppLocalizations.of(c).appName,
-      theme: OttomanTheme.light(),
-      darkTheme: OttomanTheme.dark(),
+      theme: WorkspaceTheme.build(fontFamily: 'Manrope'),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
