@@ -13,7 +13,7 @@ public record EmployeeDto(
     string FullName,
     string Title,
     string? Bio,
-    string? PhotoKey,
+    string? PhotoUrl,
     bool IsActive,
     IReadOnlyList<int> ServiceIds,
     string? Email,

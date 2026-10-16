@@ -62,7 +62,7 @@ class _ProductsPageState extends State<ProductsPage> {
   });
 
   Future<void> _edit([Product? product]) async {
-    final saved = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       builder: (_) => ProductDialog(
         shop: widget.shop,
@@ -71,7 +71,7 @@ class _ProductsPageState extends State<ProductsPage> {
         product: product,
       ),
     );
-    if (saved == true) _refresh();
+    if (mounted) _refresh();
   }
 
   Future<void> _adjust(Product p) async {

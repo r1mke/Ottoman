@@ -76,7 +76,7 @@ void main() {
         'description': null,
         'price': 25,
         'durationMinutes': 30,
-        'imageKey': null,
+        'imageUrl': null,
         'isActive': true,
       },
     ]);
@@ -99,7 +99,7 @@ void main() {
           'fullName': 'Kerim Begić',
           'title': 'Master Barber',
           'bio': null,
-          'photoKey': null,
+          'photoUrl': null,
           'isActive': true,
           'serviceIds': [1, 2],
           'email': null,

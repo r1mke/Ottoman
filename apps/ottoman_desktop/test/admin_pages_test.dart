@@ -46,7 +46,7 @@ class _Recorder implements HttpClientAdapter {
           'description': null,
           'price': 25,
           'durationMinutes': 30,
-          'imageKey': null,
+          'imageUrl': null,
           'isActive': true,
         },
         {
@@ -55,7 +55,7 @@ class _Recorder implements HttpClientAdapter {
           'description': null,
           'price': 10,
           'durationMinutes': 15,
-          'imageKey': null,
+          'imageUrl': null,
           'isActive': false,
         },
       ];
@@ -67,7 +67,7 @@ class _Recorder implements HttpClientAdapter {
         'description': null,
         'price': 1,
         'durationMinutes': 5,
-        'imageKey': null,
+        'imageUrl': null,
         'isActive': true,
       };
     } else if (p.endsWith('/employees') && o.method == 'GET') {
@@ -79,7 +79,7 @@ class _Recorder implements HttpClientAdapter {
           'fullName': 'Kerim Begić',
           'title': 'Master Barber',
           'bio': null,
-          'photoKey': null,
+          'photoUrl': null,
           'isActive': true,
           'serviceIds': [1],
           'email': 'kerim@x.y',
@@ -94,7 +94,7 @@ class _Recorder implements HttpClientAdapter {
         'fullName': 'Kerim Begić',
         'title': 'Master Barber',
         'bio': null,
-        'photoKey': null,
+        'photoUrl': null,
         'isActive': true,
         'serviceIds': [1, 2],
         'email': null,

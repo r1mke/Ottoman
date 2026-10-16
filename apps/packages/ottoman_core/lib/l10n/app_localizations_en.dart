@@ -810,4 +810,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noDataForPeriod => 'No data for the selected period.';
+
+  @override
+  String get pictures => 'Pictures';
+
+  @override
+  String get addPicture => 'Add picture';
+
+  @override
+  String get changePicture => 'Change picture';
+
+  @override
+  String get removePicture => 'Remove picture';
+
+  @override
+  String get savePictureFirst =>
+      'Pictures can be added once the item is saved.';
 }

@@ -192,13 +192,10 @@ class _EmployeeCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
+              PersonAvatar(
                 radius: 40,
-                backgroundColor: scheme.surfaceContainerHighest,
-                child: Text(
-                  '${employee.firstName.characters.first}${employee.lastName.characters.first}',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
+                initials: employee.initials,
+                photoUrl: employee.photoUrl,
               ),
               const SizedBox(height: 12),
               Text(

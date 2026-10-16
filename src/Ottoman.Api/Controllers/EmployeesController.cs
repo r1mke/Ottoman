@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
+using Ottoman.Api.Filters;
 using Ottoman.Application.Employees;
+using Ottoman.Application.Images;
 using Ottoman.Application.Scheduling;
 using Ottoman.Domain;
 
@@ -10,7 +12,7 @@ namespace Ottoman.Api.Controllers;
 [ApiController]
 [Route("api/v1/employees")]
 [Authorize]
-public class EmployeesController(IEmployeeService employees, IAvailabilityService availability) : ControllerBase
+public class EmployeesController(IEmployeeService employees, IAvailabilityService availability, IImageAttachments images) : ControllerBase
 {
     private bool IsAdmin => User.IsInRole(Roles.Admin);
     private bool IsAdminOrSelf(string id) => IsAdmin || User.UserId() == id;
@@ -43,6 +45,26 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
     [Authorize(Policy = Policies.AdminOnly)]
     public async Task<ActionResult<EmployeeDto>> SetServices(string id, SetEmployeeServicesRequest request, CancellationToken ct) =>
         this.ToActionResult(await employees.SetServicesAsync(id, request.ServiceIds, ct));
+
+    [HttpPut("{id}/photo")]
+    [Authorize(Policy = Policies.AdminOnly)]
+    [RejectOversizedUpload]
+    [RequestSizeLimit(ImageUpload.RequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
+    public async Task<ActionResult<EmployeeDto>> SetPhoto(string id, IFormFile file, CancellationToken ct)
+    {
+        await using var stream = file.OpenReadStream();
+        var set = await images.SetEmployeePhotoAsync(id, stream, ct);
+        return this.ToActionResult(set.Succeeded ? await employees.GetAsync(id, true, ct) : set.As<EmployeeDto>());
+    }
+
+    [HttpDelete("{id}/photo")]
+    [Authorize(Policy = Policies.AdminOnly)]
+    public async Task<ActionResult<EmployeeDto>> ClearPhoto(string id, CancellationToken ct)
+    {
+        var cleared = await images.ClearEmployeePhotoAsync(id, ct);
+        return this.ToActionResult(cleared.Succeeded ? await employees.GetAsync(id, true, ct) : cleared.As<EmployeeDto>());
+    }
 
     // ----- schedule (admin, or the employee for their own)
 

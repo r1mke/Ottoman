@@ -86,6 +86,25 @@ class ShopApi {
   Future<void> deactivateProduct(int id) =>
       _api.delete<dynamic>('/api/v1/products/$id');
 
+  /// Adds a picture (JPEG, PNG or WebP, up to 5 MB). Admin only; returns the updated product.
+  Future<Product> addProductImage(
+    int id,
+    List<int> bytes,
+    String filename,
+  ) async => Product.fromJson(
+    await _api.post<Map<String, dynamic>>(
+      '/api/v1/products/$id/images',
+      body: imageForm(bytes, filename),
+    ),
+  );
+
+  Future<Product> removeProductImage(int id, int imageId) async =>
+      Product.fromJson(
+        await _api.delete<Map<String, dynamic>>(
+          '/api/v1/products/$id/images/$imageId',
+        ),
+      );
+
   // ---- brands & categories
 
   Future<List<Brand>> brands() async =>

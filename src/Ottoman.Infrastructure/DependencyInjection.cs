@@ -8,6 +8,7 @@ using Ottoman.Application.Catalog;
 using Ottoman.Application.Clients;
 using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
+using Ottoman.Application.Images;
 using Ottoman.Application.Notifications;
 using Ottoman.Application.Orders;
 using Ottoman.Application.Payments;
@@ -22,6 +23,7 @@ using Ottoman.Infrastructure.Auth;
 using Ottoman.Infrastructure.Catalog;
 using Ottoman.Infrastructure.Employees;
 using Ottoman.Infrastructure.Identity;
+using Ottoman.Infrastructure.Images;
 using Ottoman.Infrastructure.Notifications;
 using Ottoman.Infrastructure.Orders;
 using Ottoman.Infrastructure.Outbox;
@@ -99,6 +101,23 @@ public static class DependencyInjection
         else
         {
             services.AddHttpClient<IPaymentGateway, StripeGateway>(c => c.BaseAddress = StripeGateway.BaseAddress);
+        }
+        services.Configure<ImageOptions>(config.GetSection(ImageOptions.Section));
+        services.AddSingleton<ImageUrlBuilder>();
+        services.AddScoped<IImageAttachments, ImageAttachments>();
+        if (config.GetSection(ImageOptions.Section).Get<ImageOptions>() is { Configured: true })
+        {
+            services.AddHttpClient<IImageStore, CloudinaryImageStore>(c =>
+            {
+                c.BaseAddress = CloudinaryImageStore.BaseAddress;
+                c.Timeout = TimeSpan.FromSeconds(30);
+            });
+        }
+        else
+        {
+            // No Cloudinary account: pictures are accepted and validated but go nowhere.
+            services.AddSingleton<FakeImageStore>();
+            services.AddSingleton<IImageStore>(sp => sp.GetRequiredService<FakeImageStore>());
         }
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReviewService, ReviewService>();

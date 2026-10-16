@@ -9,7 +9,7 @@ public record ServiceDto(
     string? Description,
     decimal Price,
     int DurationMinutes,
-    string? ImageKey,
+    string? ImageUrl,
     bool IsActive);
 
 public record ServiceUpsertRequest(

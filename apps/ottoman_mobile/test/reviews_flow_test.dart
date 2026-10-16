@@ -14,7 +14,7 @@ const _employee = {
   'fullName': 'Kerim Begić',
   'title': 'Master Barber',
   'bio': null,
-  'photoKey': null,
+  'photoUrl': null,
   'isActive': true,
   'serviceIds': [1],
   'email': null,

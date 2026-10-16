@@ -6,7 +6,7 @@ class Service {
     required this.durationMinutes,
     required this.isActive,
     this.description,
-    this.imageKey,
+    this.imageUrl,
   });
 
   final int id;
@@ -14,7 +14,7 @@ class Service {
   final String? description;
   final double price;
   final int durationMinutes;
-  final String? imageKey;
+  final String? imageUrl;
   final bool isActive;
 
   factory Service.fromJson(Map<String, dynamic> j) => Service(
@@ -23,7 +23,7 @@ class Service {
     description: j['description'] as String?,
     price: (j['price'] as num).toDouble(),
     durationMinutes: j['durationMinutes'] as int,
-    imageKey: j['imageKey'] as String?,
+    imageUrl: j['imageUrl'] as String?,
     isActive: j['isActive'] as bool,
   );
 }
@@ -37,7 +37,7 @@ class Employee {
     required this.isActive,
     required this.serviceIds,
     this.bio,
-    this.photoKey,
+    this.photoUrl,
     this.email,
     this.phone,
   });
@@ -47,7 +47,7 @@ class Employee {
   final String lastName;
   final String title;
   final String? bio;
-  final String? photoKey;
+  final String? photoUrl;
   final bool isActive;
   final List<int> serviceIds;
   final String? email;
@@ -55,13 +55,17 @@ class Employee {
 
   String get fullName => '$firstName $lastName'.trim();
 
+  String get initials =>
+      '${firstName.isEmpty ? '' : firstName[0]}${lastName.isEmpty ? '' : lastName[0]}'
+          .toUpperCase();
+
   factory Employee.fromJson(Map<String, dynamic> j) => Employee(
     id: j['id'] as String,
     firstName: j['firstName'] as String,
     lastName: j['lastName'] as String,
     title: j['title'] as String,
     bio: j['bio'] as String?,
-    photoKey: j['photoKey'] as String?,
+    photoUrl: j['photoUrl'] as String?,
     isActive: j['isActive'] as bool,
     serviceIds: (j['serviceIds'] as List).cast<int>(),
     email: j['email'] as String?,

@@ -34,6 +34,8 @@ class Product {
     this.categoryId,
     this.categoryName,
     this.lowStockThreshold,
+    this.imageUrl,
+    this.images = const [],
   });
 
   final int id;
@@ -47,6 +49,8 @@ class Product {
   final int stock;
   final int? lowStockThreshold;
   final bool isLowStock;
+  final String? imageUrl;
+  final List<ProductImage> images;
   final bool isActive;
 
   bool get inStock => stock > 0;
@@ -64,6 +68,10 @@ class Product {
     lowStockThreshold: j['lowStockThreshold'] as int?,
     isLowStock: j['isLowStock'] as bool,
     isActive: j['isActive'] as bool,
+    imageUrl: j['imageUrl'] as String?,
+    images: ((j['images'] as List?) ?? const [])
+        .map((e) => ProductImage.fromJson(e as Map<String, dynamic>))
+        .toList(),
   );
 }
 
@@ -176,4 +184,14 @@ class ShopOrder {
         .toList(),
     paymentClientSecret: j['paymentClientSecret'] as String?,
   );
+}
+
+class ProductImage {
+  const ProductImage({required this.id, required this.url});
+
+  final int id;
+  final String url;
+
+  factory ProductImage.fromJson(Map<String, dynamic> j) =>
+      ProductImage(id: j['id'] as int, url: j['url'] as String);
 }

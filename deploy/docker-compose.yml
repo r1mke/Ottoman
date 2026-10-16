@@ -67,6 +67,9 @@ services:
       Payments__SecretKey: ${STRIPE_SECRET_KEY:-}
       Payments__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-}
       Payments__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME:-}
+      Cloudinary__ApiKey: ${CLOUDINARY_API_KEY:-}
+      Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET:-}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}

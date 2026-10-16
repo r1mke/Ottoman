@@ -140,3 +140,8 @@ class _AuthInterceptor extends Interceptor {
     handler.next(err);
   }
 }
+
+/// Multipart body for the image endpoints. The server decides the real type from the bytes.
+FormData imageForm(List<int> bytes, String filename) => FormData.fromMap({
+  'file': MultipartFile.fromBytes(bytes, filename: filename),
+});

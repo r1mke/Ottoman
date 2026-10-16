@@ -267,6 +267,11 @@
   "chooseFields": "Fields",
   "runReport": "Show report",
   "allStatusesOption": "All statuses",
-  "noDataForPeriod": "No data for the selected period."
+  "noDataForPeriod": "No data for the selected period.",
+  "pictures": "Pictures",
+  "addPicture": "Add picture",
+  "changePicture": "Change picture",
+  "removePicture": "Remove picture",
+  "savePictureFirst": "Pictures can be added once the item is saved."
 
 }

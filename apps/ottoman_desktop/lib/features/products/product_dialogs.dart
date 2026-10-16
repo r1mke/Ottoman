@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../images/picture_editor.dart';
+
 String _detail(AppException e) {
   final detail = e.errors.values.expand((x) => x).join('\n');
   return detail.isEmpty ? e.message : detail;
@@ -15,18 +17,24 @@ class ProductDialog extends StatefulWidget {
     required this.brands,
     required this.categories,
     this.product,
+    this.chooser = const FileImageChooser(),
   });
 
   final ShopApi shop;
   final List<Brand> brands;
   final List<Category> categories;
   final Product? product;
+  final ImageChooser chooser;
 
   @override
   State<ProductDialog> createState() => _ProductDialogState();
 }
 
 class _ProductDialogState extends State<ProductDialog> {
+  static List<EditablePicture> _pictures(Product p) => [
+    for (final i in p.images) EditablePicture(i.id, i.url),
+  ];
+
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.product?.name);
   late final _description = TextEditingController(
@@ -202,6 +210,36 @@ class _ProductDialogState extends State<ProductDialog> {
                   value: _active,
                   onChanged: (v) => setState(() => _active = v),
                 ),
+                const SizedBox(height: 8),
+                if (widget.product == null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      t.savePictureFirst,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  )
+                else
+                  PictureEditor(
+                    key: const Key('product_pictures'),
+                    chooser: widget.chooser,
+                    maxCount: 8,
+                    fallbackIcon: Icons.inventory_2_outlined,
+                    pictures: _pictures(widget.product!),
+                    onAdd: (img) async => _pictures(
+                      await widget.shop.addProductImage(
+                        widget.product!.id,
+                        img.bytes,
+                        img.name,
+                      ),
+                    ),
+                    onRemove: (p) async => _pictures(
+                      await widget.shop.removeProductImage(
+                        widget.product!.id,
+                        p.id as int,
+                      ),
+                    ),
+                  ),
                 if (_error != null)
                   Align(
                     alignment: Alignment.centerLeft,

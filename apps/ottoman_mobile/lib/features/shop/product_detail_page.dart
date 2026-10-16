@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 import '../reviews/reviews_section.dart';
+import 'product_gallery.dart';
 import 'recommended_row.dart';
 
 class ProductDetailPage extends StatelessWidget {
@@ -28,18 +29,7 @@ class ProductDetailPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              Icons.inventory_2_outlined,
-              size: 72,
-              color: scheme.outline,
-            ),
-          ),
+          ProductGallery(images: p.images),
           const SizedBox(height: 16),
           Text(
             p.name,

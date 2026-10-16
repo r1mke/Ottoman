@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
+using Ottoman.Api.Filters;
 using Ottoman.Application.Common;
+using Ottoman.Application.Images;
 using Ottoman.Application.Shop;
 using Ottoman.Domain;
 
@@ -10,7 +12,7 @@ namespace Ottoman.Api.Controllers;
 [ApiController]
 [Route("api/v1/products")]
 [Authorize]
-public class ProductsController(IProductCatalog catalog) : ControllerBase
+public class ProductsController(IProductCatalog catalog, IImageAttachments images) : ControllerBase
 {
     /// <summary>Catalogue with search, filters, sorting and paging. Inactive products and low-stock filtering are admin-only.</summary>
     [HttpGet]
@@ -60,6 +62,26 @@ public class ProductsController(IProductCatalog catalog) : ControllerBase
     [Authorize(Policy = Policies.AdminOnly)]
     public async Task<IActionResult> Deactivate(int id, CancellationToken ct) =>
         this.ToNoContent(await catalog.DeactivateAsync(id, ct));
+
+    [HttpPost("{id:int}/images")]
+    [Authorize(Policy = Policies.AdminOnly)]
+    [RejectOversizedUpload]
+    [RequestSizeLimit(ImageUpload.RequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
+    public async Task<ActionResult<ProductDto>> AddImage(int id, IFormFile file, CancellationToken ct)
+    {
+        await using var stream = file.OpenReadStream();
+        var added = await images.AddProductImageAsync(id, stream, ct);
+        return this.ToActionResult(added.Succeeded ? await catalog.GetAsync(id, true, ct) : added.As<ProductDto>());
+    }
+
+    [HttpDelete("{id:int}/images/{imageId:int}")]
+    [Authorize(Policy = Policies.AdminOnly)]
+    public async Task<ActionResult<ProductDto>> RemoveImage(int id, int imageId, CancellationToken ct)
+    {
+        var removed = await images.RemoveProductImageAsync(id, imageId, ct);
+        return this.ToActionResult(removed.Succeeded ? await catalog.GetAsync(id, true, ct) : removed.As<ProductDto>());
+    }
 }
 
 [ApiController]

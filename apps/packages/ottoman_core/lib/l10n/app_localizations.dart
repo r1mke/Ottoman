@@ -1663,6 +1663,36 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Nema podataka za odabrani period.'**
   String get noDataForPeriod;
+
+  /// No description provided for @pictures.
+  ///
+  /// In bs, this message translates to:
+  /// **'Slike'**
+  String get pictures;
+
+  /// No description provided for @addPicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodaj sliku'**
+  String get addPicture;
+
+  /// No description provided for @changePicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Promijeni sliku'**
+  String get changePicture;
+
+  /// No description provided for @removePicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloni sliku'**
+  String get removePicture;
+
+  /// No description provided for @savePictureFirst.
+  ///
+  /// In bs, this message translates to:
+  /// **'Slike se mogu dodati nakon što se stavka spremi.'**
+  String get savePictureFirst;
 }
 
 class _AppLocalizationsDelegate
