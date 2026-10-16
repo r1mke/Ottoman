@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Ottoman.Application.Auth;
 using Ottoman.Application.Common;
+using Ottoman.Application.Notifications;
 using Ottoman.Contracts;
 using Ottoman.Domain;
 using Ottoman.Domain.Entities;
@@ -17,6 +18,8 @@ public class AuthService(
     ITokenService tokens,
     IOutbox outbox,
     IOptions<JwtOptions> jwt,
+    IResetTokenVault vault,
+    IAccessGate gate,
     TimeProvider clock) : IAuthService
 {
     private const string GenericLoginError = "Neispravan email ili lozinka.";
@@ -97,7 +100,7 @@ public class AuthService(
         }
 
         await users.ResetAccessFailedCountAsync(user);
-        return AuthResult<AuthResponse>.Ok((await IssueAsync(user, ct)).Response);
+        return AuthResult<AuthResponse>.Ok((await IssueAsync(user, Guid.NewGuid(), ct)).Response);
     }
 
     // ----------------------------------------------------------------- refresh
@@ -123,7 +126,7 @@ public class AuthService(
         if (user is null || user.IsBlocked)
             return AuthResult<AuthResponse>.Fail(AuthFailure.InvalidToken, GenericTokenError);
 
-        var (response, newHash) = await IssueAsync(user, ct);
+        var (response, newHash) = await IssueAsync(user, stored.SessionId, ct);
 
         // Atomic single-use: only one concurrent refresh can flip RevokedUtc from NULL.
         var now = Now;
@@ -142,13 +145,22 @@ public class AuthService(
         return AuthResult<AuthResponse>.Ok(response);
     }
 
+    /// <summary>
+    /// Ends the whole sign-in on the server: the refresh token and, because the access token names its session, the
+    /// access token too. Signing out only on the phone would leave a copied token working for up to 15 minutes.
+    /// </summary>
     public async Task LogoutAsync(string refreshToken, CancellationToken ct)
     {
         var hash = tokens.Hash(refreshToken);
+        var session = await db.RefreshTokens.AsNoTracking().Where(t => t.TokenHash == hash)
+            .Select(t => new { t.SessionId, t.UserId }).FirstOrDefaultAsync(ct);
+        if (session is null) return;
+
         var now = Now;
         await db.RefreshTokens
-            .Where(t => t.TokenHash == hash && t.RevokedUtc == null)
+            .Where(t => t.SessionId == session.SessionId && t.RevokedUtc == null)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedUtc, now), ct);
+        gate.Invalidate(session.UserId);
     }
 
     // ---------------------------------------------------------- password reset
@@ -159,7 +171,7 @@ public class AuthService(
         if (user is null || user.IsBlocked) return;
 
         var token = await users.GeneratePasswordResetTokenAsync(user);
-        outbox.Enqueue(new PasswordResetRequested(user.Id, user.Email!, user.FullName, token));
+        outbox.Enqueue(new PasswordResetRequested(user.Id, user.Email!, user.FullName, vault.Seal(token)));
         await db.SaveChangesAsync(ct);
     }
 
@@ -215,10 +227,10 @@ public class AuthService(
 
     // ----------------------------------------------------------------- helpers
 
-    private async Task<(AuthResponse Response, string RefreshHash)> IssueAsync(AppUser user, CancellationToken ct)
+    private async Task<(AuthResponse Response, string RefreshHash)> IssueAsync(AppUser user, Guid sessionId, CancellationToken ct)
     {
         var dto = await ToDtoAsync(user);
-        var (access, expires) = tokens.CreateAccessToken(user.Id, user.Email!, dto.Roles);
+        var (access, expires) = tokens.CreateAccessToken(user.Id, user.Email!, dto.Roles, sessionId);
 
         var raw = tokens.CreateRefreshToken();
         var refreshHash = tokens.Hash(raw);
@@ -226,6 +238,7 @@ public class AuthService(
         {
             UserId = user.Id,
             TokenHash = refreshHash,
+            SessionId = sessionId,
             ExpiresUtc = Now.AddDays(jwt.Value.RefreshTokenDays),
         });
         await db.SaveChangesAsync(ct);
@@ -239,6 +252,7 @@ public class AuthService(
         await db.RefreshTokens
             .Where(t => t.UserId == userId && t.RevokedUtc == null)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedUtc, now), ct);
+        gate.Invalidate(userId);
     }
 
     private async Task<UserDto> ToDtoAsync(AppUser user) => new(

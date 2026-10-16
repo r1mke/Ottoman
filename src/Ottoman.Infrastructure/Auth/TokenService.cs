@@ -9,7 +9,7 @@ namespace Ottoman.Infrastructure.Auth;
 
 public interface ITokenService
 {
-    (string Token, DateTime ExpiresUtc) CreateAccessToken(string userId, string email, IEnumerable<string> roles);
+    (string Token, DateTime ExpiresUtc) CreateAccessToken(string userId, string email, IEnumerable<string> roles, Guid sessionId);
     string CreateRefreshToken();
     string Hash(string refreshToken);
 }
@@ -19,7 +19,7 @@ public class TokenService(IOptions<JwtOptions> options, TimeProvider clock) : IT
     private readonly JwtOptions _opt = options.Value;
     private readonly JsonWebTokenHandler _handler = new();
 
-    public (string Token, DateTime ExpiresUtc) CreateAccessToken(string userId, string email, IEnumerable<string> roles)
+    public (string Token, DateTime ExpiresUtc) CreateAccessToken(string userId, string email, IEnumerable<string> roles, Guid sessionId)
     {
         var now = clock.GetUtcNow().UtcDateTime;
         var expires = now.AddMinutes(_opt.AccessTokenMinutes);
@@ -29,6 +29,7 @@ public class TokenService(IOptions<JwtOptions> options, TimeProvider clock) : IT
             new(JwtRegisteredClaimNames.Sub, userId),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
+            new("sid", sessionId.ToString("N")),
         };
         claims.AddRange(roles.Select(r => new Claim("role", r)));
 

@@ -8,7 +8,7 @@ import 'push/firebase_push_client.dart';
 
 // 10.0.2.2 is the host machine as seen from the Android emulator.
 const _apiUrl = String.fromEnvironment(
-  'API_URL',
+  'API_BASE_URL',
   defaultValue: 'http://10.0.2.2:5080',
 );
 

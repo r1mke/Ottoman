@@ -134,10 +134,8 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
         return await GetAsync(id, true, ct);
     }
 
-    private Task<bool> ServicesExist(List<int> ids, CancellationToken ct) =>
-        ids.Count == 0
-            ? Task.FromResult(true)
-            : db.Services.CountAsync(s => ids.Contains(s.Id), ct).ContinueWith(t => t.Result == ids.Count, ct);
+    private async Task<bool> ServicesExist(List<int> ids, CancellationToken ct) =>
+        ids.Count == 0 || await db.Services.CountAsync(s => ids.Contains(s.Id), ct) == ids.Count;
 
     // ---------------------------------------------------------- working hours
 

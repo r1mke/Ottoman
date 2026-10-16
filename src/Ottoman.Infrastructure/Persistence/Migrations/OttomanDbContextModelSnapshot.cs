@@ -762,6 +762,9 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("RevokedUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -772,6 +775,8 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SessionId");
 
                     b.HasIndex("TokenHash")
                         .IsUnique();
@@ -1337,6 +1342,15 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.AuditEntry", b =>
+                {
+                    b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.DeviceToken", b =>
                 {
                     b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
@@ -1372,6 +1386,15 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.IdempotencyRecord", b =>
+                {
+                    b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Ottoman.Domain.Entities.Order", b =>

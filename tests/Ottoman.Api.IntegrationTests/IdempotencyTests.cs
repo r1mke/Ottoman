@@ -266,9 +266,10 @@ public class IdempotencyTests(ApiFixture api)
         await using var scope = api.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
         var marker = Guid.NewGuid().ToString("N");
+        var userId = (await api.CreateClient().LoginOk(ApiFixture.AdminEmail, ApiFixture.AdminPassword)).User.Id;
         IdempotencyRecord Record(string suffix, DateTime at) => new()
         {
-            UserId = "u",
+            UserId = userId,
             Key = $"{marker}-{suffix}",
             Route = "POST x",
             RequestHash = "h",

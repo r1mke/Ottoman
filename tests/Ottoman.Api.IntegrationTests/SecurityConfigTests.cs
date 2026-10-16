@@ -104,7 +104,7 @@ public class SecurityConfigTests(ApiFixture api)
         var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
         var payload = (await db.OutboxMessages.AsNoTracking().Where(m => m.Type == "PasswordResetRequested").OrderByDescending(m => m.Id)
             .Select(m => m.PayloadJson).Take(50).ToListAsync()).First(p => p.Contains(email));
-        var token = System.Text.Json.JsonDocument.Parse(payload).RootElement.GetProperty("Token").GetString()!;
+        var token = scope.ServiceProvider.GetRequiredService<Ottoman.Application.Notifications.IResetTokenVault>().Open(System.Text.Json.JsonDocument.Parse(payload).RootElement.GetProperty("SealedToken").GetString()!)!;
 
         var reset = await api.CreateClient().PostAsJsonAsync("/api/v1/auth/reset-password", new { email, token, newPassword = "N0va_Lozinka!" });
 
@@ -148,7 +148,7 @@ public class SecurityConfigTests(ApiFixture api)
         var payload = (await again.ServiceProvider.GetRequiredService<OttomanDbContext>().OutboxMessages.AsNoTracking()
             .Where(m => m.Type == "PasswordResetRequested").OrderByDescending(m => m.Id).Select(m => m.PayloadJson).Take(50).ToListAsync())
             .First(p => p.Contains(email));
-        var token = System.Text.Json.JsonDocument.Parse(payload).RootElement.GetProperty("Token").GetString()!;
+        var token = again.ServiceProvider.GetRequiredService<Ottoman.Application.Notifications.IResetTokenVault>().Open(System.Text.Json.JsonDocument.Parse(payload).RootElement.GetProperty("SealedToken").GetString()!)!;
         (await api.CreateClient().PostAsJsonAsync("/api/v1/auth/reset-password", new { email, token, newPassword = "N0va_Lozinka!" }))
             .StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -161,6 +161,50 @@ public class SecurityConfigTests(ApiFixture api)
         var removed = await scope.ServiceProvider.GetRequiredService<StoredKeyEncryption>().EnsureEncryptedAsync(default);
 
         removed.Should().Be(0);
+    }
+
+    [Fact]
+    public void A_sealed_reset_code_hides_the_code_and_opens_only_to_the_original()
+    {
+        var vault = api.Services.GetRequiredService<Ottoman.Application.Notifications.IResetTokenVault>();
+
+        var sealedValue = vault.Seal("CODE-ABC-123");
+
+        sealedValue.Should().NotContain("CODE-ABC-123");
+        vault.Open(sealedValue).Should().Be("CODE-ABC-123");
+        vault.Seal("CODE-ABC-123").Should().NotBe(sealedValue, "every sealing is different");
+        vault.Open(sealedValue + "x").Should().BeNull("a damaged value is refused, not thrown");
+        vault.Open("not a sealed value").Should().BeNull();
+        vault.Open("").Should().BeNull();
+    }
+
+    [Fact]
+    public async Task A_damaged_sealed_code_sends_no_mail_and_does_not_fail_the_event()
+    {
+        var (email, _) = await api.CreateClient().NewClient();
+        var mail = api.Services.GetRequiredService<FakeEmailSender>();
+        var before = mail.Sent.Count;
+        long id;
+        await using (var scope = api.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
+            var m = new Ottoman.Domain.Entities.OutboxMessage
+            {
+                Type = "PasswordResetRequested",
+                PayloadJson = System.Text.Json.JsonSerializer.Serialize(
+                    new Ottoman.Contracts.PasswordResetRequested("u", email, "Ana Anić", "garbage")),
+                CreatedAtUtc = DateTime.UtcNow,
+            };
+            db.OutboxMessages.Add(m);
+            await db.SaveChangesAsync();
+            id = m.Id;
+        }
+
+        await using var again = api.Services.CreateAsyncScope();
+        await again.ServiceProvider.GetRequiredService<Ottoman.Infrastructure.Notifications.EventProcessor>()
+            .ProcessAsync(id, "PasswordResetRequested", (await again.ServiceProvider.GetRequiredService<OttomanDbContext>().OutboxMessages.FindAsync(id))!.PayloadJson, default);
+
+        mail.Sent.Count.Should().Be(before);
     }
 
     [Fact]

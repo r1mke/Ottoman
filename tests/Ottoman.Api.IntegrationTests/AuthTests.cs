@@ -242,7 +242,8 @@ public class AuthTests(ApiFixture api)
             var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
             var msg = await db.OutboxMessages.Where(m => m.Type == nameof(PasswordResetRequested) && m.PayloadJson.Contains(email))
                 .OrderByDescending(m => m.Id).FirstAsync();
-            token = System.Text.Json.JsonSerializer.Deserialize<PasswordResetRequested>(msg.PayloadJson)!.Token;
+            var sealedToken = System.Text.Json.JsonSerializer.Deserialize<PasswordResetRequested>(msg.PayloadJson)!.SealedToken;
+            token = scope.ServiceProvider.GetRequiredService<Ottoman.Application.Notifications.IResetTokenVault>().Open(sealedToken)!;
         }
 
         const string newPassword = "Brand_New_Pass1!";

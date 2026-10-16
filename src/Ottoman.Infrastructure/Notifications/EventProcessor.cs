@@ -23,6 +23,7 @@ public class EventProcessor(
     OttomanDbContext db,
     IEmailSender email,
     IPushSender push,
+    IResetTokenVault vault,
     TimeProvider clock,
     ILogger<EventProcessor> log)
 {
@@ -68,7 +69,16 @@ public class EventProcessor(
             case nameof(RegistrationAttemptedForExistingAccount):
                 return MessageComposer.ExistingAccountAttempt(Read<RegistrationAttemptedForExistingAccount>(json));
             case nameof(PasswordResetRequested):
-                return MessageComposer.PasswordReset(Read<PasswordResetRequested>(json));
+                {
+                    var e = Read<PasswordResetRequested>(json);
+                    var token = vault.Open(e.SealedToken);
+                    if (token is null)
+                    {
+                        log.LogWarning("The sealed reset code of event {Type} has expired or is damaged; no mail is sent", type);
+                        return [];
+                    }
+                    return MessageComposer.PasswordReset(e, token);
+                }
 
             case nameof(ReservationCreated):
                 {

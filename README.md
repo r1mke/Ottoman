@@ -32,7 +32,7 @@ U `deploy/.env` postavite `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` i `STRIP
 ```bash
 cd apps/ottoman_desktop && flutter run -d windows
 cd apps/ottoman_mobile  && flutter run                 # emulator: API na http://10.0.2.2:5080
-cd apps/ottoman_mobile  && flutter run --dart-define=API_URL=http://<IP računara>:5080   # pravi telefon
+cd apps/ottoman_mobile  && flutter run --dart-define=API_BASE_URL=http://<IP računara>:5080   # pravi telefon
 cd apps/ottoman_mobile  && flutter build apk --debug   # apps/ottoman_mobile/build/app/outputs/flutter-apk/app-debug.apk
 ```
 

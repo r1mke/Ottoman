@@ -95,7 +95,7 @@ public class MessageComposerTests
     [Fact]
     public void The_reset_mail_carries_the_token()
     {
-        var m = MessageComposer.PasswordReset(new PasswordResetRequested("c1", "ana@x.ba", "Ana", "TOKEN-123")).Single();
+        var m = MessageComposer.PasswordReset(new PasswordResetRequested("c1", "ana@x.ba", "Ana", "sealed-value"), "TOKEN-123").Single();
         m.Body.Should().Contain("TOKEN-123");
         m.InApp.Should().BeFalse("a password token must never sit in an inbox");
     }

@@ -2,7 +2,7 @@ name: ottoman
 
 services:
   sql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-CU27-ubuntu-22.04
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
@@ -20,7 +20,7 @@ services:
       start_period: 30s
 
   rabbitmq:
-    image: rabbitmq:4-management
+    image: rabbitmq:4.3.6-management
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?set RABBITMQ_USER in deploy/.env}
@@ -37,7 +37,7 @@ services:
 
   # Local SMTP inbox for development. Open http://localhost:8025
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit:v1.31
     restart: unless-stopped
     ports:
       - "8025:8025"
@@ -55,7 +55,7 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      ConnectionStrings__Default: Server=sql;Database=Ottoman;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      ConnectionStrings__Default: Server=sql;Database=220048;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in deploy/.env (min 32 chars)}
       Jwt__Issuer: ${JWT_ISSUER:-ottoman}
       Jwt__Audience: ${JWT_AUDIENCE:-ottoman-clients}
@@ -101,7 +101,7 @@ services:
         condition: service_healthy
     environment:
       DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      ConnectionStrings__Default: Server=sql;Database=Ottoman;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      ConnectionStrings__Default: Server=sql;Database=220048;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in deploy/.env (min 32 chars)}
       Payments__SecretKey: ${STRIPE_SECRET_KEY:-}
       Payments__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-}

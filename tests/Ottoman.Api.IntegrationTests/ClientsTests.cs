@@ -137,7 +137,7 @@ public class ClientsTests(ApiFixture api)
     // ---------------------------------------------------------------- blocking
 
     [Fact]
-    public async Task Blocking_cuts_off_a_signed_in_client_immediately_and_unblocking_restores_access()
+    public async Task Blocking_cuts_off_a_signed_in_client_immediately_and_unblocking_lets_them_sign_in_again()
     {
         var (email, id, client) = await NewClient();
         var admin = await Admin();
@@ -155,7 +155,8 @@ public class ClientsTests(ApiFixture api)
         var unblocked = await admin.PostAsync($"/api/v1/clients/{id}/unblock", null);
 
         unblocked.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await client.GetAsync("/api/v1/notifications/unread-count")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await client.GetAsync("/api/v1/notifications/unread-count")).StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+            "blocking ended that sign-in for good; unblocking lets the person sign in again, not the old token");
         (await api.CreateClient().PostAsJsonAsync("/api/v1/auth/login", new { email, password = TestClient.StrongPassword }))
             .StatusCode.Should().Be(HttpStatusCode.OK);
     }

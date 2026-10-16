@@ -172,10 +172,11 @@ public class AuditTests(ApiFixture api)
         var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
         var now = clock.GetUtcNow().UtcDateTime;
         var marker = $"Purge.{Guid.NewGuid():N}";
+        var userId = (await api.CreateClient().LoginOk(ApiFixture.AdminEmail, ApiFixture.AdminPassword)).User.Id;
         AuditEntry Entry(string action, DateTime at) => new()
         {
             AtUtc = at,
-            UserId = "u",
+            UserId = userId,
             UserName = "n",
             Role = "Admin",
             Method = "POST",

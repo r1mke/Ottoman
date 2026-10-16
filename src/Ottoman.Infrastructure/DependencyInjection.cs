@@ -74,6 +74,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<OttomanDbContext>()
             .AddTokenProvider<DataProtectorTokenProvider<AppUser>>(TokenOptions.DefaultProvider);
         services.AddScoped<StoredKeyEncryption>();
+        services.AddSingleton<IResetTokenVault, ResetTokenVault>();
         services.AddDataProtection().SetApplicationName("Ottoman")
             .PersistKeysToDbContext<OttomanDbContext>()
             .ProtectKeysWithConfiguredSecret(config.GetSection(KeyEncryptionOptions.Section).Get<KeyEncryptionOptions>() ?? new());

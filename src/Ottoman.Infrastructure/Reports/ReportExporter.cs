@@ -136,7 +136,7 @@ public class ReportExporter : IReportExporter
             {
                 col.Item().Text("OTTOMAN").Bold().FontSize(11).LetterSpacing(0.2f);
                 col.Item().PaddingTop(2).Text(table.Title).Bold().FontSize(15);
-                col.Item().PaddingBottom(8).Text($"Izrađeno {DateTime.Now:dd.MM.yyyy. HH:mm}").FontSize(8).FontColor(Colors.Grey.Darken1);
+                col.Item().PaddingBottom(8).Text($"Izrađeno {DateTime.UtcNow:dd.MM.yyyy. HH:mm} UTC").FontSize(8).FontColor(Colors.Grey.Darken1);
             });
 
             page.Content().Table(t =>

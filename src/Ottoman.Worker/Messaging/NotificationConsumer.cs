@@ -70,7 +70,8 @@ public sealed class NotificationConsumer(
         }
 
         log.LogWarning(ex, "Event {Type} failed (attempt {Attempts}/{Max}); retrying", type, attempts, MaxAttempts);
-        await Task.Delay(TimeSpan.FromSeconds(attempts * 2), ct);
+        // Exponential backoff: 1 s, 2 s, 4 s, 8 s between the five attempts.
+        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempts - 1)), ct);
 
         var props = new BasicProperties
         {

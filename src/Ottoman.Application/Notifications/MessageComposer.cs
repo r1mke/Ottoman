@@ -46,11 +46,11 @@ public static class MessageComposer
             "RegistrationAttempt", Email: e.Email, InApp: false),
     ];
 
-    public static IReadOnlyList<Message> PasswordReset(PasswordResetRequested e) =>
+    public static IReadOnlyList<Message> PasswordReset(PasswordResetRequested e, string token) =>
     [
         new("Resetovanje lozinke",
             $"Zdravo {e.FullName},\nprimili smo zahtjev za novu lozinku. U aplikaciji odaberite „Zaboravljena lozinka“ → „Imam kod“ " +
-            $"i zalijepite ovaj kod:\n\n{e.Token}\n\nAko niste tražili promjenu, ignorišite ovu poruku.",
+            $"i zalijepite ovaj kod:\n\n{token}\n\nAko niste tražili promjenu, ignorišite ovu poruku.",
             "PasswordReset", UserId: e.UserId, InApp: false),
     ];
 

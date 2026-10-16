@@ -4,7 +4,7 @@ import 'package:ottoman_core/ottoman_core.dart';
 import 'app.dart';
 
 const _apiUrl = String.fromEnvironment(
-  'API_URL',
+  'API_BASE_URL',
   defaultValue: 'http://localhost:5080',
 );
 

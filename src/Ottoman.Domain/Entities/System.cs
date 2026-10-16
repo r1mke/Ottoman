@@ -22,6 +22,9 @@ public class RefreshToken
     public DateTime ExpiresUtc { get; set; }
     public DateTime? RevokedUtc { get; set; }
     public string? ReplacedByHash { get; set; }
+
+    /// <summary>One sign-in. Rotating the refresh token keeps it; the access token carries it, so signing out can end it.</summary>
+    public Guid SessionId { get; set; }
 }
 
 /// <summary>Transactional outbox: written with the business change, dispatched to RabbitMQ by the worker.</summary>

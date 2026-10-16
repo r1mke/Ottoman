@@ -306,7 +306,9 @@ public class NotificationTests(ApiFixture api)
         await Process(evt);
 
         var mail = Mail.Sent.Single(m => m.To == email && m.Subject == "Resetovanje lozinke");
-        var token = JsonDocument.Parse(evt.PayloadJson).RootElement.GetProperty("Token").GetString()!;
+        var sealedToken = JsonDocument.Parse(evt.PayloadJson).RootElement.GetProperty("SealedToken").GetString()!;
+        var token = api.Services.GetRequiredService<Ottoman.Application.Notifications.IResetTokenVault>().Open(sealedToken)!;
+        evt.PayloadJson.Should().NotContain(token, "the reset code must not sit in the outbox as plain text");
         mail.Text.Should().Contain(token);
         (await Inbox(client)).Should().BeEmpty();
         _ = clientId;

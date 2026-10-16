@@ -11,7 +11,8 @@ public record UserRegistered(string UserId, string Email, string FullName);
 /// <summary>Someone tried to register with an email that already has an account.</summary>
 public record RegistrationAttemptedForExistingAccount(string Email, string FullName);
 
-public record PasswordResetRequested(string UserId, string Email, string FullName, string Token);
+/// <summary>The reset code travels sealed (see IResetTokenVault): it is never stored in the outbox as plain text.</summary>
+public record PasswordResetRequested(string UserId, string Email, string FullName, string SealedToken);
 
 public record ReservationCreated(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, DateTime EndUtc, decimal TotalPrice);
 

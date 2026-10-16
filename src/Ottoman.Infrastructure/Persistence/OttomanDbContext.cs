@@ -187,6 +187,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.Key).HasMaxLength(64);
             e.Property(x => x.Route).HasMaxLength(200);
             e.Property(x => x.RequestHash).HasMaxLength(64);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.Property(x => x.ContentType).HasMaxLength(100);
             e.HasIndex(x => new { x.UserId, x.Key }).IsUnique();
             e.HasIndex(x => x.CreatedAtUtc);
@@ -202,6 +203,8 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.Route).HasMaxLength(200);
             e.Property(x => x.Target).HasMaxLength(200);
             e.Property(x => x.Ip).HasMaxLength(64);
+            // History must not vanish with an account, so deleting a user who has audit lines is refused.
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.AtUtc);
             e.HasIndex(x => new { x.UserId, x.AtUtc });
         });
@@ -252,6 +255,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
         {
             e.Property(x => x.TokenHash).HasMaxLength(128);
             e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasIndex(x => x.SessionId);
             e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 

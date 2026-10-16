@@ -88,8 +88,9 @@ public static class AuthSetup
                     {
                         var userId = context.Principal?.FindFirstValue("sub");
                         var gate = context.HttpContext.RequestServices.GetRequiredService<IAccessGate>();
-                        if (userId is null || !await gate.IsAllowedAsync(userId, context.HttpContext.RequestAborted))
-                            context.Fail("The account is blocked or no longer exists.");
+                        var hasSession = Guid.TryParseExact(context.Principal?.FindFirstValue("sid"), "N", out var sessionId);
+                        if (userId is null || !hasSession || !await gate.IsAllowedAsync(userId, sessionId, context.HttpContext.RequestAborted))
+                            context.Fail("The account is blocked, or this sign-in has ended.");
                     },
                 };
             });
