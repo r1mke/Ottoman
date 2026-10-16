@@ -24,6 +24,7 @@ builder.Services.AddScoped<Ottoman.Infrastructure.Notifications.EventProcessor>(
 builder.Services.AddHostedService<OutboxDispatcher>();
 builder.Services.AddHostedService<NotificationConsumer>();
 builder.Services.AddHostedService<ReminderScheduler>();
+builder.Services.AddHostedService<OutboxCleanupScheduler>();
 builder.Services.AddHostedService<OrderExpiryService>();
 builder.Services.AddHostedService<HeartbeatService>();
 

@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Ottoman.Api.Auth;
 using Ottoman.Api.Filters;
 using Ottoman.Application;
+using Ottoman.Application.Common;
 using Ottoman.Infrastructure;
 using Ottoman.Infrastructure.Persistence;
 using Ottoman.Infrastructure.Seeding;
@@ -14,6 +16,31 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // A production instance must not start with example secrets or demo accounts.
+    var problems = StartupGuards.Problems(
+        builder.Environment.IsDevelopment(),
+        builder.Configuration["Jwt:SigningKey"],
+        builder.Configuration.GetValue<bool>("Seed:DemoData"),
+        builder.Configuration["Seed:AdminPassword"]);
+    if (problems.Count > 0)
+        throw new InvalidOperationException(
+            "Unsafe configuration:" + Environment.NewLine + " - " + string.Join(Environment.NewLine + " - ", problems));
+
+    // No endpoint takes a large body (no uploads yet); a small cap blunts cheap memory abuse.
+    builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 1_000_000);
+
+    // Behind a reverse proxy every request would otherwise look like it comes from the proxy, which would make
+    // the per-IP rate limits useless. Only proxies listed in config are trusted to set X-Forwarded-For.
+    var trustedProxies = builder.Configuration.GetSection("Proxy:KnownProxies").Get<string[]>() ?? [];
+    builder.Services.Configure<ForwardedHeadersOptions>(o =>
+    {
+        o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        o.ForwardLimit = 1;
+        o.KnownIPNetworks.Clear();
+        o.KnownProxies.Clear();
+        foreach (var p in trustedProxies) o.KnownProxies.Add(System.Net.IPAddress.Parse(p));
+    });
+
     builder.Host.UseSerilog((ctx, cfg) => cfg
         .ReadFrom.Configuration(ctx.Configuration)
         .Enrich.FromLogContext()
@@ -24,6 +51,7 @@ try
     builder.Services.AddOttomanAuth(builder.Configuration);
     builder.Services.AddControllers(o => o.Filters.Add<ValidationFilter>());
     builder.Services.AddOpenApi();
+    builder.Services.AddExceptionHandler<HttpExceptionHandler>();
     builder.Services.AddProblemDetails();
     builder.Services.AddHealthChecks()
         .AddSqlServer(
@@ -32,6 +60,19 @@ try
             tags: ["ready"]);
 
     var app = builder.Build();
+
+    if (trustedProxies.Length > 0) app.UseForwardedHeaders();
+    if (!app.Environment.IsDevelopment()) app.UseHsts();
+
+    app.Use(async (ctx, next) =>
+    {
+        // A JSON API: nothing here should be sniffed as HTML, framed, cached with credentials, or leak the URL on navigation.
+        ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        ctx.Response.Headers["Referrer-Policy"] = "no-referrer";
+        ctx.Response.Headers["X-Frame-Options"] = "DENY";
+        ctx.Response.Headers["Cache-Control"] = "no-store";
+        await next();
+    });
 
     app.UseSerilogRequestLogging();
     app.UseExceptionHandler();
@@ -47,17 +88,18 @@ try
 
     if (app.Environment.IsDevelopment())
     {
-        app.MapOpenApi();
-        app.MapScalarApiReference();
+        app.MapOpenApi().AllowAnonymous();
+        app.MapScalarApiReference().AllowAnonymous();
     }
 
-    app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
+    // After authentication, so the general write limit can count per signed-in user instead of per address.
+    app.UseRateLimiter();
 
     app.MapControllers();
-    app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
-    app.MapHealthChecks("/health/ready", new() { Predicate = r => r.Tags.Contains("ready") });
+    app.MapHealthChecks("/health/live", new() { Predicate = _ => false }).AllowAnonymous();
+    app.MapHealthChecks("/health/ready", new() { Predicate = r => r.Tags.Contains("ready") }).AllowAnonymous();
 
     app.Run();
 }
