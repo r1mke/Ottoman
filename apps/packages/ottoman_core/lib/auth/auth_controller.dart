@@ -81,6 +81,16 @@ class AuthController extends ChangeNotifier {
   Future<void> forgotPassword(String email) =>
       api.post<dynamic>('/api/v1/auth/forgot-password', body: {'email': email});
 
+  /// Finishes a password reset with the code from the e-mail.
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) => api.post<dynamic>(
+    '/api/v1/auth/reset-password',
+    body: {'email': email, 'token': token, 'newPassword': newPassword},
+  );
+
   Future<void> logout() async {
     final refresh = await storage.readRefreshToken();
     if (refresh != null) {

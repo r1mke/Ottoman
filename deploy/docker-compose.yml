@@ -85,12 +85,21 @@ services:
       dockerfile: deploy/Worker.Dockerfile
     restart: unless-stopped
     depends_on:
+      sql:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       mailpit:
         condition: service_started
+      # The API applies migrations on start; the worker must not query a schema that does not exist yet.
+      api:
+        condition: service_healthy
     environment:
       DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__Default: Server=sql;Database=Ottoman;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in deploy/.env (min 32 chars)}
+      Payments__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Payments__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}

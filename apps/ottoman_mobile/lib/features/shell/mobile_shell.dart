@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 import '../booking/employees_tab.dart';
+import '../notifications/notifications_page.dart';
 import '../profile/profile_page.dart';
 import '../reservations/employee_schedule_tab.dart';
 import '../reservations/my_reservations_tab.dart';
@@ -50,25 +53,42 @@ class _MobileShellState extends State<MobileShell> {
       widget.catalogOverride ?? CatalogApi(widget.auth.api);
   late final ReservationsApi _reservations = ReservationsApi(widget.auth.api);
   late final ShopApi _shop = widget.shopOverride ?? ShopApi(widget.auth.api);
+  late final NotificationsApi _notifications = NotificationsApi(
+    widget.auth.api,
+  );
+  int _unread = 0;
+  Timer? _poll;
   final CartController _cart = CartController();
 
   @override
   void initState() {
     super.initState();
+    _refreshUnread();
+    _poll = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => _refreshUnread(),
+    );
     // Cards show up once the server has said it can take them.
     widget.cardPayment.prepare().then((_) {
       if (mounted) setState(() {});
     });
   }
 
+  Future<void> _refreshUnread() async {
+    try {
+      final n = await _notifications.unreadCount();
+      if (mounted && n != _unread) setState(() => _unread = n);
+    } on Object {
+      // The badge is a convenience; a failed poll just keeps the old number.
+    }
+  }
+
   @override
   void dispose() {
+    _poll?.cancel();
     _cart.dispose();
     super.dispose();
   }
-
-  Widget _soon(IconData icon, AppLocalizations t) =>
-      EmptyState(icon: icon, message: t.comingSoon);
 
   List<_Tab> _tabs(AppLocalizations t) {
     if (widget.auth.user!.isEmployee) {
@@ -87,7 +107,11 @@ class _MobileShellState extends State<MobileShell> {
         _Tab(
           Icons.notifications_outlined,
           (t) => t.notifications,
-          () => _soon(Icons.notifications_outlined, t),
+          () => NotificationsPage(
+            api: _notifications,
+            embedded: true,
+            onChanged: _refreshUnread,
+          ),
         ),
         _Tab(
           Icons.person_outline,
@@ -141,7 +165,31 @@ class _MobileShellState extends State<MobileShell> {
     final tab = tabs[index];
 
     return Scaffold(
-      appBar: AppBar(title: Text(tab.label(t))),
+      appBar: AppBar(
+        title: Text(tab.label(t)),
+        actions: [
+          IconButton(
+            key: const Key('open_notifications'),
+            tooltip: t.notifications,
+            icon: Badge(
+              isLabelVisible: _unread > 0,
+              label: Text('$_unread'),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => NotificationsPage(
+                    api: _notifications,
+                    onChanged: _refreshUnread,
+                  ),
+                ),
+              );
+              _refreshUnread();
+            },
+          ),
+        ],
+      ),
       body: tab.body(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,

@@ -542,4 +542,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get none => 'None';
+
+  @override
+  String get noNotifications => 'No notifications';
+
+  @override
+  String get markAllRead => 'Mark all as read';
+
+  @override
+  String get audienceAll => 'Everyone';
+
+  @override
+  String get audienceClients => 'Clients';
+
+  @override
+  String get audienceEmployees => 'Employees';
+
+  @override
+  String get audienceUser => 'One user';
+
+  @override
+  String get audience => 'Audience';
+
+  @override
+  String get messageTitle => 'Title';
+
+  @override
+  String get messageBody => 'Message';
+
+  @override
+  String get alsoSendEmail => 'Also send by email';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get announcementSent => 'Message sent.';
+
+  @override
+  String get sentMessages => 'Sent messages';
+
+  @override
+  String recipientsCount(int count) {
+    return '$count recipients';
+  }
+
+  @override
+  String get newMessage => 'New message';
+
+  @override
+  String get haveCode => 'I have a code';
+
+  @override
+  String get resetCode => 'Code from the email';
+
+  @override
+  String get newPassword => 'New password';
+
+  @override
+  String get passwordChanged => 'Password changed. Please sign in.';
+
+  @override
+  String get resetFailed => 'The code is wrong or has expired.';
+
+  @override
+  String get close => 'Close';
 }

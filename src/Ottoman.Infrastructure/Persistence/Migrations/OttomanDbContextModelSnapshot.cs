@@ -174,6 +174,52 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.Announcement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RecipientCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("SendEmail")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TargetUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.ToTable("Announcements");
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.Brand", b =>
                 {
                     b.Property<int>("Id")
@@ -454,6 +500,19 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.ToTable("Payments");
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.ProcessedEvent", b =>
+                {
+                    b.Property<long>("OutboxMessageId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("ProcessedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("OutboxMessageId");
+
+                    b.ToTable("ProcessedEvents");
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -673,6 +732,33 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.ToTable("ReservationItems");
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.ReservationReminder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReservationId", "Kind")
+                        .IsUnique();
+
+                    b.ToTable("ReservationReminders");
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.ReservationSlot", b =>
                 {
                     b.Property<int>("Id")
@@ -814,6 +900,51 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.HasIndex("EmployeeId", "StartUtc");
 
                     b.ToTable("TimeOff");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.UserNotification", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("AnnouncementId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnnouncementId");
+
+                    b.HasIndex("UserId", "ReadAtUtc", "CreatedAtUtc");
+
+                    b.ToTable("UserNotifications");
                 });
 
             modelBuilder.Entity("Ottoman.Domain.Entities.WorkingHours", b =>
@@ -985,6 +1116,15 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.Announcement", b =>
+                {
+                    b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.EmployeeProfile", b =>
                 {
                     b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
@@ -1112,6 +1252,15 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.ReservationReminder", b =>
+                {
+                    b.HasOne("Ottoman.Domain.Entities.Reservation", null)
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.ReservationSlot", b =>
                 {
                     b.HasOne("Ottoman.Domain.Entities.Reservation", null)
@@ -1126,6 +1275,20 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.HasOne("Ottoman.Domain.Entities.EmployeeProfile", null)
                         .WithMany("TimeOff")
                         .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.UserNotification", b =>
+                {
+                    b.HasOne("Ottoman.Domain.Entities.Announcement", null)
+                        .WithMany()
+                        .HasForeignKey("AnnouncementId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

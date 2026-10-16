@@ -8,6 +8,7 @@ using Ottoman.Application.Catalog;
 using Ottoman.Application.Clients;
 using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
+using Ottoman.Application.Notifications;
 using Ottoman.Application.Orders;
 using Ottoman.Application.Payments;
 using Ottoman.Application.Reservations;
@@ -18,6 +19,7 @@ using Ottoman.Infrastructure.Auth;
 using Ottoman.Infrastructure.Catalog;
 using Ottoman.Infrastructure.Employees;
 using Ottoman.Infrastructure.Identity;
+using Ottoman.Infrastructure.Notifications;
 using Ottoman.Infrastructure.Orders;
 using Ottoman.Infrastructure.Outbox;
 using Ottoman.Infrastructure.Payments;
@@ -87,7 +89,8 @@ public static class DependencyInjection
         {
             services.AddHttpClient<IPaymentGateway, StripeGateway>(c => c.BaseAddress = StripeGateway.BaseAddress);
         }
-        services.AddHostedService<OrderExpiryService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<ReminderService>();
 
         services.Configure<SeedOptions>(config.GetSection(SeedOptions.Section));
         services.AddScoped<DatabaseSeeder>();

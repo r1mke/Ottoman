@@ -541,4 +541,69 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get none => 'Bez';
+
+  @override
+  String get noNotifications => 'Nema obavijesti';
+
+  @override
+  String get markAllRead => 'Označi sve kao pročitano';
+
+  @override
+  String get audienceAll => 'Svi';
+
+  @override
+  String get audienceClients => 'Klijenti';
+
+  @override
+  String get audienceEmployees => 'Uposlenici';
+
+  @override
+  String get audienceUser => 'Jedan korisnik';
+
+  @override
+  String get audience => 'Publika';
+
+  @override
+  String get messageTitle => 'Naslov';
+
+  @override
+  String get messageBody => 'Poruka';
+
+  @override
+  String get alsoSendEmail => 'Pošalji i na email';
+
+  @override
+  String get send => 'Pošalji';
+
+  @override
+  String get announcementSent => 'Poruka je poslana.';
+
+  @override
+  String get sentMessages => 'Poslane poruke';
+
+  @override
+  String recipientsCount(int count) {
+    return '$count primalaca';
+  }
+
+  @override
+  String get newMessage => 'Nova poruka';
+
+  @override
+  String get haveCode => 'Imam kod';
+
+  @override
+  String get resetCode => 'Kod iz maila';
+
+  @override
+  String get newPassword => 'Nova lozinka';
+
+  @override
+  String get passwordChanged => 'Lozinka je promijenjena. Prijavite se.';
+
+  @override
+  String get resetFailed => 'Kod nije ispravan ili je istekao.';
+
+  @override
+  String get close => 'Zatvori';
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
 
 namespace Ottoman.Api.IntegrationTests;
@@ -38,6 +39,13 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-0123456789-abcdef");
         builder.UseSetting("RateLimiting:Enabled", "false");
         builder.UseSetting("Payments:WebhookSecret", WebhookSecret);
+        builder.ConfigureServices(s =>
+        {
+            // The API does not send mail (the worker does); tests drive the same handler with a recording sender.
+            s.AddSingleton<FakeEmailSender>();
+            s.AddScoped<Ottoman.Infrastructure.Notifications.EventProcessor>();
+            s.AddSingleton<Ottoman.Application.Notifications.IEmailSender>(sp => sp.GetRequiredService<FakeEmailSender>());
+        });
     }
 }
 
