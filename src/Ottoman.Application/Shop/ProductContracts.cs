@@ -97,11 +97,13 @@ public interface IProductCatalog
     Task<Result<bool>> DeactivateAsync(int id, CancellationToken ct);
 
     Task<IReadOnlyList<BrandDto>> ListBrandsAsync(CancellationToken ct);
+    Task<PagedResult<BrandDto>> PageBrandsAsync(string? search, PageQuery page, CancellationToken ct);
     Task<Result<BrandDto>> CreateBrandAsync(NameRequest request, CancellationToken ct);
     Task<Result<BrandDto>> UpdateBrandAsync(int id, NameRequest request, CancellationToken ct);
     Task<Result<bool>> DeleteBrandAsync(int id, CancellationToken ct);
 
     Task<IReadOnlyList<CategoryDto>> ListCategoriesAsync(CancellationToken ct);
+    Task<PagedResult<CategoryDto>> PageCategoriesAsync(string? search, PageQuery page, CancellationToken ct);
     Task<Result<CategoryDto>> CreateCategoryAsync(NameRequest request, CancellationToken ct);
     Task<Result<CategoryDto>> UpdateCategoryAsync(int id, NameRequest request, CancellationToken ct);
     Task<Result<bool>> DeleteCategoryAsync(int id, CancellationToken ct);

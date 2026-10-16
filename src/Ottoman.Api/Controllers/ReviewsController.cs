@@ -25,8 +25,9 @@ public class ReviewsController(IReviewService reviews) : ControllerBase
 
     /// <summary>Average rating and review count for every target of a kind (to show stars in lists).</summary>
     [HttpGet("summary")]
-    public Task<IReadOnlyList<ReviewSummaryDto>> Summary([FromQuery] ReviewTargetType targetType, CancellationToken ct) =>
-        reviews.SummaryAsync(targetType, ct);
+    public async Task<IReadOnlyList<ReviewSummaryDto>> Summary(
+        [FromQuery] ReviewTargetType targetType, [FromQuery] int page = 1, [FromQuery] int pageSize = PageQuery.MaxPageSize, CancellationToken ct = default) =>
+        this.Page(await reviews.SummaryPageAsync(targetType, new PageQuery(page, pageSize), ct));
 
     /// <summary>Can the signed-in client review this? Only after a completed appointment or a collected order.</summary>
     [HttpGet("eligibility")]

@@ -33,3 +33,19 @@ public static class ImageUpload
     /// <summary>Carries the failure of a step that returned nothing over to a response that returns the fresh resource.</summary>
     public static Result<T> As<T>(this Result<bool> failed) => new(failed.Status, default, failed.Error);
 }
+
+public static class PagingExtensions
+{
+    public const string TotalCountHeader = "X-Total-Count";
+
+    /// <summary>
+    /// The page of items as a plain JSON array, with the total in <c>X-Total-Count</c>. Small lookup lists (services,
+    /// barbers, brands) stay easy to bind in forms while still being limited to <c>PageQuery.MaxPageSize</c> rows.
+    /// </summary>
+    public static IReadOnlyList<T> Page<T>(this ControllerBase c, PagedResult<T> page)
+    {
+        c.Response.Headers[TotalCountHeader] = page.TotalCount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        c.Response.Headers.AccessControlExposeHeaders = TotalCountHeader;
+        return page.Items;
+    }
+}

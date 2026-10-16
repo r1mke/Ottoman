@@ -21,6 +21,24 @@ public class ServiceCatalog(OttomanDbContext db, ImageUrlBuilder images) : IServ
         return rows.Select(ToDto).ToList();
     }
 
+    public async Task<PagedResult<ServiceDto>> PageAsync(
+        string? employeeId, bool includeInactive, string? search, PageQuery page, CancellationToken ct)
+    {
+        var query = db.Services.AsNoTracking().AsQueryable();
+        if (!includeInactive) query = query.Where(s => s.IsActive);
+        if (employeeId is not null)
+            query = query.Where(s => db.EmployeeServices.Any(es => es.ServiceId == s.Id && es.EmployeeId == employeeId));
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(s => s.Name.Contains(term) || (s.Description != null && s.Description.Contains(term)));
+        }
+
+        var total = await query.CountAsync(ct);
+        var rows = await query.OrderBy(s => s.Name).ThenBy(s => s.Id).Skip(page.Skip).Take(page.SafePageSize).ToListAsync(ct);
+        return new PagedResult<ServiceDto>(rows.Select(ToDto).ToList(), total);
+    }
+
     public async Task<Result<ServiceDto>> GetAsync(int id, CancellationToken ct)
     {
         var s = await db.Services.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
 using Ottoman.Api.Filters;
+using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
 using Ottoman.Application.Images;
 using Ottoman.Application.Scheduling;
@@ -19,8 +20,13 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
 
     /// <summary>Active employees for clients; admins may include inactive ones and see contact details.</summary>
     [HttpGet]
-    public Task<IReadOnlyList<EmployeeDto>> List([FromQuery] bool includeInactive = false, CancellationToken ct = default) =>
-        employees.ListAsync(includeInactive && IsAdmin, IsAdmin, ct);
+    public async Task<IReadOnlyList<EmployeeDto>> List(
+        [FromQuery] string? search,
+        [FromQuery] bool includeInactive = false,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = PageQuery.MaxPageSize,
+        CancellationToken ct = default) =>
+        this.Page(await employees.PageAsync(includeInactive && IsAdmin, IsAdmin, search, new PageQuery(page, pageSize), ct));
 
     [HttpGet("{id}")]
     public async Task<ActionResult<EmployeeDto>> Get(string id, CancellationToken ct) =>
@@ -81,8 +87,13 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
 
     [HttpGet("{id}/time-off")]
     [Authorize(Policy = Policies.Staff)]
-    public async Task<ActionResult<IReadOnlyList<TimeOffDto>>> ListTimeOff(string id, CancellationToken ct) =>
-        IsAdminOrSelf(id) ? this.ToActionResult(await employees.ListTimeOffAsync(id, ct)) : Forbid();
+    public async Task<ActionResult<IReadOnlyList<TimeOffDto>>> ListTimeOff(
+        string id, [FromQuery] int page = 1, [FromQuery] int pageSize = PageQuery.MaxPageSize, CancellationToken ct = default)
+    {
+        if (!IsAdminOrSelf(id)) return Forbid();
+        var result = await employees.PageTimeOffAsync(id, new PageQuery(page, pageSize), ct);
+        return result.Succeeded ? Ok(this.Page(result.Value!)) : this.ToActionResult(result).Result!;
+    }
 
     [HttpPost("{id}/time-off")]
     [Authorize(Policy = Policies.AdminOnly)]

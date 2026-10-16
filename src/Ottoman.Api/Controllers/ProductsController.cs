@@ -90,7 +90,9 @@ public class ProductsController(IProductCatalog catalog, IImageAttachments image
 public class BrandsController(IProductCatalog catalog) : ControllerBase
 {
     [HttpGet]
-    public Task<IReadOnlyList<BrandDto>> List(CancellationToken ct) => catalog.ListBrandsAsync(ct);
+    public async Task<IReadOnlyList<BrandDto>> List(
+        [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = PageQuery.MaxPageSize, CancellationToken ct = default) =>
+        this.Page(await catalog.PageBrandsAsync(search, new PageQuery(page, pageSize), ct));
 
     [HttpPost]
     [Authorize(Policy = Policies.AdminOnly)]
@@ -117,7 +119,9 @@ public class BrandsController(IProductCatalog catalog) : ControllerBase
 public class CategoriesController(IProductCatalog catalog) : ControllerBase
 {
     [HttpGet]
-    public Task<IReadOnlyList<CategoryDto>> List(CancellationToken ct) => catalog.ListCategoriesAsync(ct);
+    public async Task<IReadOnlyList<CategoryDto>> List(
+        [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = PageQuery.MaxPageSize, CancellationToken ct = default) =>
+        this.Page(await catalog.PageCategoriesAsync(search, new PageQuery(page, pageSize), ct));
 
     [HttpPost]
     [Authorize(Policy = Policies.AdminOnly)]

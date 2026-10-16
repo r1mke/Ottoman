@@ -37,6 +37,9 @@ public interface IServiceCatalog
     /// <param name="employeeId">When set, only services this employee performs.</param>
     Task<IReadOnlyList<ServiceDto>> ListAsync(string? employeeId, bool includeInactive, CancellationToken ct);
 
+    /// <summary>The same list, one page at a time (at most PageQuery.MaxPageSize rows), with an optional name search.</summary>
+    Task<PagedResult<ServiceDto>> PageAsync(string? employeeId, bool includeInactive, string? search, PageQuery page, CancellationToken ct);
+
     Task<Result<ServiceDto>> GetAsync(int id, CancellationToken ct);
     Task<Result<ServiceDto>> CreateAsync(ServiceUpsertRequest request, CancellationToken ct);
     Task<Result<ServiceDto>> UpdateAsync(int id, ServiceUpsertRequest request, CancellationToken ct);

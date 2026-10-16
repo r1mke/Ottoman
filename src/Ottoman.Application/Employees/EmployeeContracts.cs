@@ -126,6 +126,9 @@ public class CreateTimeOffRequestValidator : AbstractValidator<CreateTimeOffRequ
 public interface IEmployeeService
 {
     Task<IReadOnlyList<EmployeeDto>> ListAsync(bool includeInactive, bool includePrivate, CancellationToken ct);
+
+    /// <summary>The same list, one page at a time, with an optional search by name or title.</summary>
+    Task<PagedResult<EmployeeDto>> PageAsync(bool includeInactive, bool includePrivate, string? search, PageQuery page, CancellationToken ct);
     Task<Result<EmployeeDto>> GetAsync(string id, bool includePrivate, CancellationToken ct);
     Task<Result<EmployeeDto>> CreateAsync(CreateEmployeeRequest request, CancellationToken ct);
     Task<Result<EmployeeDto>> UpdateAsync(string id, UpdateEmployeeRequest request, CancellationToken ct);
@@ -135,6 +138,7 @@ public interface IEmployeeService
     Task<Result<IReadOnlyList<WorkingHoursDto>>> SetWorkingHoursAsync(string id, SetWorkingHoursRequest request, CancellationToken ct);
 
     Task<Result<IReadOnlyList<TimeOffDto>>> ListTimeOffAsync(string id, CancellationToken ct);
+    Task<Result<PagedResult<TimeOffDto>>> PageTimeOffAsync(string id, PageQuery page, CancellationToken ct);
     Task<Result<TimeOffDto>> AddTimeOffAsync(string id, CreateTimeOffRequest request, CancellationToken ct);
     Task<Result<bool>> RemoveTimeOffAsync(string id, int timeOffId, CancellationToken ct);
 }

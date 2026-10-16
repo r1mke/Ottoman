@@ -22,6 +22,37 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
         return rows.Select(x => ToDto(x.Profile, x.User, includePrivate)).ToList();
     }
 
+    public async Task<PagedResult<EmployeeDto>> PageAsync(
+        bool includeInactive, bool includePrivate, string? search, PageQuery page, CancellationToken ct)
+    {
+        var query =
+            from p in db.EmployeeProfiles.AsNoTracking()
+            join u in db.Users.AsNoTracking() on p.UserId equals u.Id
+            where includeInactive || p.IsActive
+            select new { Profile = p, User = u };
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(x => (x.User.FirstName + " " + x.User.LastName).Contains(term) || x.Profile.Title.Contains(term));
+        }
+
+        var total = await query.CountAsync(ct);
+        var rows = await query.OrderBy(x => x.User.FirstName).ThenBy(x => x.User.LastName).ThenBy(x => x.User.Id)
+            .Skip(page.Skip).Take(page.SafePageSize).ToListAsync(ct);
+
+        // One more query for the service ids of just these barbers, not one per barber.
+        var ids = rows.Select(x => x.Profile.UserId).ToList();
+        var services = await db.EmployeeServices.AsNoTracking().Where(s => ids.Contains(s.EmployeeId))
+            .Select(s => new { s.EmployeeId, s.ServiceId }).ToListAsync(ct);
+        var byEmployee = services.ToLookup(s => s.EmployeeId, s => s.ServiceId);
+
+        var items = rows.Select(x => new EmployeeDto(
+            x.Profile.UserId, x.User.FirstName, x.User.LastName, x.User.FullName, x.Profile.Title, x.Profile.Bio,
+            images.Url(x.Profile.PhotoKey), x.Profile.IsActive, byEmployee[x.Profile.UserId].OrderBy(s => s).ToList(),
+            includePrivate ? x.User.Email : null, includePrivate ? x.User.PhoneNumber : null)).ToList();
+        return new PagedResult<EmployeeDto>(items, total);
+    }
+
     public async Task<Result<EmployeeDto>> GetAsync(string id, bool includePrivate, CancellationToken ct)
     {
         var rows = await LoadAsync(p => p.UserId == id && (includePrivate || p.IsActive), ct);
@@ -193,6 +224,19 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
             .Where(t => t.EmployeeId == id && t.EndUtc > now)
             .OrderBy(t => t.StartUtc).ToListAsync(ct);
         return Result<IReadOnlyList<TimeOffDto>>.Ok(rows.Select(t => new TimeOffDto(t.Id, t.StartUtc, t.EndUtc, t.Reason)).ToList());
+    }
+
+    public async Task<Result<PagedResult<TimeOffDto>>> PageTimeOffAsync(string id, PageQuery page, CancellationToken ct)
+    {
+        if (!await db.EmployeeProfiles.AnyAsync(p => p.UserId == id, ct))
+            return Result<PagedResult<TimeOffDto>>.NotFound();
+
+        var now = clock.GetUtcNow().UtcDateTime;
+        var query = db.TimeOff.AsNoTracking().Where(t => t.EmployeeId == id && t.EndUtc > now);
+        var total = await query.CountAsync(ct);
+        var rows = await query.OrderBy(t => t.StartUtc).ThenBy(t => t.Id).Skip(page.Skip).Take(page.SafePageSize).ToListAsync(ct);
+        return Result<PagedResult<TimeOffDto>>.Ok(
+            new PagedResult<TimeOffDto>(rows.Select(t => new TimeOffDto(t.Id, t.StartUtc, t.EndUtc, t.Reason)).ToList(), total));
     }
 
     public async Task<Result<TimeOffDto>> AddTimeOffAsync(string id, CreateTimeOffRequest r, CancellationToken ct)

@@ -175,6 +175,34 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
     public async Task<IReadOnlyList<BrandDto>> ListBrandsAsync(CancellationToken ct) =>
         await db.Brands.AsNoTracking().OrderBy(b => b.Name).Select(b => new BrandDto(b.Id, b.Name)).ToListAsync(ct);
 
+    public async Task<PagedResult<BrandDto>> PageBrandsAsync(string? search, PageQuery page, CancellationToken ct)
+    {
+        var query = db.Brands.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(b => b.Name.Contains(term));
+        }
+        var total = await query.CountAsync(ct);
+        var items = await query.OrderBy(b => b.Name).ThenBy(b => b.Id).Skip(page.Skip).Take(page.SafePageSize)
+            .Select(b => new BrandDto(b.Id, b.Name)).ToListAsync(ct);
+        return new PagedResult<BrandDto>(items, total);
+    }
+
+    public async Task<PagedResult<CategoryDto>> PageCategoriesAsync(string? search, PageQuery page, CancellationToken ct)
+    {
+        var query = db.Categories.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(c => c.Name.Contains(term) || (c.Description != null && c.Description.Contains(term)));
+        }
+        var total = await query.CountAsync(ct);
+        var items = await query.OrderBy(c => c.Name).ThenBy(c => c.Id).Skip(page.Skip).Take(page.SafePageSize)
+            .Select(c => new CategoryDto(c.Id, c.Name, c.Description)).ToListAsync(ct);
+        return new PagedResult<CategoryDto>(items, total);
+    }
+
     public async Task<Result<BrandDto>> CreateBrandAsync(NameRequest r, CancellationToken ct)
     {
         var name = r.Name.Trim();

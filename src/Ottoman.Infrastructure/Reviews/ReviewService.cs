@@ -37,6 +37,16 @@ public class ReviewService(OttomanDbContext db, TimeProvider clock) : IReviewSer
         return rows.Select(r => new ReviewSummaryDto(r.Key, Math.Round(r.Average, 2), r.Count)).ToList();
     }
 
+    public async Task<PagedResult<ReviewSummaryDto>> SummaryPageAsync(ReviewTargetType type, PageQuery page, CancellationToken ct)
+    {
+        var groups = db.Reviews.AsNoTracking().Where(r => r.TargetType == type && !r.IsHidden)
+            .GroupBy(r => r.TargetKey)
+            .Select(g => new { Key = g.Key, Average = g.Average(r => (double)r.Rating), Count = g.Count() });
+        var total = await groups.CountAsync(ct);
+        var rows = await groups.OrderBy(g => g.Key).Skip(page.Skip).Take(page.SafePageSize).ToListAsync(ct);
+        return new PagedResult<ReviewSummaryDto>(rows.Select(r => new ReviewSummaryDto(r.Key, Math.Round(r.Average, 2), r.Count)).ToList(), total);
+    }
+
     public async Task<PagedResult<ReviewDto>> ListAllAsync(bool onlyHidden, PageQuery page, CancellationToken ct)
     {
         var query = db.Reviews.AsNoTracking().AsQueryable();

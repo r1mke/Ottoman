@@ -65,6 +65,7 @@ public interface IReviewService
 
     /// <summary>Average and count per target of one kind (hidden reviews do not count).</summary>
     Task<IReadOnlyList<ReviewSummaryDto>> SummaryAsync(ReviewTargetType type, CancellationToken ct);
+    Task<PagedResult<ReviewSummaryDto>> SummaryPageAsync(ReviewTargetType type, PageQuery page, CancellationToken ct);
 
     Task<EligibilityDto> EligibilityAsync(Actor client, ReviewTargetType type, string key, CancellationToken ct);
     Task<Result<ReviewDto>> CreateAsync(Actor client, CreateReviewRequest request, CancellationToken ct);

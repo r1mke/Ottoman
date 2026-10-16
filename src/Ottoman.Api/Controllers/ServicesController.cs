@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
 using Ottoman.Api.Filters;
 using Ottoman.Application.Catalog;
+using Ottoman.Application.Common;
 using Ottoman.Application.Images;
 using Ottoman.Domain;
 
@@ -15,9 +16,15 @@ public class ServicesController(IServiceCatalog catalog, IImageAttachments image
 {
     /// <summary>Active services; with <c>employeeId</c> only those that employee performs. Admins may include inactive ones.</summary>
     [HttpGet]
-    public Task<IReadOnlyList<ServiceDto>> List(
-        [FromQuery] string? employeeId, [FromQuery] bool includeInactive = false, CancellationToken ct = default) =>
-        catalog.ListAsync(employeeId, includeInactive && User.IsInRole(Roles.Admin), ct);
+    public async Task<IReadOnlyList<ServiceDto>> List(
+        [FromQuery] string? employeeId,
+        [FromQuery] string? search,
+        [FromQuery] bool includeInactive = false,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = PageQuery.MaxPageSize,
+        CancellationToken ct = default) =>
+        this.Page(await catalog.PageAsync(
+            employeeId, includeInactive && User.IsInRole(Roles.Admin), search, new PageQuery(page, pageSize), ct));
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ServiceDto>> Get(int id, CancellationToken ct) =>
