@@ -85,6 +85,20 @@ public class ImageAttachments(
             key => db.EmployeeProfiles.Where(p => p.UserId == employeeId).ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key), ct),
             content, "ottoman/employees", ct);
 
+    // ------------------------------------------------------------ announcements
+
+    public Task<Result<bool>> SetAnnouncementImageAsync(int announcementId, Stream content, CancellationToken ct) =>
+        ReplaceAnnouncementAsync(announcementId, content, ct);
+
+    public Task<Result<bool>> ClearAnnouncementImageAsync(int announcementId, CancellationToken ct) =>
+        ReplaceAnnouncementAsync(announcementId, null, ct);
+
+    private Task<Result<bool>> ReplaceAnnouncementAsync(int announcementId, Stream? content, CancellationToken ct) =>
+        ReplaceAsync(
+            async () => await db.Announcements.Where(a => a.Id == announcementId).Select(a => new KeyRow(a.ImageKey)).FirstOrDefaultAsync(ct),
+            key => db.Announcements.Where(a => a.Id == announcementId).ExecuteUpdateAsync(s => s.SetProperty(x => x.ImageKey, key), ct),
+            content, "ottoman/news", ct);
+
     // ----------------------------------------------------------------- helpers
 
     private sealed record KeyRow(string? Key);

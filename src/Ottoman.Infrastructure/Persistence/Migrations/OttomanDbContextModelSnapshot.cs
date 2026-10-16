@@ -199,6 +199,9 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("ImageKey")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("RecipientCount")
                         .HasColumnType("int");
 

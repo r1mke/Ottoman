@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
+using Ottoman.Api.Filters;
 using Ottoman.Application.Common;
+using Ottoman.Application.Images;
 using Ottoman.Application.Notifications;
 
 namespace Ottoman.Api.Controllers;
@@ -49,4 +51,26 @@ public class AnnouncementsController(INotificationService notifications) : Contr
     [HttpGet]
     public Task<PagedResult<AnnouncementDto>> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default) =>
         notifications.ListAnnouncementsAsync(new PageQuery(page, pageSize), ct);
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<AnnouncementDto>> Get(int id, CancellationToken ct) =>
+        this.ToActionResult(await notifications.GetAnnouncementAsync(id, ct));
+
+    [HttpPut("{id:int}/image")]
+    [RejectOversizedUpload]
+    [RequestSizeLimit(ImageUpload.RequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
+    public async Task<ActionResult<AnnouncementDto>> SetImage(int id, IFormFile file, IImageAttachments images, CancellationToken ct)
+    {
+        await using var stream = file.OpenReadStream();
+        var set = await images.SetAnnouncementImageAsync(id, stream, ct);
+        return this.ToActionResult(set.Succeeded ? await notifications.GetAnnouncementAsync(id, ct) : set.As<AnnouncementDto>());
+    }
+
+    [HttpDelete("{id:int}/image")]
+    public async Task<ActionResult<AnnouncementDto>> ClearImage(int id, IImageAttachments images, CancellationToken ct)
+    {
+        var cleared = await images.ClearAnnouncementImageAsync(id, ct);
+        return this.ToActionResult(cleared.Succeeded ? await notifications.GetAnnouncementAsync(id, ct) : cleared.As<AnnouncementDto>());
+    }
 }

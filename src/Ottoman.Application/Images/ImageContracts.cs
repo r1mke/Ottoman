@@ -36,6 +36,8 @@ public interface IImageAttachments
     Task<Result<bool>> ClearServiceImageAsync(int serviceId, CancellationToken ct);
     Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct);
     Task<Result<bool>> ClearEmployeePhotoAsync(string employeeId, CancellationToken ct);
+    Task<Result<bool>> SetAnnouncementImageAsync(int announcementId, Stream content, CancellationToken ct);
+    Task<Result<bool>> ClearAnnouncementImageAsync(int announcementId, CancellationToken ct);
 }
 
 public static class ImageRules

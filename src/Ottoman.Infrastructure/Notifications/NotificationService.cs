@@ -5,11 +5,12 @@ using Ottoman.Contracts;
 using Ottoman.Domain;
 using Ottoman.Domain.Entities;
 using Ottoman.Domain.Notifications;
+using Ottoman.Infrastructure.Images;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Notifications;
 
-public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvider clock) : INotificationService
+public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvider clock, ImageUrlBuilder images) : INotificationService
 {
     // ---------------------------------------------------------------- inbox (always the caller's own rows)
 
@@ -21,9 +22,13 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
         var total = await query.CountAsync(ct);
         var items = await query.OrderByDescending(n => n.CreatedAtUtc).ThenByDescending(n => n.Id)
             .Skip(page.Skip).Take(page.SafePageSize)
-            .Select(n => new NotificationDto(n.Id, n.Title, n.Body, n.Kind, n.CreatedAtUtc, n.ReadAtUtc != null))
+            .Select(n => new
+            {
+                Dto = new NotificationDto(n.Id, n.Title, n.Body, n.Kind, n.CreatedAtUtc, n.ReadAtUtc != null, null),
+                ImageKey = db.Announcements.Where(a => a.Id == n.AnnouncementId).Select(a => a.ImageKey).FirstOrDefault(),
+            })
             .ToListAsync(ct);
-        return new PagedResult<NotificationDto>(items, total);
+        return new PagedResult<NotificationDto>(items.Select(i => i.Dto with { ImageUrl = images.Url(i.ImageKey) }).ToList(), total);
     }
 
     public Task<int> UnreadCountAsync(string userId, CancellationToken ct) =>
@@ -118,6 +123,12 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
         return new PagedResult<AnnouncementDto>(items.Select(ToDto).ToList(), total);
     }
 
-    private static AnnouncementDto ToDto(Announcement a) =>
-        new(a.Id, a.Title, a.Body, a.Audience, a.SendEmail, a.RecipientCount, a.CreatedAtUtc);
+    public async Task<Result<AnnouncementDto>> GetAnnouncementAsync(int id, CancellationToken ct)
+    {
+        var a = await db.Announcements.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        return a is null ? Result<AnnouncementDto>.NotFound("Obavijest nije pronađena.") : Result<AnnouncementDto>.Ok(ToDto(a));
+    }
+
+    private AnnouncementDto ToDto(Announcement a) =>
+        new(a.Id, a.Title, a.Body, a.Audience, a.SendEmail, a.RecipientCount, a.CreatedAtUtc, images.Url(a.ImageKey));
 }

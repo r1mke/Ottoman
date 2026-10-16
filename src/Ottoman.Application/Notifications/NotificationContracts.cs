@@ -5,7 +5,7 @@ using Ottoman.Domain;
 
 namespace Ottoman.Application.Notifications;
 
-public record NotificationDto(long Id, string Title, string Body, string Kind, DateTime CreatedAtUtc, bool IsRead);
+public record NotificationDto(long Id, string Title, string Body, string Kind, DateTime CreatedAtUtc, bool IsRead, string? ImageUrl = null);
 
 public record UnreadCountDto(int Count);
 
@@ -39,7 +39,8 @@ public record AnnouncementDto(
     AnnouncementAudience Audience,
     bool SendEmail,
     int RecipientCount,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    string? ImageUrl = null);
 
 /// <summary>The signed-in user's inbox plus the admin's announcements.</summary>
 public interface INotificationService
@@ -51,6 +52,7 @@ public interface INotificationService
 
     Task<Result<AnnouncementDto>> CreateAnnouncementAsync(string adminId, AnnouncementRequest request, CancellationToken ct);
     Task<PagedResult<AnnouncementDto>> ListAnnouncementsAsync(PageQuery page, CancellationToken ct);
+    Task<Result<AnnouncementDto>> GetAnnouncementAsync(int id, CancellationToken ct);
 }
 
 /// <summary>Sends one e-mail. Implemented with SMTP in the worker; faked in tests.</summary>

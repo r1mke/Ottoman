@@ -194,6 +194,46 @@ public class ImageTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task News_carry_a_picture_that_reaches_the_recipients_inbox()
+    {
+        var admin = await Admin();
+        var (_, auth) = await api.CreateClient().NewClient();
+        var client = api.CreateClient().As(auth);
+        var created = await admin.PostAsJsonAsync("/api/v1/announcements", new Ottoman.Application.Notifications.AnnouncementRequest(
+            $"Akcija {Guid.NewGuid():N}", "Šišanje -10%", Ottoman.Domain.AnnouncementAudience.User, auth.User.Id));
+        var announcement = (await created.Content.ReadFromJsonAsync<Ottoman.Application.Notifications.AnnouncementDto>())!;
+        announcement.ImageUrl.Should().BeNull();
+
+        var res = await admin.PutAsync($"/api/v1/announcements/{announcement.Id}/image", Upload(Png()));
+
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        var withImage = (await res.Content.ReadFromJsonAsync<Ottoman.Application.Notifications.AnnouncementDto>())!;
+        withImage.ImageUrl.Should().StartWith("https://res.cloudinary.com/testcloud/").And.Contain("ottoman/news/");
+        var inbox = (await client.GetFromJsonAsync<Ottoman.Application.Common.PagedResult<Ottoman.Application.Notifications.NotificationDto>>("/api/v1/notifications"))!;
+        inbox.Items.Single(n => n.Title == announcement.Title).ImageUrl.Should().Be(withImage.ImageUrl);
+
+        var cleared = await admin.DeleteAsync($"/api/v1/announcements/{announcement.Id}/image");
+        (await cleared.Content.ReadFromJsonAsync<Ottoman.Application.Notifications.AnnouncementDto>())!.ImageUrl.Should().BeNull();
+        Store.Deleted.Should().Contain(k => withImage.ImageUrl!.EndsWith(k));
+    }
+
+    [Fact]
+    public async Task Only_an_admin_can_attach_a_news_picture_and_it_must_be_a_real_picture()
+    {
+        var admin = await Admin();
+        var created = await admin.PostAsJsonAsync("/api/v1/announcements", new Ottoman.Application.Notifications.AnnouncementRequest(
+            $"Vijest {Guid.NewGuid():N}", "tekst", Ottoman.Domain.AnnouncementAudience.All));
+        var id = (await created.Content.ReadFromJsonAsync<Ottoman.Application.Notifications.AnnouncementDto>())!.Id;
+        var (_, auth) = await api.CreateClient().NewClient();
+
+        (await api.CreateClient().PutAsync($"/api/v1/announcements/{id}/image", Upload(Png()))).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        (await api.CreateClient().As(auth).PutAsync($"/api/v1/announcements/{id}/image", Upload(Png()))).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        var html = System.Text.Encoding.UTF8.GetBytes("<html></html>");
+        (await admin.PutAsync($"/api/v1/announcements/{id}/image", Upload(html))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.PutAsync("/api/v1/announcements/999999/image", Upload(Png()))).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public void Cloudinary_signatures_sort_parameters_and_append_the_secret()
     {
         // sha1("folder=a&timestamp=1" + "secret"), independent of the order the parameters are passed in.
