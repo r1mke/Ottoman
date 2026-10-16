@@ -30,7 +30,9 @@ public sealed class AuditFilter(IAuditLog audit) : IAsyncActionFilter
         var status = (executed.Result as IStatusCodeActionResult)?.StatusCode ?? http.Response.StatusCode;
         if (!AuditPolicy.ShouldRecord(http.Request.Method, descriptor.ControllerName, status, isStaff)) return;
 
-        var target = string.Join(", ", context.RouteData.Values
+        // A create has no id in its URL yet; the Location it answers with does.
+        var routeValues = (executed.Result as CreatedAtActionResult)?.RouteValues ?? context.RouteData.Values;
+        var target = string.Join(", ", routeValues
             .Where(v => v.Key is not ("controller" or "action"))
             .Select(v => $"{v.Key}={v.Value}"));
 

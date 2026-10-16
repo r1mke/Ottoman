@@ -13,9 +13,12 @@ public static class StartupGuards
         bool isDevelopment,
         string? jwtSigningKey,
         bool seedDemoData,
-        string? seedAdminPassword)
+        string? seedAdminPassword,
+        string? keyEncryptionSecret = null,
+        IEnumerable<string>? corsOrigins = null)
     {
-        if (isDevelopment) return [];
+        var cors = CorsRules.Problems(corsOrigins ?? [], isDevelopment);
+        if (isDevelopment) return [.. cors];
 
         var problems = new List<string>();
 
@@ -32,6 +35,17 @@ public static class StartupGuards
             Placeholders.Any(p => seedAdminPassword.Contains(p, StringComparison.OrdinalIgnoreCase)))
             problems.Add("Seed:AdminPassword is a placeholder. Set a real password before the first start.");
 
+        if (!IsValidEncryptionSecret(keyEncryptionSecret))
+            problems.Add("DataProtection:KeyEncryptionSecret must be set in production: base64 of 32 random bytes (openssl rand -base64 32). It encrypts the stored keys.");
+
+        problems.AddRange(cors);
         return problems;
+    }
+
+    public static bool IsValidEncryptionSecret(string? secret)
+    {
+        if (string.IsNullOrWhiteSpace(secret)) return false;
+        var buffer = new byte[48];
+        return Convert.TryFromBase64String(secret, buffer, out var written) && written == 32 && buffer.Take(32).Distinct().Count() > 4;
     }
 }

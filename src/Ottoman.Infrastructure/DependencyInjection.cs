@@ -37,6 +37,7 @@ using Ottoman.Infrastructure.Reports;
 using Ottoman.Infrastructure.Reservations;
 using Ottoman.Infrastructure.Reviews;
 using Ottoman.Infrastructure.Scheduling;
+using Ottoman.Infrastructure.Security;
 using Ottoman.Infrastructure.Seeding;
 using Ottoman.Infrastructure.Settings;
 using Ottoman.Infrastructure.Shop;
@@ -72,8 +73,10 @@ public static class DependencyInjection
             .AddRoles<Microsoft.AspNetCore.Identity.IdentityRole>()
             .AddEntityFrameworkStores<OttomanDbContext>()
             .AddTokenProvider<DataProtectorTokenProvider<AppUser>>(TokenOptions.DefaultProvider);
+        services.AddScoped<StoredKeyEncryption>();
         services.AddDataProtection().SetApplicationName("Ottoman")
-            .PersistKeysToDbContext<OttomanDbContext>();
+            .PersistKeysToDbContext<OttomanDbContext>()
+            .ProtectKeysWithConfiguredSecret(config.GetSection(KeyEncryptionOptions.Section).Get<KeyEncryptionOptions>() ?? new());
 
         services.AddOptions<JwtOptions>()
             .Bind(config.GetSection(JwtOptions.Section))

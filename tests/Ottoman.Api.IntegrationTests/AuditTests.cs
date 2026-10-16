@@ -43,6 +43,7 @@ public class AuditTests(ApiFixture api)
                                     && e.Role == "Admin" && e.Target == $"id={product.Id}" && e.StatusCode == 200);
         lines.Single(e => e.Action == "Products.AdjustStock").UserName.Should().NotBeNullOrWhiteSpace();
         lines.Single(e => e.Action == "Products.AdjustStock").Route.Should().Contain("products/{id");
+        (await Entries(admin, $"id={product.Id}")).Should().Contain(e => e.Action == "Products.Create" && e.Target == $"id={product.Id}", "a create is traceable to the record it made");
         var all = await Entries(admin, "Products.Create");
         all.Should().Contain(e => e.StatusCode == 201, "the create itself is recorded with its real status");
     }

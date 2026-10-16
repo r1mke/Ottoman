@@ -70,6 +70,8 @@ services:
       Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME:-}
       Cloudinary__ApiKey: ${CLOUDINARY_API_KEY:-}
       Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET:-}
+      DataProtection__KeyEncryptionSecret: ${DP_KEY_ENCRYPTION_SECRET:-}
+      Cors__Origins__0: ${CORS_ORIGIN:-}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
@@ -104,6 +106,7 @@ services:
       Payments__SecretKey: ${STRIPE_SECRET_KEY:-}
       Payments__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-}
       Firebase__ServiceAccountJson: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      DataProtection__KeyEncryptionSecret: ${DP_KEY_ENCRYPTION_SECRET:-}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
