@@ -1862,6 +1862,30 @@ abstract class AppLocalizations {
   /// **'Prethodna sedmica'**
   String get previousWeek;
 
+  /// No description provided for @changePassword.
+  ///
+  /// In bs, this message translates to:
+  /// **'Promijeni lozinku'**
+  String get changePassword;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In bs, this message translates to:
+  /// **'Trenutna lozinka'**
+  String get currentPassword;
+
+  /// No description provided for @repeatPassword.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ponovite novu lozinku'**
+  String get repeatPassword;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In bs, this message translates to:
+  /// **'Lozinke se ne podudaraju.'**
+  String get passwordsDoNotMatch;
+
   /// No description provided for @nextWeek.
   ///
   /// In bs, this message translates to:

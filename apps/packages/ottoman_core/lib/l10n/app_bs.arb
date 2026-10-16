@@ -303,6 +303,10 @@
   "viewDay": "Dan",
   "viewWeek": "Sedmica",
   "previousWeek": "Prethodna sedmica",
+  "changePassword": "Promijeni lozinku",
+  "currentPassword": "Trenutna lozinka",
+  "repeatPassword": "Ponovite novu lozinku",
+  "passwordsDoNotMatch": "Lozinke se ne podudaraju.",
   "nextWeek": "Sljedeća sedmica"
 
 }

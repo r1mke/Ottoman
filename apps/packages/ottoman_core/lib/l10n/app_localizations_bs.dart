@@ -915,5 +915,17 @@ class AppLocalizationsBs extends AppLocalizations {
   String get previousWeek => 'Prethodna sedmica';
 
   @override
+  String get changePassword => 'Promijeni lozinku';
+
+  @override
+  String get currentPassword => 'Trenutna lozinka';
+
+  @override
+  String get repeatPassword => 'Ponovite novu lozinku';
+
+  @override
+  String get passwordsDoNotMatch => 'Lozinke se ne podudaraju.';
+
+  @override
   String get nextWeek => 'Sljedeća sedmica';
 }

@@ -115,6 +115,16 @@ class AuthController extends ChangeNotifier {
   }
 
   /// Re-reads /me (e.g. after a profile edit).
+  /// Changes the password. The server ends every session of this account when it succeeds, so the user is signed
+  /// out here too and has to sign in with the new password.
+  Future<void> changePassword(String current, String next) async {
+    await api.post<dynamic>(
+      '/api/v1/me/change-password',
+      body: {'currentPassword': current, 'newPassword': next},
+    );
+    await _clear();
+  }
+
   Future<void> reloadUser() async {
     final data = await api.get<Map<String, dynamic>>('/api/v1/me');
     final s = _session;

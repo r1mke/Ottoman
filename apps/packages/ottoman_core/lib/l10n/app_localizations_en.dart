@@ -916,5 +916,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previousWeek => 'Previous week';
 
   @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get currentPassword => 'Current password';
+
+  @override
+  String get repeatPassword => 'Repeat the new password';
+
+  @override
+  String get passwordsDoNotMatch => 'The passwords do not match.';
+
+  @override
   String get nextWeek => 'Next week';
 }

@@ -9,6 +9,7 @@ import '../clients/clients_page.dart';
 import '../employees/employees_page.dart';
 import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
+import '../profile/profile_page.dart';
 import '../products/products_page.dart';
 import '../reports/overview_page.dart';
 import '../reports/reports_page.dart';
@@ -28,6 +29,7 @@ class ShellDeps {
     required this.clients,
     required this.audit,
     required this.user,
+    required this.auth,
   });
 
   final CatalogApi catalog;
@@ -39,6 +41,7 @@ class ShellDeps {
   final ClientsApi clients;
   final AuditApi audit;
   final AppUser user;
+  final AuthController auth;
 }
 
 class _Section {
@@ -231,7 +234,11 @@ class _DesktopShellState extends State<DesktopShell> {
       adminOnly: true,
       body: (d) => AuditPage(api: d.audit),
     ),
-    _Section(Icons.person_outline, (t) => t.myProfile),
+    _Section(
+      Icons.person_outline,
+      (t) => t.myProfile,
+      body: (d) => ProfilePage(auth: d.auth),
+    ),
   ];
 
   @override
@@ -290,6 +297,7 @@ class _DesktopShellState extends State<DesktopShell> {
                           clients: _clients,
                           audit: _audit,
                           user: user,
+                          auth: widget.auth,
                         ),
                       ) ??
                       EmptyState(icon: current.icon, message: t.comingSoon),

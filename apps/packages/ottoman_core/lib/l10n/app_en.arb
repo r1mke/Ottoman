@@ -303,6 +303,10 @@
   "viewDay": "Day",
   "viewWeek": "Week",
   "previousWeek": "Previous week",
+  "changePassword": "Change password",
+  "currentPassword": "Current password",
+  "repeatPassword": "Repeat the new password",
+  "passwordsDoNotMatch": "The passwords do not match.",
   "nextWeek": "Next week"
 
 }
