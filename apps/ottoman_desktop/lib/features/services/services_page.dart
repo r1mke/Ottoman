@@ -200,7 +200,7 @@ class _ServiceDialogState extends State<ServiceDialog> {
         (v == null || v.trim().isEmpty) ? t.requiredField : null;
 
     return AlertDialog(
-      title: Text(widget.service == null ? t.add : t.edit),
+      title: DialogHeader(widget.service == null ? t.add : t.edit),
       content: SizedBox(
         width: 420,
         child: Form(

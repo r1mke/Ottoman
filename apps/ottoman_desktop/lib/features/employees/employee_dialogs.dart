@@ -96,7 +96,7 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
         (v == null || v.trim().isEmpty) ? t.requiredField : null;
 
     return AlertDialog(
-      title: Text(_isNew ? t.add : t.edit),
+      title: DialogHeader(_isNew ? t.add : t.edit),
       content: SizedBox(
         width: 460,
         child: Form(
@@ -269,7 +269,7 @@ class _AssignServicesDialogState extends State<AssignServicesDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text('${t.services} — ${widget.employee.fullName}'),
+      title: DialogHeader('${t.services} — ${widget.employee.fullName}'),
       content: SizedBox(
         width: 420,
         height: 360,
@@ -438,7 +438,7 @@ class _WorkingHoursDialogState extends State<WorkingHoursDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text('${t.workingHours} — ${widget.employee.fullName}'),
+      title: DialogHeader('${t.workingHours} — ${widget.employee.fullName}'),
       content: SizedBox(
         width: 640,
         height: 440,

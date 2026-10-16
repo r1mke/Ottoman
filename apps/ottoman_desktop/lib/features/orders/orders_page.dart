@@ -35,7 +35,7 @@ class _OrdersPageState extends State<OrdersPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.cancelOrder),
+        title: DialogHeader(t.cancelOrder),
         content: Text(t.cancelOrderQuestion),
         actions: [
           TextButton(

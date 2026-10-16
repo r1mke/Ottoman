@@ -104,7 +104,7 @@ class _ProductDialogState extends State<ProductDialog> {
     }
 
     return AlertDialog(
-      title: Text(widget.product == null ? t.newProduct : t.edit),
+      title: DialogHeader(widget.product == null ? t.newProduct : t.edit),
       content: SizedBox(
         width: 460,
         child: Form(
@@ -319,7 +319,7 @@ class _StockDialogState extends State<StockDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text('${t.restock}: ${widget.product.name}'),
+      title: DialogHeader('${t.restock}: ${widget.product.name}'),
       content: SizedBox(
         width: 360,
         child: Column(
@@ -453,7 +453,7 @@ class _NamesDialogState extends State<NamesDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(widget.isBrands ? t.brands : t.categories),
+      title: DialogHeader(widget.isBrands ? t.brands : t.categories),
       content: SizedBox(
         width: 420,
         height: 420,
@@ -562,7 +562,7 @@ class _RenameDialogState extends State<_RenameDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(t.edit),
+      title: DialogHeader(t.edit),
       content: TextField(
         key: const Key('rename_field'),
         controller: _controller,

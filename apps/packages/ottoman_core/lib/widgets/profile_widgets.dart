@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../auth/auth_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../network/app_exception.dart';
+import 'dialog_header.dart';
 
 String _detail(AppException e) {
   final detail = e.errors.values.expand((x) => x).join('\n');
@@ -188,7 +189,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
     String? required(String? v) =>
         (v == null || v.isEmpty) ? t.requiredField : null;
     return AlertDialog(
-      title: Text(t.changePassword),
+      title: DialogHeader(t.changePassword),
       content: SizedBox(
         width: 380,
         child: Form(

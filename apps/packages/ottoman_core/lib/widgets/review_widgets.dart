@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../network/app_exception.dart';
 import '../notifications/notification_labels.dart';
 import '../reviews/reviews_api.dart';
+import 'dialog_header.dart';
 import 'star_rating.dart';
 
 /// Asks for stars and an optional comment, then saves. Returns true when a review was saved.
@@ -99,7 +100,7 @@ class _ReviewDialogState extends State<_ReviewDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(widget.title),
+      title: DialogHeader(widget.title),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

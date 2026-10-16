@@ -57,7 +57,7 @@ class _RescheduleDialogState extends State<RescheduleDialog> {
     final t = AppLocalizations.of(context);
     final r = widget.reservation;
     return AlertDialog(
-      title: Text(t.reschedule),
+      title: DialogHeader(t.reschedule),
       content: SizedBox(
         width: 520,
         height: 620,
@@ -209,7 +209,7 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
         _client != null && _employee != null && _serviceIds.isNotEmpty;
 
     return AlertDialog(
-      title: Text(t.newAppointment),
+      title: DialogHeader(t.newAppointment),
       content: SizedBox(
         width: 560,
         height: 680,

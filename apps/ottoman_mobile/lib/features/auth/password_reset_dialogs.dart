@@ -22,7 +22,7 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(t.forgotPassword),
+      title: DialogHeader(t.forgotPassword),
       content: TextField(
         key: const Key('forgot_email'),
         controller: _email,
@@ -112,7 +112,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(t.haveCode),
+      title: DialogHeader(t.haveCode),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

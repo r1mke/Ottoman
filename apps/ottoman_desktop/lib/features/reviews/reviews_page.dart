@@ -51,7 +51,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.delete),
+        title: DialogHeader(t.delete),
         content: Text(r.comment ?? r.targetName),
         actions: [
           TextButton(
@@ -189,7 +189,7 @@ class _ReplyDialogState extends State<_ReplyDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(t.reply),
+      title: DialogHeader(t.reply),
       content: SizedBox(
         width: 420,
         child: TextField(
