@@ -9,6 +9,7 @@ class AppNotification {
     required this.kind,
     required this.createdAtUtc,
     required this.isRead,
+    this.imageUrl,
   });
 
   final int id;
@@ -20,6 +21,9 @@ class AppNotification {
   final DateTime createdAtUtc;
   final bool isRead;
 
+  /// Picture of a news item (announcement); null for ordinary messages.
+  final String? imageUrl;
+
   AppNotification asRead() => AppNotification(
     id: id,
     title: title,
@@ -27,6 +31,7 @@ class AppNotification {
     kind: kind,
     createdAtUtc: createdAtUtc,
     isRead: true,
+    imageUrl: imageUrl,
   );
 
   factory AppNotification.fromJson(Map<String, dynamic> j) => AppNotification(
@@ -36,6 +41,7 @@ class AppNotification {
     kind: j['kind'] as String,
     createdAtUtc: DateTime.parse(j['createdAtUtc'] as String),
     isRead: j['isRead'] as bool,
+    imageUrl: j['imageUrl'] as String?,
   );
 }
 
@@ -55,6 +61,7 @@ class AnnouncementItem {
     required this.sendEmail,
     required this.recipientCount,
     required this.createdAtUtc,
+    this.imageUrl,
   });
 
   final int id;
@@ -64,6 +71,7 @@ class AnnouncementItem {
   final bool sendEmail;
   final int recipientCount;
   final DateTime createdAtUtc;
+  final String? imageUrl;
 
   factory AnnouncementItem.fromJson(Map<String, dynamic> j) => AnnouncementItem(
     id: j['id'] as int,
@@ -73,6 +81,7 @@ class AnnouncementItem {
     sendEmail: j['sendEmail'] as bool,
     recipientCount: j['recipientCount'] as int,
     createdAtUtc: DateTime.parse(j['createdAtUtc'] as String),
+    imageUrl: j['imageUrl'] as String?,
   );
 }
 
@@ -134,6 +143,17 @@ class NotificationsApi {
         'targetUserId': targetUserId,
         'sendEmail': sendEmail,
       },
+    ),
+  );
+
+  Future<AnnouncementItem> setAnnouncementImage(
+    int id,
+    List<int> bytes,
+    String filename,
+  ) async => AnnouncementItem.fromJson(
+    await _api.put<Map<String, dynamic>>(
+      '/api/v1/announcements/$id/image',
+      body: imageForm(bytes, filename),
     ),
   );
 

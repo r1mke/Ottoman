@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../images/picture_editor.dart';
+
 /// Admin: write a message to a group (or one person) and see what was sent before.
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({
     super.key,
     required this.api,
     required this.reservations,
+    this.chooser = const FileImageChooser(),
   });
 
   final NotificationsApi api;
 
   /// Only used to find a single client when sending a personal message.
   final ReservationsApi reservations;
+
+  /// Where the optional picture comes from (a file dialog; faked in tests).
+  final ImageChooser chooser;
 
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
@@ -27,6 +33,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   String _audience = Audience.clients;
   bool _email = false;
   ClientItem? _target;
+  ChosenImage? _picture;
   List<ClientItem> _found = const [];
   bool _busy = false;
   String? _error;
@@ -62,17 +69,46 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _error = null;
     });
     try {
-      await widget.api.announce(
+      final sent = await widget.api.announce(
         title: _title.text.trim(),
         body: _body.text.trim(),
         audience: _audience,
         targetUserId: _audience == Audience.user ? _target!.id : null,
         sendEmail: _email,
       );
+      final picture = _picture;
+      String? pictureProblem;
+      if (picture != null) {
+        try {
+          await widget.api.setAnnouncementImage(
+            sent.id,
+            picture.bytes,
+            picture.name,
+          );
+        } on AppException catch (e) {
+          // The message is already sent; say so, and why the picture is missing.
+          pictureProblem = e.message;
+        }
+      }
+      // The form is emptied after a successful send, as the next message starts from scratch.
       _title.clear();
       _body.clear();
-      messenger.showSnackBar(SnackBar(content: Text(t.announcementSent)));
-      if (mounted) setState(() => _version++);
+      _form.currentState?.reset();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            pictureProblem == null
+                ? t.announcementSent
+                : '${t.announcementSent} ${t.pictureNotSaved}: $pictureProblem',
+          ),
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          _picture = null;
+          _version++;
+        });
+      }
     } on AppException catch (e) {
       final detail = e.errors.values.expand((x) => x).join('\n');
       if (mounted) setState(() => _error = detail.isEmpty ? e.message : detail);
@@ -188,6 +224,56 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               ? t.requiredField
                               : null,
                         ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            OutlinedButton.icon(
+                              key: const Key('msg_picture'),
+                              onPressed: _busy
+                                  ? null
+                                  : () async {
+                                      final chosen = await widget.chooser
+                                          .choose();
+                                      if (chosen != null && mounted) {
+                                        setState(() => _picture = chosen);
+                                      }
+                                    },
+                              icon: const Icon(
+                                Icons.add_photo_alternate_outlined,
+                              ),
+                              label: Text(
+                                _picture == null
+                                    ? t.addPicture
+                                    : t.changePicture,
+                              ),
+                            ),
+                            if (_picture != null) ...[
+                              const SizedBox(width: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  _picture!.bytes,
+                                  key: const Key('msg_picture_preview'),
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const SizedBox(
+                                    width: 56,
+                                    height: 56,
+                                    child: Icon(Icons.image_outlined),
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                key: const Key('msg_picture_remove'),
+                                tooltip: t.removePicture,
+                                icon: const Icon(Icons.close),
+                                onPressed: () =>
+                                    setState(() => _picture = null),
+                              ),
+                            ],
+                          ],
+                        ),
                         CheckboxListTile(
                           key: const Key('msg_email'),
                           contentPadding: EdgeInsets.zero,
@@ -235,6 +321,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 Expanded(
                   child: AsyncView<Paged<AnnouncementItem>>(
                     key: ValueKey(_version),
+                    refreshEvery: const Duration(seconds: 60),
                     load: () => widget.api.announcements(),
                     skeleton: const ListSkeleton(),
                     isEmpty: (p) => p.items.isEmpty,
@@ -247,6 +334,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         return Card(
                           key: Key('sent_${a.id}'),
                           child: ListTile(
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: NetworkPicture(
+                                key: Key('sent_picture_${a.id}'),
+                                url: a.imageUrl,
+                                width: 48,
+                                height: 48,
+                                fallbackIcon: Icons.campaign_outlined,
+                              ),
+                            ),
                             title: Text(
                               a.title,
                               style: const TextStyle(

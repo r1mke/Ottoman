@@ -939,4 +939,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cancelReasonRequired =>
       'Enter a reason (at least 3 characters). The client receives it in a notification.';
+
+  @override
+  String get pictureNotSaved => 'The picture was not saved';
 }

@@ -310,6 +310,7 @@
   "nextWeek": "Next week",
   "cancelReasonLabel": "Reason for cancelling",
   "cancelReasonOptionalLabel": "Reason (optional)",
-  "cancelReasonRequired": "Enter a reason (at least 3 characters). The client receives it in a notification."
+  "cancelReasonRequired": "Enter a reason (at least 3 characters). The client receives it in a notification.",
+  "pictureNotSaved": "The picture was not saved"
 
 }

@@ -310,6 +310,7 @@
   "nextWeek": "Sljedeća sedmica",
   "cancelReasonLabel": "Razlog otkazivanja",
   "cancelReasonOptionalLabel": "Razlog (nije obavezan)",
-  "cancelReasonRequired": "Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti."
+  "cancelReasonRequired": "Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti.",
+  "pictureNotSaved": "Slika nije spremljena"
 
 }

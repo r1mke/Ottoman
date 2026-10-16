@@ -1909,6 +1909,12 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti.'**
   String get cancelReasonRequired;
+
+  /// No description provided for @pictureNotSaved.
+  ///
+  /// In bs, this message translates to:
+  /// **'Slika nije spremljena'**
+  String get pictureNotSaved;
 }
 
 class _AppLocalizationsDelegate

@@ -51,8 +51,27 @@ class _NotificationsPageState extends State<NotificationsPage> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(n.title),
-        content: Text(n.body),
+        title: DialogHeader(n.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (n.imageUrl != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: NetworkPicture(
+                    key: Key('notification_image_${n.id}'),
+                    url: n.imageUrl,
+                    height: 180,
+                    fallbackIcon: Icons.campaign_outlined,
+                  ),
+                ),
+              ),
+            Text(n.body),
+          ],
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.close)),
         ],
@@ -67,6 +86,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     final body = AsyncView<Paged<AppNotification>>(
       key: ValueKey(_version),
+      // New messages appear on their own; nobody has to pull to refresh.
+      refreshEvery: const Duration(seconds: 30),
       load: () => widget.api.list(),
       skeleton: const ListSkeleton(rowHeight: 84),
       isEmpty: (p) => p.items.isEmpty,
@@ -87,7 +108,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
               color: n.isRead ? null : scheme.primaryContainer,
               child: ListTile(
                 onTap: () => _open(n),
-                leading: Icon(notificationIcon(n.kind)),
+                leading: n.imageUrl == null
+                    ? Icon(notificationIcon(n.kind))
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: NetworkPicture(
+                          key: Key('notification_thumb_${n.id}'),
+                          url: n.imageUrl,
+                          width: 48,
+                          height: 48,
+                          fallbackIcon: Icons.campaign_outlined,
+                        ),
+                      ),
                 title: Text(
                   n.title,
                   style: TextStyle(

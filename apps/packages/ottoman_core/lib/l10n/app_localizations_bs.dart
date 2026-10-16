@@ -938,4 +938,7 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get cancelReasonRequired =>
       'Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti.';
+
+  @override
+  String get pictureNotSaved => 'Slika nije spremljena';
 }
