@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ottoman.Application.Audit;
+using Ottoman.Application.Idempotency;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Outbox;
@@ -33,6 +34,9 @@ public class OutboxCleanup(OttomanDbContext db, TimeProvider clock)
         // The audit trail is kept for its retention period and not a day longer (it holds names and IP addresses).
         var auditCutoff = now - AuditPolicy.Retention;
         removed += await db.AuditEntries.Where(a => a.AtUtc < auditCutoff).ExecuteDeleteAsync(ct);
+
+        var idempotencyCutoff = now - IdempotencyRules.Retention;
+        removed += await db.IdempotencyRecords.Where(r => r.CreatedAtUtc < idempotencyCutoff).ExecuteDeleteAsync(ct);
         return removed;
     }
 }

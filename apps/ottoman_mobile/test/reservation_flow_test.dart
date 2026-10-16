@@ -224,6 +224,11 @@ void main() {
     expect(data['startUtc'], '2030-01-07T08:15:00.000Z');
     expect(data['note'], 'Fade');
     expect(data.containsKey('price'), isFalse); // the client never sends money
+    expect(
+      post.headers['Idempotency-Key'],
+      matches(RegExp(r'^[0-9a-f]{32}$')),
+      reason: 'one key per booking intention',
+    );
     expect(find.text('Termin je rezervisan.'), findsOneWidget);
     expect(find.byKey(const Key('book')), findsNothing); // back at the start
   });

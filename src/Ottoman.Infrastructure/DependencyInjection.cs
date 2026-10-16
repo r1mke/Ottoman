@@ -127,6 +127,7 @@ public static class DependencyInjection
         services.Configure<PushOptions>(config.GetSection(PushOptions.Section));
         services.AddScoped<IDeviceRegistry, DeviceRegistry>();
         services.AddSingleton<IAuditLog, Ottoman.Infrastructure.Audit.AuditLog>();
+        services.AddSingleton<Ottoman.Application.Idempotency.IIdempotencyStore, Ottoman.Infrastructure.Idempotency.IdempotencyStore>();
         services.AddScoped<IAuditQueries, Ottoman.Infrastructure.Audit.AuditQueries>();
         if (config.GetSection(PushOptions.Section).Get<PushOptions>() is { Configured: true })
         {

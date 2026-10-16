@@ -28,6 +28,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   bool get _cardAvailable => widget.cardPayment.isAvailable;
 
+  /// One key for one intention to order: repeating the same tap (or a retry after a lost response) cannot create
+  /// a second order. It changes when the choices that make a different order change.
+  String _attempt = newIdempotencyKey();
+
   @override
   void dispose() {
     _note.dispose();
@@ -47,6 +51,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         quantities: widget.cart.toQuantities(),
         fulfilment: FulfilmentType.pickup,
         paymentMethod: _payment,
+        idempotencyKey: _attempt,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       // The order exists (and its stock is held) from here on, whatever happens with the payment.
@@ -85,7 +90,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
           Text(t.payment, style: _heading(context)),
           RadioGroup<String>(
             groupValue: _payment,
-            onChanged: (v) => setState(() => _payment = v!),
+            onChanged: (v) => setState(() {
+              _payment = v!;
+              _attempt = newIdempotencyKey();
+            }),
             child: Column(
               children: [
                 RadioListTile<String>(

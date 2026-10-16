@@ -15,9 +15,11 @@ class ReservationsApi {
     required DateTime startUtc,
     String? note,
     String? clientId,
+    String? idempotencyKey,
   }) async => Reservation.fromJson(
     await _api.post<Map<String, dynamic>>(
       '/api/v1/reservations',
+      idempotencyKey: idempotencyKey,
       body: {
         'employeeId': employeeId,
         'serviceIds': serviceIds,

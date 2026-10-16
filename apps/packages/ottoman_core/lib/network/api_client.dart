@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -41,8 +42,18 @@ class ApiClient {
   Future<T> get<T>(String path, {Map<String, dynamic>? query}) =>
       _send(() => dio.get<dynamic>(path, queryParameters: query));
 
-  Future<T> post<T>(String path, {Object? body}) =>
-      _send(() => dio.post<dynamic>(path, data: body));
+  /// [idempotencyKey] makes a repeat of the same write harmless: the server answers the second request with the
+  /// first answer instead of doing it again (double tap, retry after a lost response).
+  Future<T> post<T>(String path, {Object? body, String? idempotencyKey}) =>
+      _send(
+        () => dio.post<dynamic>(
+          path,
+          data: body,
+          options: idempotencyKey == null
+              ? null
+              : Options(headers: {'Idempotency-Key': idempotencyKey}),
+        ),
+      );
 
   Future<T> put<T>(String path, {Object? body}) =>
       _send(() => dio.put<dynamic>(path, data: body));
@@ -145,3 +156,13 @@ class _AuthInterceptor extends Interceptor {
 FormData imageForm(List<int> bytes, String filename) => FormData.fromMap({
   'file': MultipartFile.fromBytes(bytes, filename: filename),
 });
+
+/// A fresh random key for one user intention (one tap on "Order" or "Book"). Reuse it for retries of that same
+/// attempt, never for a different one.
+String newIdempotencyKey() {
+  final random = Random.secure();
+  return List.generate(
+    16,
+    (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+  ).join();
+}

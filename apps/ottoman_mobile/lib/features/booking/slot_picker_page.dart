@@ -29,6 +29,9 @@ class _SlotPickerPageState extends State<SlotPickerPage> {
   DateTime? _start;
   Availability? _availability;
   bool _busy = false;
+
+  /// One key per booking intention; a different slot is a different booking, so it gets a new key.
+  String _attempt = newIdempotencyKey();
   String? _error;
 
   @override
@@ -52,6 +55,7 @@ class _SlotPickerPageState extends State<SlotPickerPage> {
         employeeId: widget.employee.id,
         serviceIds: widget.services.map((s) => s.id).toList(),
         startUtc: start,
+        idempotencyKey: _attempt,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       widget.onBooked();
@@ -106,6 +110,7 @@ class _SlotPickerPageState extends State<SlotPickerPage> {
                   controller: _controller,
                   onChanged: (start, availability) => setState(() {
                     _start = start;
+                    _attempt = newIdempotencyKey();
                     _availability = availability;
                     _error = null;
                   }),

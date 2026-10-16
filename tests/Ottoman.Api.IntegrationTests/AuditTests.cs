@@ -106,8 +106,14 @@ public class AuditTests(ApiFixture api)
             var start = DateTime.UtcNow.AddDays(-30);
             var r = new Reservation
             {
-                ClientId = clientAuth.User.Id, EmployeeId = kerim.User.Id, StartUtc = start, EndUtc = start.AddMinutes(30),
-                Status = ReservationStatus.Confirmed, TotalPrice = 20m, TotalDurationMinutes = 30, CreatedAtUtc = start.AddDays(-1),
+                ClientId = clientAuth.User.Id,
+                EmployeeId = kerim.User.Id,
+                StartUtc = start,
+                EndUtc = start.AddMinutes(30),
+                Status = ReservationStatus.Confirmed,
+                TotalPrice = 20m,
+                TotalDurationMinutes = 30,
+                CreatedAtUtc = start.AddDays(-1),
                 Items = [new ReservationItem { ServiceId = service.Id, ServiceName = service.Name, Price = 20m, DurationMinutes = 30 }],
             };
             db.Reservations.Add(r);
@@ -167,7 +173,15 @@ public class AuditTests(ApiFixture api)
         var marker = $"Purge.{Guid.NewGuid():N}";
         AuditEntry Entry(string action, DateTime at) => new()
         {
-            AtUtc = at, UserId = "u", UserName = "n", Role = "Admin", Method = "POST", Action = action, Route = "r", Target = "t", StatusCode = 200,
+            AtUtc = at,
+            UserId = "u",
+            UserName = "n",
+            Role = "Admin",
+            Method = "POST",
+            Action = action,
+            Route = "r",
+            Target = "t",
+            StatusCode = 200,
         };
         db.AuditEntries.AddRange(Entry($"{marker}.old", now - AuditPolicy.Retention - TimeSpan.FromDays(1)), Entry($"{marker}.new", now.AddDays(-10)));
         await db.SaveChangesAsync();

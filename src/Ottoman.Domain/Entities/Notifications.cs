@@ -71,3 +71,18 @@ public class AuditEntry
     public int StatusCode { get; set; }
     public string? Ip { get; set; }
 }
+
+/// <summary>The remembered outcome of a write, keyed by the caller's Idempotency-Key. StatusCode stays null while it runs.</summary>
+public class IdempotencyRecord
+{
+    public long Id { get; set; }
+    public string UserId { get; set; } = null!;
+    public string Key { get; set; } = null!;
+    public string Route { get; set; } = null!;
+    public string RequestHash { get; set; } = null!;
+    public int? StatusCode { get; set; }
+    public string? ResponseBody { get; set; }
+    public string? ContentType { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? CompletedAtUtc { get; set; }
+}

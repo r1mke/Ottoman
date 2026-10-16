@@ -140,6 +140,20 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
   final _serviceIds = <int>{};
   DateTime? _start;
   bool _busy = false;
+
+  /// A repeat of the same booking (double click, retry after a lost answer) must not book twice; changing anything
+  /// about it makes it a different booking with its own key.
+  String _attemptKey = newIdempotencyKey();
+  String? _attemptFor;
+
+  String _keyFor(String fingerprint) {
+    if (_attemptFor != fingerprint) {
+      _attemptFor = fingerprint;
+      _attemptKey = newIdempotencyKey();
+    }
+    return _attemptKey;
+  }
+
   String? _error;
 
   @override
@@ -173,6 +187,9 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
         startUtc: start,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
         clientId: client.id,
+        idempotencyKey: _keyFor(
+          '${client.id}|${employee.id}|${start.toIso8601String()}|${(_serviceIds.toList()..sort())}|${_note.text.trim()}',
+        ),
       );
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
