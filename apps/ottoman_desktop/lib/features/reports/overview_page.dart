@@ -266,10 +266,17 @@ class _KpiCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              value,
-              key: Key('kpi_value_$id'),
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                key: Key('kpi_value_$id'),
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
             const SizedBox(height: 4),
             if (change != null)
@@ -502,7 +509,7 @@ class _KpiGrid extends StatelessWidget {
 
   static const _gap = 16.0;
   static const _minWidth = 210.0;
-  static const _height = 116.0;
+  static const _height = 124.0;
 
   final List<Widget> children;
 

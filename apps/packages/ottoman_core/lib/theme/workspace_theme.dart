@@ -28,28 +28,29 @@ abstract final class WorkspaceColors {
 abstract final class WorkspaceTheme {
   static ThemeData build({String? fontFamily}) {
     const c = WorkspaceColors.ink;
-    final scheme = ColorScheme.fromSeed(
-      seedColor: WorkspaceColors.amber,
-      brightness: Brightness.light,
-    ).copyWith(
-      primary: c,
-      onPrimary: Colors.white,
-      secondary: WorkspaceColors.amber,
-      onSecondary: c,
-      secondaryContainer: WorkspaceColors.amberSoft,
-      onSecondaryContainer: WorkspaceColors.amberInk,
-      surface: WorkspaceColors.surface,
-      onSurface: c,
-      onSurfaceVariant: WorkspaceColors.muted,
-      surfaceContainerHighest: WorkspaceColors.tableHead,
-      surfaceContainerHigh: WorkspaceColors.tableHead,
-      surfaceContainer: WorkspaceColors.canvas,
-      surfaceContainerLow: WorkspaceColors.canvas,
-      outline: WorkspaceColors.muted,
-      outlineVariant: WorkspaceColors.line,
-      error: WorkspaceColors.danger,
-      tertiary: WorkspaceColors.success,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: WorkspaceColors.amber,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: c,
+          onPrimary: Colors.white,
+          secondary: WorkspaceColors.amber,
+          onSecondary: c,
+          secondaryContainer: WorkspaceColors.amberSoft,
+          onSecondaryContainer: WorkspaceColors.amberInk,
+          surface: WorkspaceColors.surface,
+          onSurface: c,
+          onSurfaceVariant: WorkspaceColors.muted,
+          surfaceContainerHighest: WorkspaceColors.tableHead,
+          surfaceContainerHigh: WorkspaceColors.tableHead,
+          surfaceContainer: WorkspaceColors.canvas,
+          surfaceContainerLow: WorkspaceColors.canvas,
+          outline: WorkspaceColors.muted,
+          outlineVariant: WorkspaceColors.line,
+          error: WorkspaceColors.danger,
+          tertiary: WorkspaceColors.success,
+        );
 
     final card = BorderRadius.circular(12);
     final control = BorderRadius.circular(10);
@@ -129,7 +130,10 @@ abstract final class WorkspaceTheme {
         filled: true,
         fillColor: WorkspaceColors.surface,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(borderRadius: control),
         enabledBorder: OutlineInputBorder(
           borderRadius: control,
@@ -166,7 +170,9 @@ abstract final class WorkspaceTheme {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       ),
       dataTableTheme: DataTableThemeData(
-        headingRowColor: const WidgetStatePropertyAll(WorkspaceColors.tableHead),
+        headingRowColor: const WidgetStatePropertyAll(
+          WorkspaceColors.tableHead,
+        ),
         headingTextStyle: const TextStyle(
           color: WorkspaceColors.muted,
           fontSize: 12,
@@ -191,10 +197,14 @@ abstract final class WorkspaceTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? Colors.white : WorkspaceColors.neutral,
+          (s) => s.contains(WidgetState.selected)
+              ? Colors.white
+              : WorkspaceColors.neutral,
         ),
         trackColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? WorkspaceColors.success : WorkspaceColors.line,
+          (s) => s.contains(WidgetState.selected)
+              ? WorkspaceColors.success
+              : WorkspaceColors.line,
         ),
         trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
@@ -205,7 +215,10 @@ abstract final class WorkspaceTheme {
         shape: RoundedRectangleBorder(borderRadius: control),
       ),
       tooltipTheme: TooltipThemeData(
-        decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(6)),
+        decoration: BoxDecoration(
+          color: c,
+          borderRadius: BorderRadius.circular(6),
+        ),
         textStyle: const TextStyle(color: Colors.white, fontSize: 12),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(color: c),
