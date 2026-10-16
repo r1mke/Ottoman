@@ -10,7 +10,7 @@ using Ottoman.Infrastructure.Persistence;
 namespace Ottoman.Infrastructure.Seeding;
 
 /// <summary>Idempotent: safe to run on every start.</summary>
-public class DatabaseSeeder(
+public partial class DatabaseSeeder(
     OttomanDbContext db,
     UserManager<AppUser> users,
     RoleManager<IdentityRole> roles,
@@ -37,7 +37,8 @@ public class DatabaseSeeder(
         if (_opt.DemoData) await SeedDemoAsync(ct);
     }
 
-    private async Task<AppUser> EnsureUserAsync(string email, string password, string first, string last, string role)
+    private async Task<AppUser> EnsureUserAsync(
+        string email, string password, string first, string last, string role, DateTime? registeredAtUtc = null)
     {
         var user = await users.FindByEmailAsync(email);
         if (user is not null) return user;
@@ -49,7 +50,7 @@ public class DatabaseSeeder(
             EmailConfirmed = true,
             FirstName = first,
             LastName = last,
-            RegisteredAtUtc = DateTime.UtcNow,
+            RegisteredAtUtc = registeredAtUtc ?? DateTime.UtcNow,
         };
         var created = await users.CreateAsync(user, password);
         if (!created.Succeeded)
@@ -72,27 +73,55 @@ public class DatabaseSeeder(
             new Service { Name = "Uređivanje brade", Description = "Oblikovanje i njega brade", Price = 15m, DurationMinutes = 30 },
             new Service { Name = "Srednja / duga kosa", Description = "Šišanje srednje i duge kose", Price = 35m, DurationMinutes = 45 },
             new Service { Name = "Masaža glave", Description = "Opuštajuća masaža glave", Price = 10m, DurationMinutes = 15 },
+            new Service { Name = "Brijanje vrućim ručnikom", Description = "Tradicionalno brijanje britvom i toplim ručnikom", Price = 20m, DurationMinutes = 30 },
+            new Service { Name = "Dječije šišanje", Description = "Šišanje za dječake do 12 godina", Price = 15m, DurationMinutes = 30 },
+            new Service { Name = "Bojenje brade", Description = "Prirodno bojenje sijedih dlaka u bradi", Price = 20m, DurationMinutes = 30 },
         };
         db.Services.AddRange(services);
         await db.SaveChangesAsync(ct);
 
         var kerim = await EnsureUserAsync("kerim@ottoman.local", pw, "Kerim", "Begić", Roles.Employee);
         var tarik = await EnsureUserAsync("tarik@ottoman.local", pw, "Tarik", "Mujkić", Roles.Employee);
-        await EnsureUserAsync("klijent@ottoman.local", pw, "Demo", "Klijent", Roles.Client);
+        var adin = await EnsureUserAsync("adin@ottoman.local", pw, "Adin", "Hasanović", Roles.Employee);
+        var demoClient = await EnsureUserAsync("klijent@ottoman.local", pw, "Demo", "Klijent", Roles.Client);
 
         AddEmployee(kerim, "Master Barber", "Majstor u usponu", services);
         AddEmployee(tarik, "Junior Barber", null, services.Take(3).ToArray());
+        AddEmployee(adin, "Barber", "Specijalista za fade i klasična brijanja", services.Where(s => s.Name != "Masaža glave").ToArray());
 
         var dandy = new Brand { Name = "Dandy" };
         var proraso = new Brand { Name = "Proraso" };
+        var reuzel = new Brand { Name = "Reuzel" };
         var wax = new Category { Name = "Voskovi", Description = "Voskovi i pomade za stilizovanje" };
         var beard = new Category { Name = "Njega brade", Description = "Ulja i balzami za bradu" };
-        db.Products.AddRange(
+        var shampoo = new Category { Name = "Šamponi", Description = "Šamponi i njega kose" };
+        var aftershave = new Category { Name = "Poslije brijanja", Description = "Losioni za lice poslije brijanja" };
+        var tools = new Category { Name = "Pribor", Description = "Češljevi i četke" };
+        var products = new[]
+        {
             new Product { Name = "Vosak za kosu Dandy Shaping Pomade", Description = "Pomada srednje fiksacije, prirodan efekt.", Brand = dandy, Category = wax, Price = 10m, Stock = 25, LowStockThreshold = 5 },
             new Product { Name = "Dandy Matt Clay", Description = "Mat glina jake fiksacije.", Brand = dandy, Category = wax, Price = 12m, Stock = 18, LowStockThreshold = 5 },
             new Product { Name = "Dandy Beard Oil", Description = "Ulje za njegu i omekšavanje brade.", Brand = dandy, Category = beard, Price = 14m, Stock = 12, LowStockThreshold = 4 },
-            new Product { Name = "Proraso Beard Balm", Description = "Balzam za bradu s eukaliptusom.", Brand = proraso, Category = beard, Price = 16m, Stock = 3, LowStockThreshold = 5 });
+            new Product { Name = "Proraso Beard Balm", Description = "Balzam za bradu s eukaliptusom.", Brand = proraso, Category = beard, Price = 16m, Stock = 3, LowStockThreshold = 5 },
+            new Product { Name = "Reuzel Daily Shampoo", Description = "Svakodnevni šampon blage formule.", Brand = reuzel, Category = shampoo, Price = 13m, Stock = 20, LowStockThreshold = 5 },
+            new Product { Name = "Reuzel Tea Tree Shampoo", Description = "Šampon s čajevcem protiv perutanja.", Brand = reuzel, Category = shampoo, Price = 15m, Stock = 14, LowStockThreshold = 4 },
+            new Product { Name = "Proraso After Shave Lotion", Description = "Osvježavajući losion poslije brijanja.", Brand = proraso, Category = aftershave, Price = 11m, Stock = 16, LowStockThreshold = 4 },
+            new Product { Name = "Dandy After Shave Balm", Description = "Umirujući balzam za lice poslije brijanja.", Brand = dandy, Category = aftershave, Price = 12m, Stock = 9, LowStockThreshold = 4 },
+            new Product { Name = "Drveni češalj", Description = "Ručno rađen češalj od bukovine.", Category = tools, Price = 6m, Stock = 30, LowStockThreshold = 6 },
+            new Product { Name = "Četka za bradu", Description = "Četka od prirodne čekinje.", Category = tools, Price = 9m, Stock = 22, LowStockThreshold = 5 },
+        };
+        db.Products.AddRange(products);
         await db.SaveChangesAsync(ct);
+
+        // Clients registered over the last four months, so "new clients" in the reports has a shape.
+        var clients = new List<AppUser> { demoClient };
+        for (var i = 0; i < DemoClients.Length; i++)
+        {
+            var (first, last, email) = DemoClients[i];
+            clients.Add(await EnsureUserAsync(email, pw, first, last, Roles.Client, DateTime.UtcNow.AddDays(-110 + i * 13)));
+        }
+
+        await SeedActivityAsync([kerim, tarik, adin], clients, services, products, ct);
         log.LogInformation("Seeded demo data");
     }
 

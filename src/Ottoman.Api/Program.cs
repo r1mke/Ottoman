@@ -102,6 +102,8 @@ try
         await db.Database.MigrateAsync();
         await scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
         await scope.ServiceProvider.GetRequiredService<Ottoman.Infrastructure.Security.StoredKeyEncryption>().EnsureEncryptedAsync(default);
+        if (app.Configuration.GetValue<bool>("Seed:DemoData"))
+            await scope.ServiceProvider.GetRequiredService<Ottoman.Infrastructure.Seeding.DemoImageSeeder>().SeedAsync();
     }
 
     if (app.Environment.IsDevelopment())

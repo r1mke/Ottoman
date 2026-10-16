@@ -154,6 +154,7 @@ public static class DependencyInjection
 
         services.Configure<SeedOptions>(config.GetSection(SeedOptions.Section));
         services.AddScoped<DatabaseSeeder>();
+        services.AddScoped<DemoImageSeeder>();
         return services;
     }
 }
