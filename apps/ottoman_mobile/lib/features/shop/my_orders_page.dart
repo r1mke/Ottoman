@@ -49,15 +49,40 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     if (mounted) setState(() => _version++);
   }
 
+  /// The order whose payment sheet is open; while set, no second sheet can be opened (double tap).
+  int? _paying;
+
   Future<void> _pay(ShopOrder o) async {
+    if (_paying != null) return;
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    // The list does not carry payment secrets; fetch the one order.
-    final result = await widget.cardPayment.pay(await widget.shop.order(o.id));
-    if (result == CardPaymentResult.unavailable) {
-      messenger.showSnackBar(SnackBar(content: Text(t.cardUnavailable)));
+    void say(String text) => messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(key: const Key('pay_result'), content: Text(text)),
+      );
+    setState(() => _paying = o.id);
+    try {
+      // The list does not carry payment secrets; fetch the one order (it may have been paid or closed meanwhile).
+      final fresh = await widget.shop.order(o.id);
+      if (!fresh.awaitsPayment) return;
+      final result = await widget.cardPayment.pay(fresh);
+      say(switch (result) {
+        CardPaymentResult.paid => t.paymentSucceeded,
+        CardPaymentResult.cancelled => t.paymentCancelledPayLater,
+        CardPaymentResult.unavailable => t.cardUnavailable,
+        CardPaymentResult.failed => t.paymentNotConfirmed,
+      });
+    } on AppException catch (e) {
+      say(e.message);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _paying = null;
+          _version++;
+        });
+      }
     }
-    if (mounted) setState(() => _version++);
   }
 
   @override
@@ -82,7 +107,9 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               return OrderCard(
                 order: o,
                 onCancel: o.clientCanCancel ? () => _cancel(o) : null,
-                onPay: o.awaitsPayment ? () => _pay(o) : null,
+                onPay: o.awaitsPayment && _paying == null
+                    ? () => _pay(o)
+                    : null,
               );
             },
           ),

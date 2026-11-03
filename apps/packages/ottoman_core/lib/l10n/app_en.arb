@@ -223,6 +223,8 @@
   "paymentStatusRefunded": "Refunded",
   "paymentStatusRefundPending": "Refund pending",
   "paymentNotConfirmed": "The payment was not confirmed. The order waits for payment in \"My orders\"; if it stays unpaid, it closes on its own.",
+  "paymentSucceeded": "Payment successful. Thank you!",
+  "paymentCancelledPayLater": "Payment cancelled. You can pay for the order later.",
   "none": "None",
   "noNotifications": "No notifications",
   "markAllRead": "Mark all as read",

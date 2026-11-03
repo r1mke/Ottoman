@@ -571,6 +571,13 @@ class AppLocalizationsBs extends AppLocalizations {
       'Plaćanje nije potvrđeno. Narudžba čeka uplatu u „Moje narudžbe“; ako ostane neplaćena, sama se zatvara.';
 
   @override
+  String get paymentSucceeded => 'Plaćanje je uspjelo. Hvala!';
+
+  @override
+  String get paymentCancelledPayLater =>
+      'Plaćanje je otkazano. Narudžbu možete platiti kasnije.';
+
+  @override
   String get none => 'Bez';
 
   @override

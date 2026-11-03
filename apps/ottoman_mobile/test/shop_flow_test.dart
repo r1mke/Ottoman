@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -61,6 +62,7 @@ class _Api implements HttpClientAdapter {
 
   /// What GET /orders/{id} returns; by default an unpaid card order.
   Map<String, dynamic>? orderDetail;
+  int orderDetailStatus = 200;
   List<Map<String, dynamic>> sections = [];
   int onSaleCount = 0;
   bool showCategoryBlock = true;
@@ -165,6 +167,7 @@ class _Api implements HttpClientAdapter {
     } else if (path.endsWith('/sections')) {
       body = sections;
     } else if (RegExp(r'/orders/\d+$').hasMatch(path) && o.method == 'GET') {
+      status = orderDetailStatus;
       body =
           orderDetail ??
           {
@@ -204,6 +207,21 @@ class _Api implements HttpClientAdapter {
 
   @override
   void close({bool force = false}) {}
+}
+
+/// A payment sheet that stays open until the test closes it.
+class _SlowCard extends CardPaymentLauncher {
+  final opened = <ShopOrder>[];
+  final done = Completer<CardPaymentResult>();
+
+  @override
+  bool get isAvailable => true;
+
+  @override
+  Future<CardPaymentResult> pay(ShopOrder order) {
+    opened.add(order);
+    return done.future;
+  }
 }
 
 class _FakeCard extends CardPaymentLauncher {
@@ -571,6 +589,70 @@ void main() {
       ); // still on checkout
     },
   );
+
+  Future<_Api> openUnpaidOrder(
+    WidgetTester tester,
+    CardPaymentLauncher card,
+  ) async {
+    final api = await _openShop(tester, cardPayment: card);
+    api.orders = [_order(status: 'PendingPayment', method: 'Card')];
+    await tester.tap(find.byKey(const Key('open_orders')));
+    await tester.pumpAndSettle();
+    return api;
+  }
+
+  testWidgets('paying from my orders says how it went and reloads', (
+    tester,
+  ) async {
+    await openUnpaidOrder(tester, _FakeCard(CardPaymentResult.paid));
+    await tester.tap(find.byKey(const Key('pay_7')));
+    await tester.pumpAndSettle();
+    expect(find.text('Plaćanje je uspjelo. Hvala!'), findsOneWidget);
+  });
+
+  testWidgets('closing the sheet from my orders says it can be paid later', (
+    tester,
+  ) async {
+    await openUnpaidOrder(tester, _FakeCard(CardPaymentResult.cancelled));
+    await tester.tap(find.byKey(const Key('pay_7')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('platiti kasnije'), findsOneWidget);
+  });
+
+  testWidgets('a second tap while the sheet is open opens no second sheet', (
+    tester,
+  ) async {
+    final card = _SlowCard();
+    await openUnpaidOrder(tester, card);
+    await tester.tap(find.byKey(const Key('pay_7')));
+    await tester.pumpAndSettle();
+    // While the sheet is open the button is gone, so it cannot be tapped again.
+    expect(find.byKey(const Key('pay_7')), findsNothing);
+    expect(card.opened, hasLength(1));
+
+    card.done.complete(CardPaymentResult.cancelled);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pay_result')), findsOneWidget);
+  });
+
+  testWidgets('a server error while opening the payment is shown', (
+    tester,
+  ) async {
+    final card = _FakeCard(CardPaymentResult.paid);
+    final api = await openUnpaidOrder(tester, card);
+    api
+      ..orderDetailStatus = 409
+      ..orderDetail = {
+        'status': 409,
+        'title': 'Sukob podataka.',
+        'detail': 'Narudžba je u međuvremenu promijenjena.',
+      };
+    await tester.tap(find.byKey(const Key('pay_7')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(card.paid, isEmpty);
+    expect(find.byKey(const Key('pay_result')), findsOneWidget);
+  });
 
   testWidgets(
     'my orders lists them and lets the client withdraw an unpaid one',

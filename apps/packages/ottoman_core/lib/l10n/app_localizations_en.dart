@@ -571,6 +571,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'The payment was not confirmed. The order waits for payment in \"My orders\"; if it stays unpaid, it closes on its own.';
 
   @override
+  String get paymentSucceeded => 'Payment successful. Thank you!';
+
+  @override
+  String get paymentCancelledPayLater =>
+      'Payment cancelled. You can pay for the order later.';
+
+  @override
   String get none => 'None';
 
   @override

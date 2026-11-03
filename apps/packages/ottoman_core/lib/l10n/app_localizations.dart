@@ -1166,6 +1166,18 @@ abstract class AppLocalizations {
   /// **'Plaćanje nije potvrđeno. Narudžba čeka uplatu u „Moje narudžbe“; ako ostane neplaćena, sama se zatvara.'**
   String get paymentNotConfirmed;
 
+  /// No description provided for @paymentSucceeded.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plaćanje je uspjelo. Hvala!'**
+  String get paymentSucceeded;
+
+  /// No description provided for @paymentCancelledPayLater.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plaćanje je otkazano. Narudžbu možete platiti kasnije.'**
+  String get paymentCancelledPayLater;
+
   /// No description provided for @none.
   ///
   /// In bs, this message translates to:

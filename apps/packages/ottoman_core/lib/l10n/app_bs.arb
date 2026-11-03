@@ -223,6 +223,8 @@
   "paymentStatusRefunded": "Vraćeno",
   "paymentStatusRefundPending": "Povrat u obradi",
   "paymentNotConfirmed": "Plaćanje nije potvrđeno. Narudžba čeka uplatu u „Moje narudžbe“; ako ostane neplaćena, sama se zatvara.",
+  "paymentSucceeded": "Plaćanje je uspjelo. Hvala!",
+  "paymentCancelledPayLater": "Plaćanje je otkazano. Narudžbu možete platiti kasnije.",
   "none": "Bez",
   "noNotifications": "Nema obavijesti",
   "markAllRead": "Označi sve kao pročitano",
