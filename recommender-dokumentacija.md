@@ -1,7 +1,7 @@
 # Preporuke (recommender) — kako radi
 
 Kod: `src/Ottoman.Domain/Recommendations/` (čista logika, bez baze) i `src/Ottoman.Infrastructure/Recommendations/` (učitavanje podataka + keš).
-Testovi: `tests/Ottoman.Domain.Tests/RecommenderTests.cs` (131 test u projektu, ovdje determinističke fixture-e) i `RecommendationTests.cs` (uživo nad bazom).
+Testovi: `tests/Ottoman.Domain.Tests/RecommenderTests.cs` i `RecommenderExplanationTests.cs` (determinističke fixture-e; cijeli projekat `Ottoman.Domain.Tests` ima 182 testa), `tests/Ottoman.Application.Tests/ReasonTextTests.cs` (tekst objašnjenja) i `tests/Ottoman.Api.IntegrationTests/RecommendationTests.cs` (uživo nad bazom).
 
 Isti algoritam radi **tri puta**: nad proizvodima, uslugama i frizerima. Metoda je *content-based*: stavke se porede po sadržaju (riječi, kategorija, brend, cijena), a ne po tome šta su kupili drugi ljudi. Za salon s malo korisnika to je pouzdanije od kolaborativnog filtriranja (nema dovoljno podataka za „slične korisnike“).
 
@@ -47,7 +47,7 @@ decay = 0.5 ^ (starost_u_danima / 90)      // poluvrijeme 90 dana
 Izjednačenja se razrješavaju po id-u, pa je rezultat uvijek isti za iste ulaze.
 
 ## 5. „Hladni start“
-Ako korisnik nema historiju (ili ništa ne daje pozitivan skor), vraća se lista **najpopularnijeg**: broj prodaja/termina + prosječna ocjena. Stavke koje liče na ono što je korisnik označio kao omiljeno ne ulaze (kosinus < 0 prema profilu).
+Ako korisnik nema historiju (ili ništa ne daje pozitivan skor), vraća se lista **najpopularnijeg**: broj prodaja/termina + prosječna ocjena. Stavke koje liče na ono što korisniku **nije** odgovaralo ne ulaze: ako je profil zbog loših ocjena (1–2 ★) negativan prema nekoj stavci (kosinus < 0), ona se ne nudi ni kao „popularno“.
 
 ## 6. „Slično“ (detalj proizvoda)
 `Related(stavka)` = najbliži susjedi te stavke po kosinusu, bez nje same. Zato ulje za bradu daje balzam za bradu, pa ostale proizvode istog brenda.
@@ -55,7 +55,18 @@ Ako korisnik nema historiju (ili ništa ne daje pozitivan skor), vraća se lista
 ## 7. Frizeri
 Frizer se opisuje svojom titulom, opisom i uslugama koje radi. Profil korisnika se gradi iz termina kod frizera i recenzija. Popularnost = broj termina + prosječna ocjena.
 
-## 8. Keš i invalidacija
+## 8. Objašnjenje uz preporuku („Zašto ovo?“)
+Uz svaku preporuku API vraća i rečenicu koja kaže zašto je stavka predložena (`RecommendationReason`: vrsta, naziv izvora i tekst). Nastaje u dva koraka, oba bez baze:
+
+1. **Domen** (`Recommender.ExplainFor`, `ItemIndex.Explain`): od svih stavki s kojima je korisnik imao pozitivan kontakt bira se ona koja najjače „vuče“ kandidata (težina događaja × opadanje u vremenu × kosinus prema kandidatu). Za taj par se zapisuje šta stvarno dijele: istu kategoriju, isti brend, isti cjenovni razred i zajedničke riječi. Ako takve stavke nema, razlog je *Popular*.
+2. **Tekst** (`ReasonText.Compose`, `src/Ottoman.Application/Recommendations/ReasonText.cs`) to pretvara u jednu rečenicu na bosanskom:
+   - lična preporuka: „Jer ste kupili „Dandy Beard Oil“ - ista kategorija (Njega brade), isti brend (Dandy)“; za usluge „Jer ste koristili uslugu …“, za frizere „Jer ste bili kod frizera …“;
+   - „slično“ na detalju proizvoda: „Slično kao „…“ - …“;
+   - hladni start: „Popularno u salonu. Čim nešto kupite ili rezervišete, preporuke će biti lične.“
+
+Svaka činjenica u rečenici dolazi iz istog poređenja koje je dalo skor, pa objašnjenje nikad ne tvrdi nešto što nije uticalo na izbor. Mobilna aplikacija tu rečenicu prikazuje uz preporuku.
+
+## 9. Keš i invalidacija
 Vektori (skupi dio) se čuvaju u memoriji (`RecommendationCache`). Brišu se **odmah** kad se promijeni katalog: `CatalogChangeInterceptor` presreće svaki `SaveChanges` koji dira proizvod, uslugu, frizera, brend ili kategoriju; operacije koje zaobilaze `SaveChanges` (deaktivacija proizvoda, brisanje brenda/kategorije) pozivaju `Invalidate()` same. Zaliha i ocjene se ne keširaju. Nema TTL-a, pa nema zastarjelih preporuka.
 
 ## Primjer računa
