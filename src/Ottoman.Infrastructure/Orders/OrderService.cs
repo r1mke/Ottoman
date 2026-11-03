@@ -110,10 +110,16 @@ public class OrderService(
                     }
                 }
 
-                foreach (var p in products.Where(p => p.LowStockThreshold != null))
+                // One query for the new stock of every watched product (not one per product).
+                var watched = products.Where(p => p.LowStockThreshold != null).ToList();
+                if (watched.Count > 0)
                 {
-                    var stock = await db.Products.Where(x => x.Id == p.Id).Select(x => x.Stock).SingleAsync(ct);
-                    if (stock <= p.LowStockThreshold) outbox.Enqueue(new ProductLowStock(p.Id, p.Name, stock, p.LowStockThreshold!.Value));
+                    var watchedIds = watched.Select(p => p.Id).ToList();
+                    var stockById = await db.Products.Where(x => watchedIds.Contains(x.Id))
+                        .Select(x => new { x.Id, x.Stock }).ToDictionaryAsync(x => x.Id, x => x.Stock, ct);
+                    foreach (var p in watched)
+                        if (stockById[p.Id] <= p.LowStockThreshold)
+                            outbox.Enqueue(new ProductLowStock(p.Id, p.Name, stockById[p.Id], p.LowStockThreshold!.Value));
                 }
 
                 db.Orders.Add(order);

@@ -32,26 +32,50 @@ public class ReminderService(OttomanDbContext db, IOutbox outbox, TimeProvider c
                 .Select(x => new { x.ReservationId, x.Kind }).ToListAsync(ct))
             .GroupBy(x => x.ReservationId).ToDictionary(g => g.Key, g => g.Select(x => x.Kind).ToHashSet());
 
-        var queued = 0;
-        foreach (var r in upcoming)
+        var due = upcoming
+            .SelectMany(r => ReminderPolicy.Due(now, r.StartUtc, r.CreatedAtUtc, sent.GetValueOrDefault(r.Id) ?? [])
+                .Select(kind => new ReservationReminderDue(r.Id, r.ClientId, r.EmployeeId, r.StartUtc, kind.ToString())))
+            .ToList();
+        if (due.Count == 0) return 0;
+
+        // Normally all reminders and their events go in one save (one transaction).
+        db.ChangeTracker.Clear();
+        foreach (var e in due) Queue(e, now);
+        try
         {
-            var already = sent.GetValueOrDefault(r.Id) ?? [];
-            foreach (var kind in ReminderPolicy.Due(now, r.StartUtc, r.CreatedAtUtc, already))
+            await db.SaveChangesAsync(ct);
+            return due.Count;
+        }
+        catch (DbUpdateException ex) when (IsDuplicate(ex))
+        {
+            // Another scheduler queued some of them first; nothing of this batch was saved. Go one by one so the
+            // rest still go out exactly once.
+        }
+
+        var queued = 0;
+        foreach (var e in due)
+        {
+            db.ChangeTracker.Clear();
+            Queue(e, now);
+            try
             {
-                db.ChangeTracker.Clear();
-                db.ReservationReminders.Add(new ReservationReminder { ReservationId = r.Id, Kind = kind, SentAtUtc = now });
-                outbox.Enqueue(new ReservationReminderDue(r.Id, r.ClientId, r.EmployeeId, r.StartUtc, kind.ToString()));
-                try
-                {
-                    await db.SaveChangesAsync(ct);
-                    queued++;
-                }
-                catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
-                {
-                    // Another instance queued this reminder first.
-                }
+                await db.SaveChangesAsync(ct);
+                queued++;
+            }
+            catch (DbUpdateException ex) when (IsDuplicate(ex))
+            {
+                // Another instance queued this reminder first.
             }
         }
+        db.ChangeTracker.Clear();
         return queued;
     }
+
+    private void Queue(ReservationReminderDue e, DateTime now)
+    {
+        db.ReservationReminders.Add(new ReservationReminder { ReservationId = e.ReservationId, Kind = Enum.Parse<ReminderKind>(e.Kind), SentAtUtc = now });
+        outbox.Enqueue(e);
+    }
+
+    private static bool IsDuplicate(DbUpdateException ex) => ex.InnerException is SqlException { Number: 2601 or 2627 };
 }
