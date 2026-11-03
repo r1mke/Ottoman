@@ -27,7 +27,7 @@ public class CreateOrderRequestValidator : AbstractValidator<CreateOrderRequest>
         });
         RuleFor(x => x.Fulfilment).IsInEnum();
         RuleFor(x => x.PaymentMethod).IsInEnum();
-        // Goods are collected at the salon; delivery is not offered (docs/06 #65).
+        // Goods are collected at the salon; delivery is not offered.
         RuleFor(x => x.Fulfilment).Equal(FulfilmentType.Pickup).WithMessage("Proizvodi se preuzimaju u salonu.");
         RuleFor(x => x.Note).MaximumLength(500).WithName("Napomena");
     }

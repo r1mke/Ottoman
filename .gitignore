@@ -38,3 +38,4 @@ data/images/
 # Firebase / Google service account keys (secrets)
 deploy/*firebase-adminsdk*.json
 deploy/firebase-service-account.json
+/docs/

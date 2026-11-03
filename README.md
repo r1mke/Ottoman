@@ -5,7 +5,7 @@ Sistem za upravljanje barbershopom: rezervacije termina, webshop proizvoda s pla
 - **Backend:** ASP.NET Core (.NET 10), EF Core + SQL Server, ASP.NET Identity + JWT, RabbitMQ (worker), Stripe.
 - **Klijenti:** Flutter desktop (admin) i Flutter mobile (klijent / zaposlenik), zajednički paket `apps/packages/ottoman_core`.
 
-Dokumentacija: [`docs/`](docs/README.md) — posebno `06-za-odluku.md` (sve odluke koje su donesene samostalno, s razlogom) i `recommender-dokumentacija.md` (kako rade preporuke).
+Dokumentacija preporuka: [`recommender-dokumentacija.md`](recommender-dokumentacija.md).
 
 ## Brzi početak
 
@@ -56,7 +56,7 @@ dotnet format Ottoman.slnx --verify-no-changes
 
 Flutter: `cd apps/<app> && flutter pub get && flutter analyze && flutter test`.
 
-Svaka faza je radila na vlastitoj grani spojenoj u `main`; `PROGRESS.md` (izvan repozitorija) i `docs/04-plan-implementacije.md` prate stanje.
+Svaka faza je radila na vlastitoj grani spojenoj u `main`; 
 
 ## Produkcija — šta provjeriti
 
@@ -64,4 +64,3 @@ Svaka faza je radila na vlastitoj grani spojenoj u `main`; `PROGRESS.md` (izvan 
 - Iza reverse proxyja navedite pouzdane adrese u `Proxy:KnownProxies` (inače su rate limiti po IP-u beskorisni) i terminirajte TLS na proxyju.
 - Dodajte pravi SMTP (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`) i produkcijski Stripe webhook endpoint (njegov `whsec_`).
 - QuestPDF (PDF izvoz) koristi Community licencu: besplatno za organizacije do 1 M USD godišnjeg prihoda.
-- Sigurnosne mjere i otvorene tačke: `docs/09-sigurnost.md`.
