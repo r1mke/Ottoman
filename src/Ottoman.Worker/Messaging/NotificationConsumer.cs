@@ -1,4 +1,5 @@
 using System.Text;
+using Ottoman.Infrastructure.Messaging;
 using Ottoman.Infrastructure.Notifications;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -18,7 +19,8 @@ public sealed class NotificationConsumer(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await using var connection = await rabbit.ConnectAsync(stoppingToken);
+        // The shared connection of this process; only the channel is ours to close.
+        var connection = await rabbit.GetAsync(stoppingToken);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
         await RabbitTopology.DeclareAsync(channel, stoppingToken);
         await channel.BasicQosAsync(0, 10, false, stoppingToken);

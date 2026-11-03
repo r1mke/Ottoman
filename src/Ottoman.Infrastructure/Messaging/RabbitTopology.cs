@@ -1,6 +1,6 @@
 using RabbitMQ.Client;
 
-namespace Ottoman.Worker.Messaging;
+namespace Ottoman.Infrastructure.Messaging;
 
 /// <summary>
 /// One topic exchange for all integration events (routing key = event type). The notification queue gets every

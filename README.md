@@ -2,7 +2,7 @@
 
 Sistem za upravljanje barbershopom: rezervacije termina, webshop proizvoda s plaćanjem karticom, recenzije i preporuke, obavijesti i podsjetnici, izvještaji.
 
-- **Backend:** ASP.NET Core (.NET 10), EF Core + SQL Server, ASP.NET Identity + JWT, RabbitMQ (worker), Stripe.
+- **Backend:** ASP.NET Core (.NET 10), EF Core + SQL Server, ASP.NET Identity + JWT, RabbitMQ, Stripe. API upisuje događaje u outbox tabelu u istoj transakciji kao i promjenu, pa ih sam objavljuje na RabbitMQ (jedna konekcija, potvrde brokera); worker ih troši (e-mail, obavijesti, push) s ponovnim pokušajima i dead-letter redom.
 - **Klijenti:** Flutter desktop (admin) i Flutter mobile (klijent / zaposlenik), zajednički paket `apps/packages/ottoman_core`.
 
 Dokumentacija preporuka: [`recommender-dokumentacija.md`](recommender-dokumentacija.md).

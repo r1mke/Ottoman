@@ -44,6 +44,8 @@ public sealed class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Cloudinary:CloudName", "testcloud");
         builder.UseSetting("Cors:Origins:0", "https://admin.example.com");
         builder.UseSetting("DataProtection:KeyEncryptionSecret", KeyEncryptionSecret);
+        // Tests drive the outbox by hand; the API must not publish to whatever RabbitMQ happens to run locally.
+        builder.UseSetting(Ottoman.Infrastructure.DependencyInjection.PublishOutboxSetting, "false");
         builder.ConfigureServices(s =>
         {
             // The API does not send mail (the worker does); tests drive the same handler with a recording sender.

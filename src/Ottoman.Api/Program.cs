@@ -50,6 +50,7 @@ try
         .WriteTo.Console());
 
     builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddOutboxPublishing(builder.Configuration);
     builder.Services.AddApplication();
     builder.Services.AddOttomanAuth(builder.Configuration);
     builder.Services.AddControllers(o =>

@@ -76,9 +76,11 @@ services:
       Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET:-}
       DataProtection__KeyEncryptionSecret: ${DP_KEY_ENCRYPTION_SECRET:-}
       Cors__Origins__0: ${CORS_ORIGIN:-}
+      # The API publishes its outbox to RabbitMQ (one connection, publisher confirms).
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      RabbitMq__ClientName: ottoman-api
     ports:
       - "${API_PORT:-5080}:8080"
     healthcheck:
@@ -111,9 +113,11 @@ services:
       Payments__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-}
       Firebase__ServiceAccountJson: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
       DataProtection__KeyEncryptionSecret: ${DP_KEY_ENCRYPTION_SECRET:-}
+      # The worker consumes the events (e-mail, inbox, push).
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      RabbitMq__ClientName: ottoman-worker
       Smtp__Host: ${SMTP_HOST:-mailpit}
       Smtp__Port: ${SMTP_PORT:-1025}
       Smtp__User: ${SMTP_USER:-}

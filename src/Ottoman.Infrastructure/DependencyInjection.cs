@@ -46,10 +46,27 @@ namespace Ottoman.Infrastructure;
 
 public static class DependencyInjection
 {
+    /// <summary>Set to false (tests) to keep the API from publishing the outbox to RabbitMQ.</summary>
+    public const string PublishOutboxSetting = "Messaging:PublishOutbox";
+
+    /// <summary>
+    /// The API's half of messaging: it publishes the outbox to RabbitMQ itself (the worker only consumes).
+    /// </summary>
+    public static IServiceCollection AddOutboxPublishing(this IServiceCollection services, IConfiguration config)
+    {
+        if (!string.Equals(config[PublishOutboxSetting], "false", StringComparison.OrdinalIgnoreCase))
+            services.AddHostedService<Messaging.OutboxDispatcher>();
+        return services;
+    }
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
         var cs = config.GetConnectionString("Default")
                  ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
+
+        // One RabbitMQ connection per process (API: publisher, worker: consumer), opened on first use.
+        services.Configure<Messaging.RabbitOptions>(config.GetSection(Messaging.RabbitOptions.Section));
+        services.AddSingleton<Messaging.RabbitConnection>();
 
         services.AddSingleton<RecommendationCache>();
         services.AddSingleton<IRecommendationCache>(sp => sp.GetRequiredService<RecommendationCache>());
