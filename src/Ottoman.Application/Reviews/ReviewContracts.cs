@@ -10,7 +10,14 @@ public record UpdateReviewRequest(int Rating, string? Comment);
 
 public record ReplyRequest(string Text);
 
-public record HideRequest(bool Hidden);
+/// <summary>Hidden is required: a request without it must not quietly un-hide a review.</summary>
+public record HideRequest(bool? Hidden);
+
+public class HideRequestValidator : AbstractValidator<HideRequest>
+{
+    public HideRequestValidator() =>
+        RuleFor(x => x.Hidden).NotNull().WithMessage("Navedite da li se recenzija skriva ili prikazuje.").WithName("Skriveno");
+}
 
 /// <summary>
 /// The one spelling of a review target. Services and products are keyed by their number exactly as the server

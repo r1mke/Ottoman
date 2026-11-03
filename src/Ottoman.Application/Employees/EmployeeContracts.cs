@@ -56,6 +56,22 @@ public static class GenderNames
 
 public record SetEmployeeServicesRequest(IReadOnlyList<int> ServiceIds);
 
+public class SetEmployeeServicesRequestValidator : AbstractValidator<SetEmployeeServicesRequest>
+{
+    public const int MaxServices = 100;
+
+    public SetEmployeeServicesRequestValidator()
+    {
+        RuleFor(x => x.ServiceIds).NotNull().WithName("Usluge");
+        RuleFor(x => x.ServiceIds)
+            .Must(ids => ids.Count <= MaxServices).WithMessage($"Najviše {MaxServices} usluga.")
+            .Must(ids => ids.All(id => id > 0)).WithMessage("Neispravna oznaka usluge.")
+            .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("Ista usluga je navedena više puta.")
+            .When(x => x.ServiceIds is not null)
+            .WithName("Usluge");
+    }
+}
+
 /// <summary>Times are local salon wall-clock "HH:mm".</summary>
 public record WorkingHoursDto(DayOfWeek DayOfWeek, string Start, string End, string? BreakStart, string? BreakEnd);
 

@@ -43,7 +43,29 @@ public record ShopSectionRequest(
 /// <summary>Use this picture of a product as the card picture.</summary>
 public record ShopSectionPickedImageRequest(int ProductImageId);
 
+public class ShopSectionPickedImageRequestValidator : AbstractValidator<ShopSectionPickedImageRequest>
+{
+    public ShopSectionPickedImageRequestValidator() =>
+        RuleFor(x => x.ProductImageId).GreaterThan(0).WithMessage("Odaberite sliku proizvoda.").WithName("Slika");
+}
+
 public record ShopSectionOrderRequest(IReadOnlyList<int> Ids);
+
+public class ShopSectionOrderRequestValidator : AbstractValidator<ShopSectionOrderRequest>
+{
+    public const int MaxSections = 200;
+
+    public ShopSectionOrderRequestValidator()
+    {
+        RuleFor(x => x.Ids).NotEmpty().WithMessage("Pošaljite redoslijed sekcija.").WithName("Redoslijed");
+        RuleFor(x => x.Ids)
+            .Must(ids => ids.Count <= MaxSections).WithMessage($"Najviše {MaxSections} sekcija.")
+            .Must(ids => ids.All(id => id > 0)).WithMessage("Neispravna oznaka sekcije.")
+            .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("Ista sekcija je navedena više puta.")
+            .When(x => x.Ids is { Count: > 0 })
+            .WithName("Redoslijed");
+    }
+}
 
 /// <summary>How a section or its card looks, apart from what it holds.</summary>
 public record ShopSectionStyle(

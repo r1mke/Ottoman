@@ -95,6 +95,19 @@ public record CustomReportRequest(
     string? Status = null,
     string? EmployeeId = null);
 
+/// <summary>The same rules the report runner applies (CustomReportCatalog.Validate), at the HTTP edge.</summary>
+public class CustomReportRequestValidator : AbstractValidator<CustomReportRequest>
+{
+    public CustomReportRequestValidator()
+    {
+        RuleFor(x => x).Custom((r, ctx) =>
+        {
+            var error = r.Columns is null ? "Odaberite kolone izvještaja." : CustomReportCatalog.Validate(r);
+            if (error is not null) ctx.AddFailure("Izvještaj", error);
+        });
+    }
+}
+
 public static class CustomReportCatalog
 {
     public static readonly IReadOnlyList<CustomSource> Sources =

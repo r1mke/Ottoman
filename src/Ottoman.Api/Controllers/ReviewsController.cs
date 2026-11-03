@@ -65,7 +65,7 @@ public class ReviewsController(IReviewService reviews) : ControllerBase
     [HttpPut("{id:int}/hide")]
     [Authorize(Policy = Policies.AdminOnly)]
     public async Task<ActionResult<ReviewDto>> Hide(int id, HideRequest request, CancellationToken ct) =>
-        this.ToActionResult(await reviews.SetHiddenAsync(id, request.Hidden, ct));
+        this.ToActionResult(await reviews.SetHiddenAsync(id, request.Hidden!.Value, ct));
 
     [HttpPost("{id:int}/reply")]
     [Authorize(Policy = Policies.AdminOnly)]
