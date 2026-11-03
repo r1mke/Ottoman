@@ -209,13 +209,12 @@ public class SeedTests(ApiFixture api)
         var uploaded = store.Uploaded.Count;
         await seeder.SeedAsync();
 
-        uploaded.Should().BeGreaterThan(20, "products, services, barbers and news all got a picture");
+        uploaded.Should().BeGreaterThan(20, "products, services and barbers all got a picture");
         store.Uploaded.Count.Should().Be(uploaded, "the second run found nothing left to do");
         (await db.Products.CountAsync(p => !db.ProductImages.Any(i => i.ProductId == p.Id))).Should().Be(0);
         (await db.Services.CountAsync(s => s.ImageKey == null)).Should().Be(0);
         (await db.EmployeeProfiles.CountAsync(e => e.PhotoKey == null)).Should().Be(0);
-        (await db.Announcements.CountAsync(a => a.ImageKey == null)).Should().Be(0);
-        store.Uploaded.Should().Contain(k => k.StartsWith("ottoman/products/")).And.Contain(k => k.StartsWith("ottoman/news/"));
+        store.Uploaded.Should().Contain(k => k.StartsWith("ottoman/products/"));
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ottoman.Application.Common;
+using Ottoman.Application.Images;
 using Ottoman.Application.Notifications;
 using Ottoman.Contracts;
 using Ottoman.Domain;
@@ -10,7 +11,8 @@ using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Notifications;
 
-public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvider clock, ImageUrlBuilder images) : INotificationService
+public class NotificationService(
+    OttomanDbContext db, IOutbox outbox, TimeProvider clock, IImageAttachments attachments, ImageUrlBuilder images) : INotificationService
 {
     // ---------------------------------------------------------------- inbox (always the caller's own rows)
 
@@ -24,11 +26,15 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
             .Skip(page.Skip).Take(page.SafePageSize)
             .Select(n => new
             {
-                Dto = new NotificationDto(n.Id, n.Title, n.Body, n.Kind, n.CreatedAtUtc, n.ReadAtUtc != null, null),
+                n.Id, n.Title, n.Body, n.Kind, n.CreatedAtUtc,
+                IsRead = n.ReadAtUtc != null,
+                // A news item carries its picture into every recipient's inbox.
                 ImageKey = db.Announcements.Where(a => a.Id == n.AnnouncementId).Select(a => a.ImageKey).FirstOrDefault(),
             })
             .ToListAsync(ct);
-        return new PagedResult<NotificationDto>(items.Select(i => i.Dto with { ImageUrl = images.Url(i.ImageKey) }).ToList(), total);
+        return new PagedResult<NotificationDto>(
+            items.Select(n => new NotificationDto(n.Id, n.Title, n.Body, n.Kind, n.CreatedAtUtc, n.IsRead, images.Url(n.ImageKey))).ToList(),
+            total);
     }
 
     public Task<int> UnreadCountAsync(string userId, CancellationToken ct) =>
@@ -54,7 +60,8 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
 
     // ---------------------------------------------------------------- announcements (admin)
 
-    public async Task<Result<AnnouncementDto>> CreateAnnouncementAsync(string adminId, AnnouncementRequest r, CancellationToken ct)
+    public async Task<Result<AnnouncementDto>> CreateAnnouncementAsync(
+        string adminId, AnnouncementRequest r, Stream? image, CancellationToken ct)
     {
         List<string> recipients;
         if (r.Audience == AnnouncementAudience.User)
@@ -74,9 +81,18 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
                 select u.Id).Distinct().ToListAsync(ct);
         }
 
+        string? imageKey = null;
+        if (image is not null)
+        {
+            var uploaded = await attachments.UploadAnnouncementImageAsync(image, ct);
+            if (!uploaded.Succeeded) return Result<AnnouncementDto>.Invalid(uploaded.Error!);
+            imageKey = uploaded.Value;
+        }
+
         var now = clock.GetUtcNow().UtcDateTime;
         var announcement = new Announcement
         {
+            ImageKey = imageKey,
             Title = r.Title.Trim(),
             Body = r.Body.Trim(),
             Audience = r.Audience,
@@ -87,6 +103,21 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
             CreatedAtUtc = now,
         };
 
+        try
+        {
+            await SaveAnnouncementAsync(announcement, recipients, now, ct);
+        }
+        catch
+        {
+            if (imageKey is not null) await attachments.DiscardImageAsync(imageKey);
+            throw;
+        }
+
+        return Result<AnnouncementDto>.Ok(ToDto(announcement));
+    }
+
+    private async Task SaveAnnouncementAsync(Announcement announcement, List<string> recipients, DateTime now, CancellationToken ct)
+    {
         var strategy = db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
@@ -109,8 +140,6 @@ public class NotificationService(OttomanDbContext db, IOutbox outbox, TimeProvid
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
         });
-
-        return Result<AnnouncementDto>.Ok(ToDto(announcement));
     }
 
     public async Task<PagedResult<AnnouncementDto>> ListAnnouncementsAsync(PageQuery page, CancellationToken ct)

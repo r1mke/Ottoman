@@ -121,6 +121,45 @@ public class ReservationTests(ApiFixture api)
         times.Starts.Should().Contain(At(day, 10, 30));  // starts exactly when it ends
     }
 
+    [Fact]
+    public async Task The_month_view_lists_exactly_the_days_the_day_view_would_offer()
+    {
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var day = Days.Next();
+        var sisanje = await ServiceId("Šišanje");
+
+        var month = (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.MonthAvailabilityDto>(
+            $"/api/v1/employees/{kerim}/availability/month?month={day:yyyy-MM-dd}&serviceIds={sisanje}"))!;
+
+        month.Month.Should().Be(new DateOnly(day.Year, day.Month, 1));
+        month.AvailableDays.Should().OnlyContain(d => d.Month == day.Month && d >= DateOnly.FromDateTime(DateTime.UtcNow));
+        month.AvailableDays.Should().Contain(day); // a normal working day, still free
+
+        // Every listed day really has times; a day not listed has none.
+        foreach (var d in month.AvailableDays.Take(3))
+        {
+            var times = (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.AvailabilityDto>(
+                $"/api/v1/employees/{kerim}/availability?date={d:yyyy-MM-dd}&serviceIds={sisanje}"))!;
+            times.Starts.Should().NotBeEmpty();
+        }
+    }
+
+    [Fact]
+    public async Task The_month_view_is_empty_far_in_the_past_or_future_and_needs_a_service()
+    {
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var sisanje = await ServiceId("Šišanje");
+
+        (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.MonthAvailabilityDto>(
+            $"/api/v1/employees/{kerim}/availability/month?month=2020-01-01&serviceIds={sisanje}"))!.AvailableDays.Should().BeEmpty();
+        (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.MonthAvailabilityDto>(
+            $"/api/v1/employees/{kerim}/availability/month?month=2099-01-01&serviceIds={sisanje}"))!.AvailableDays.Should().BeEmpty();
+        (await client.GetAsync($"/api/v1/employees/{kerim}/availability/month?month=2026-11-01"))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     // ------------------------------------------------- the race the DB must win
 
     [Fact]
@@ -158,6 +197,84 @@ public class ReservationTests(ApiFixture api)
         var results = await Task.WhenAll(tasks);
 
         results.Count(r => r.StatusCode == HttpStatusCode.Created).Should().Be(1);
+    }
+
+    // ------------------------------------------ one client cannot sit in two chairs
+
+    [Fact]
+    public async Task The_same_client_cannot_book_two_barbers_at_the_same_time()
+    {
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var (tarik, _) = await Employee("tarik@ottoman.local");
+        var day = Days.Next();
+        var sisanje = await ServiceId("Šišanje");
+
+        (await Book(client, kerim, At(day, 10), [sisanje])).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var second = await Book(client, tarik, At(day, 10), [sisanje]);
+        second.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await second.Content.ReadAsStringAsync()).Should().Contain("Već imate zakazan termin");
+
+        // Overlapping by a few minutes is the same thing; touching ends are fine.
+        (await Book(client, tarik, At(day, 10, 15), [sisanje])).StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await Book(client, tarik, At(day, 10, 30), [sisanje])).StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task Cancelling_frees_the_clients_time_for_another_barber()
+    {
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var (tarik, _) = await Employee("tarik@ottoman.local");
+        var day = Days.Next();
+        var sisanje = await ServiceId("Šišanje");
+        var first = await Dto(await Book(client, kerim, At(day, 11), [sisanje]));
+
+        (await Book(client, tarik, At(day, 11), [sisanje])).StatusCode.Should().Be(HttpStatusCode.Conflict);
+
+        (await client.PostAsJsonAsync($"/api/v1/reservations/{first.Id}/cancel", new CancelReservationRequest("Promjena planova")))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await Book(client, tarik, At(day, 11), [sisanje])).StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task Ten_simultaneous_bookings_of_one_client_with_two_barbers_produce_exactly_one_winner()
+    {
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var (tarik, _) = await Employee("tarik@ottoman.local");
+        var day = Days.Next();
+        var sisanje = await ServiceId("Šišanje");
+
+        var results = await Task.WhenAll(Enumerable.Range(0, 10)
+            .Select(i => Book(client, i % 2 == 0 ? kerim : tarik, At(day, 14), [sisanje])));
+
+        var codes = string.Join(",", results.Select(r => (int)r.StatusCode));
+        results.Count(r => r.StatusCode == HttpStatusCode.Created).Should().Be(1, codes);
+        results.Count(r => r.StatusCode == HttpStatusCode.Conflict).Should().Be(9, codes);
+    }
+
+    [Fact]
+    public async Task Admin_cannot_book_or_move_an_appointment_onto_the_clients_other_appointment()
+    {
+        var admin = await Admin();
+        var (clientId, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var (tarik, _) = await Employee("tarik@ottoman.local");
+        var day = Days.Next();
+        var sisanje = await ServiceId("Šišanje");
+        await Book(client, kerim, At(day, 9), [sisanje]);
+        var later = await Dto(await Book(client, tarik, At(day, 13), [sisanje]));
+
+        var walkIn = await Book(admin, tarik, At(day, 9), [sisanje], clientId: clientId);
+        walkIn.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await walkIn.Content.ReadAsStringAsync()).Should().Contain("Klijent već ima zakazan termin");
+
+        var moved = await admin.PutAsJsonAsync($"/api/v1/reservations/{later.Id}/reschedule", new RescheduleReservationRequest(At(day, 9, 15)));
+        moved.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await Dto(await client.GetAsync($"/api/v1/reservations/{later.Id}"))).StartUtc.Should().Be(At(day, 13));
     }
 
     // ------------------------------------------------------- server-side rules

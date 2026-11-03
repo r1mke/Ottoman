@@ -3,9 +3,10 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../reviews/reviews_section.dart';
 import 'product_gallery.dart';
+import 'product_visuals.dart';
 import 'recommended_row.dart';
 
-class ProductDetailPage extends StatelessWidget {
+class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({
     super.key,
     required this.product,
@@ -20,10 +21,42 @@ class ProductDetailPage extends StatelessWidget {
   final RecommendationsApi recommendations;
 
   @override
+  State<ProductDetailPage> createState() => _ProductDetailPageState();
+}
+
+class _ProductDetailPageState extends State<ProductDetailPage> {
+  int _qty = 1;
+
+  Product get product => widget.product;
+  CartController get cart => widget.cart;
+  ReviewsApi get reviews => widget.reviews;
+  RecommendationsApi get recommendations => widget.recommendations;
+
+  /// How many more can still go in: the stock (capped per line) minus what the basket already holds.
+  int get _room => cart.limitFor(product) - cart.quantityOf(product.id);
+
+  void _add() {
+    final t = AppLocalizations.of(context);
+    final q = _qty < _room ? _qty : _room;
+    if (q <= 0) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(t.limitReached)));
+      return;
+    }
+    cart.setQuantity(product, cart.quantityOf(product.id) + q);
+    setState(() => _qty = 1);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(t.addedToCartCount(q))));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final p = product;
+    final maxQty = _room < 1 ? 1 : _room;
     return Scaffold(
       appBar: AppBar(title: Text(p.name)),
       body: ListView(
@@ -45,11 +78,7 @@ class ProductDetailPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            money(t, p.price),
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.w800),
-          ),
+          PriceTag(product: p, big: true),
           const SizedBox(height: 4),
           Text(
             p.inStock ? t.inStockCount(p.stock) : t.outOfStock,
@@ -60,23 +89,42 @@ class ProductDetailPage extends StatelessWidget {
             Text(p.description!),
           ],
           const SizedBox(height: 24),
+          if (p.inStock)
+            Row(
+              children: [
+                Text(t.quantity, style: Theme.of(context).textTheme.titleSmall),
+                const Spacer(),
+                IconButton.outlined(
+                  key: const Key('qty_minus'),
+                  onPressed: _qty > 1 ? () => setState(() => _qty--) : null,
+                  icon: const Icon(Icons.remove),
+                ),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    '$_qty',
+                    key: const Key('qty_value'),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                IconButton.outlined(
+                  key: const Key('qty_plus'),
+                  onPressed: _qty < maxQty
+                      ? () => setState(() => _qty++)
+                      : null,
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+          const SizedBox(height: 12),
           FilledButton.icon(
             key: const Key('detail_add'),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
-            onPressed: p.inStock
-                ? () {
-                    final ok = cart.add(p);
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        SnackBar(
-                          content: Text(ok ? t.addToCart : t.limitReached),
-                        ),
-                      );
-                  }
-                : null,
+            onPressed: p.inStock ? _add : null,
             icon: const Icon(Icons.add_shopping_cart),
             label: Text(t.addToCart),
           ),

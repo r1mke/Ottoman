@@ -11,6 +11,61 @@ namespace Ottoman.Infrastructure.Shop;
 
 public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommendations, ImageUrlBuilder images) : IProductCatalog
 {
+    // ---------------------------------------------------------------- overview
+
+    public async Task<ShopOverviewDto> GetOverviewAsync(CancellationToken ct)
+    {
+        // Everything on the shelf, reduced to what the tiles need (a few hundred rows at most).
+        var rows = await db.Products.AsNoTracking()
+            .Where(p => p.IsActive && p.Stock > 0)
+            .OrderByDescending(p => p.Id)
+            .Select(p => new
+            {
+                p.Id,
+                p.CategoryId,
+                p.BrandId,
+                p.Price,
+                p.SalePrice,
+                Cover = p.Images.OrderBy(i => i.SortOrder).Select(i => i.FileKey).FirstOrDefault(),
+            })
+            .ToListAsync(ct);
+
+        var categories = await db.Categories.AsNoTracking().Select(c => new { c.Id, c.Name }).ToListAsync(ct);
+        var brands = await db.Brands.AsNoTracking().Select(b => new { b.Id, b.Name, b.LogoKey }).ToListAsync(ct);
+
+        // Rows are newest first, so the first one with a picture is the newest product that has one.
+        ShopTileDto Tile(int id, string name, IEnumerable<string?> covers, int count) =>
+            new(id, name, count, images.Url(covers.FirstOrDefault(k => k is not null)));
+
+        var categoryTiles = categories
+            .Select(c =>
+            {
+                var mine = rows.Where(r => r.CategoryId == c.Id).ToList();
+                return Tile(c.Id, c.Name, mine.Select(r => r.Cover), mine.Count);
+            })
+            .Where(t => t.ProductCount > 0)
+            .OrderByDescending(t => t.ProductCount).ThenBy(t => t.Name)
+            .ToList();
+        var brandTiles = brands
+            .Select(b =>
+            {
+                var mine = rows.Where(r => r.BrandId == b.Id).ToList();
+                // A logo the admin uploaded beats a product photo.
+                return b.LogoKey is not null
+                    ? new ShopTileDto(b.Id, b.Name, mine.Count, images.Url(b.LogoKey), IsLogo: true)
+                    : Tile(b.Id, b.Name, mine.Select(r => r.Cover), mine.Count);
+            })
+            .Where(t => t.ProductCount > 0)
+            .OrderByDescending(t => t.ProductCount).ThenBy(t => t.Name)
+            .ToList();
+
+        return new ShopOverviewDto(
+            categoryTiles,
+            brandTiles,
+            [],
+            []);
+    }
+
     // ---------------------------------------------------------------- products
 
     public async Task<PagedResult<ProductDto>> ListAsync(ProductQuery q, PageQuery page, CancellationToken ct)
@@ -19,6 +74,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         if (!q.IncludeInactive) query = query.Where(p => p.IsActive);
         if (q.CategoryId is { } c) query = query.Where(p => p.CategoryId == c);
         if (q.BrandId is { } b) query = query.Where(p => p.BrandId == b);
+        if (q.OnlyOnSale) query = query.Where(p => p.SalePrice != null);
         if (q.OnlyLowStock) query = query.Where(p => p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold);
         if (!string.IsNullOrWhiteSpace(q.Search))
         {
@@ -30,8 +86,8 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         var total = await query.CountAsync(ct);
         query = q.Sort switch
         {
-            ProductSort.PriceAsc => query.OrderBy(p => p.Price).ThenBy(p => p.Id),
-            ProductSort.PriceDesc => query.OrderByDescending(p => p.Price).ThenBy(p => p.Id),
+            ProductSort.PriceAsc => query.OrderBy(p => p.SalePrice ?? p.Price).ThenBy(p => p.Id),
+            ProductSort.PriceDesc => query.OrderByDescending(p => p.SalePrice ?? p.Price).ThenBy(p => p.Id),
             ProductSort.Newest => query.OrderByDescending(p => p.Id),
             _ => query.OrderBy(p => p.Name).ThenBy(p => p.Id),
         };
@@ -44,7 +100,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
                 p.Price, p.Stock, p.LowStockThreshold,
                 p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
                 p.IsActive, null,
-                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList()))
+                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList(), p.SalePrice))
             .ToListAsync(ct);
         return new PagedResult<ProductDto>(items.Select(Resolve).ToList(), total);
     }
@@ -66,7 +122,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
                 p.Price, p.Stock, p.LowStockThreshold,
                 p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
                 p.IsActive, null,
-                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList()))
+                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList(), p.SalePrice))
             .ToListAsync(ct);
         var byId = rows.Select(Resolve).ToDictionary(p => p.Id);
         return ids.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
@@ -88,6 +144,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
             BrandId = r.BrandId,
             CategoryId = r.CategoryId,
             Price = r.Price,
+            SalePrice = r.SalePrice,
             Stock = r.Stock,
             LowStockThreshold = r.LowStockThreshold,
             IsActive = r.IsActive,
@@ -115,6 +172,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         product.BrandId = r.BrandId;
         product.CategoryId = r.CategoryId;
         product.Price = r.Price;
+        product.SalePrice = r.SalePrice;
         product.LowStockThreshold = r.LowStockThreshold;
         product.IsActive = r.IsActive;
         await db.SaveChangesAsync(ct);
@@ -158,7 +216,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
                 p.Price, p.Stock, p.LowStockThreshold,
                 p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold,
                 p.IsActive, null,
-                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList()))
+                p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Id, i.FileKey)).ToList(), p.SalePrice))
             .FirstOrDefaultAsync(ct);
         return dto is null ? null : Resolve(dto);
     }
@@ -173,7 +231,8 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
     // ---------------------------------------------------------------- brands
 
     public async Task<IReadOnlyList<BrandDto>> ListBrandsAsync(CancellationToken ct) =>
-        await db.Brands.AsNoTracking().OrderBy(b => b.Name).Select(b => new BrandDto(b.Id, b.Name)).ToListAsync(ct);
+        (await db.Brands.AsNoTracking().OrderBy(b => b.Name).Select(b => new { b.Id, b.Name, b.LogoKey }).ToListAsync(ct))
+            .Select(b => new BrandDto(b.Id, b.Name, images.Url(b.LogoKey))).ToList();
 
     public async Task<PagedResult<BrandDto>> PageBrandsAsync(string? search, PageQuery page, CancellationToken ct)
     {
@@ -185,8 +244,8 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         }
         var total = await query.CountAsync(ct);
         var items = await query.OrderBy(b => b.Name).ThenBy(b => b.Id).Skip(page.Skip).Take(page.SafePageSize)
-            .Select(b => new BrandDto(b.Id, b.Name)).ToListAsync(ct);
-        return new PagedResult<BrandDto>(items, total);
+            .Select(b => new { b.Id, b.Name, b.LogoKey }).ToListAsync(ct);
+        return new PagedResult<BrandDto>(items.Select(b => new BrandDto(b.Id, b.Name, images.Url(b.LogoKey))).ToList(), total);
     }
 
     public async Task<PagedResult<CategoryDto>> PageCategoriesAsync(string? search, PageQuery page, CancellationToken ct)
@@ -203,6 +262,12 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         return new PagedResult<CategoryDto>(items, total);
     }
 
+    public async Task<Result<BrandDto>> GetBrandAsync(int id, CancellationToken ct)
+    {
+        var b = await db.Brands.AsNoTracking().Where(x => x.Id == id).Select(x => new { x.Id, x.Name, x.LogoKey }).FirstOrDefaultAsync(ct);
+        return b is null ? Result<BrandDto>.NotFound() : Result<BrandDto>.Ok(new BrandDto(b.Id, b.Name, images.Url(b.LogoKey)));
+    }
+
     public async Task<Result<BrandDto>> CreateBrandAsync(NameRequest r, CancellationToken ct)
     {
         var name = r.Name.Trim();
@@ -210,7 +275,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         var brand = new Brand { Name = name };
         db.Brands.Add(brand);
         await db.SaveChangesAsync(ct);
-        return Result<BrandDto>.Ok(new BrandDto(brand.Id, brand.Name));
+        return Result<BrandDto>.Ok(new BrandDto(brand.Id, brand.Name, images.Url(brand.LogoKey)));
     }
 
     public async Task<Result<BrandDto>> UpdateBrandAsync(int id, NameRequest r, CancellationToken ct)
@@ -221,7 +286,7 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
         if (await db.Brands.AnyAsync(b => b.Id != id && b.Name == name, ct)) return Result<BrandDto>.Conflict("Brend s tim nazivom već postoji.");
         brand.Name = name;
         await db.SaveChangesAsync(ct);
-        return Result<BrandDto>.Ok(new BrandDto(brand.Id, brand.Name));
+        return Result<BrandDto>.Ok(new BrandDto(brand.Id, brand.Name, images.Url(brand.LogoKey)));
     }
 
     public async Task<Result<bool>> DeleteBrandAsync(int id, CancellationToken ct)

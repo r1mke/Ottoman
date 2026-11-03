@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../auth/auth_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../network/app_exception.dart';
+import '../validation/validators.dart';
 import 'dialog_header.dart';
 
 String _detail(AppException e) {
@@ -13,9 +14,12 @@ String _detail(AppException e) {
 /// The signed-in person's own details (name, phone) and the way to change the password.
 /// Shared by the mobile and the desktop app; the e-mail is shown but cannot be changed here.
 class ProfileForm extends StatefulWidget {
-  const ProfileForm({super.key, required this.auth});
+  const ProfileForm({super.key, required this.auth, this.photoSection});
 
   final AuthController auth;
+
+  /// Shown for a barber or the admin between the e-mail and the form (the desktop app puts the photo editor here).
+  final Widget? photoSection;
 
   @override
   State<ProfileForm> createState() => _ProfileFormState();
@@ -27,14 +31,25 @@ class _ProfileFormState extends State<ProfileForm> {
   late final _phone = TextEditingController(
     text: widget.auth.user!.phone ?? '',
   );
+  // Not lazy on purpose: after a sign-out the user is gone, and dispose must not need it.
+  final _bio = TextEditingController();
+  String? _gender;
   final _form = GlobalKey<FormState>();
   bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bio.text = widget.auth.user!.bio ?? '';
+    _gender = widget.auth.user!.gender;
+  }
 
   @override
   void dispose() {
     _first.dispose();
     _last.dispose();
     _phone.dispose();
+    _bio.dispose();
     super.dispose();
   }
 
@@ -52,6 +67,15 @@ class _ProfileFormState extends State<ProfileForm> {
           'phone': _phone.text.trim().isEmpty ? null : _phone.text.trim(),
         },
       );
+      if (widget.auth.user!.isStaff) {
+        await widget.auth.api.put<dynamic>(
+          '/api/v1/me/employee-profile',
+          body: {
+            'gender': _gender,
+            'bio': _bio.text.trim().isEmpty ? null : _bio.text.trim(),
+          },
+        );
+      }
       await widget.auth.reloadUser();
       messenger.showSnackBar(SnackBar(content: Text(t.profileSaved)));
     } on AppException catch (e) {
@@ -68,18 +92,24 @@ class _ProfileFormState extends State<ProfileForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          user.email,
-          key: const Key('profile_email'),
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 16),
+        if (user.isStaff && widget.photoSection != null) ...[
+          widget.photoSection!,
+          const SizedBox(height: 20),
+        ],
         Form(
           key: _form,
           child: Column(
             children: [
+              TextFormField(
+                key: const Key('profile_email'),
+                initialValue: user.email,
+                enabled: false,
+                decoration: InputDecoration(
+                  labelText: t.email,
+                  suffixIcon: const Icon(Icons.lock_outline, size: 18),
+                ),
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 key: const Key('profile_first'),
                 controller: _first,
@@ -101,7 +131,36 @@ class _ProfileFormState extends State<ProfileForm> {
                 controller: _phone,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(labelText: t.phone),
+                validator: (v) => Validators.phone(t, v),
               ),
+              if (user.isStaff) ...[
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  key: const Key('profile_gender'),
+                  initialValue: _gender,
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: t.gender),
+                  items: [
+                    DropdownMenuItem(value: 'Male', child: Text(t.genderMale)),
+                    DropdownMenuItem(
+                      value: 'Female',
+                      child: Text(t.genderFemale),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => _gender = v),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  key: const Key('profile_bio'),
+                  controller: _bio,
+                  maxLines: 3,
+                  maxLength: 500,
+                  decoration: InputDecoration(
+                    labelText: t.bio,
+                    alignLabelWithHint: true,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -67,6 +67,9 @@ public class ReservationService(
             return Result<ReservationDto>.Conflict("Odabrani termin nije dostupan. Osvježite termine i odaberite drugi.");
 
         var duration = query.DurationMinutes;
+        if (await ClientBusyAsync(clientId, r.StartUtc, r.StartUtc.AddMinutes(duration), excludeReservationId: null, zone, ct) is { } busy)
+            return Result<ReservationDto>.Conflict(ClientBusyMessage(actor, busy));
+
         var reservation = new Reservation
         {
             ClientId = clientId,
@@ -86,16 +89,18 @@ public class ReservationService(
                 DurationMinutes = s.DurationMinutes,
             }).ToList(),
             Slots = SlotGrid.Occupied(r.StartUtc, duration, settings.SlotMinutes)
-                .Select(t => new ReservationSlot { EmployeeId = r.EmployeeId, SlotStartUtc = t }).ToList(),
+                .Select(t => new ReservationSlot { EmployeeId = r.EmployeeId, ClientId = clientId, SlotStartUtc = t }).ToList(),
         };
 
         db.Reservations.Add(reservation);
 
         var taken = false;
+        var takenByClient = false;
         var strategy = db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
             taken = false;
+            takenByClient = false;
             await using var tx = await db.Database.BeginTransactionAsync(ct);
             try
             {
@@ -109,11 +114,13 @@ public class ReservationService(
             {
                 // A concurrent booking won the race for one of the steps: exactly one request can succeed.
                 taken = true;
+                takenByClient = IsClientIndex(e);
                 await tx.RollbackAsync(ct);
             }
         });
 
-        return taken ? Result<ReservationDto>.Conflict(TakenMessage) : await GetAsync(actor, reservation.Id, ct);
+        if (!taken) return await GetAsync(actor, reservation.Id, ct);
+        return Result<ReservationDto>.Conflict(takenByClient ? ClientBusyGenericMessage(actor) : TakenMessage);
     }
 
     // ------------------------------------------------------------------ read
@@ -259,14 +266,19 @@ public class ReservationService(
         if (!SlotCalculator.AllStarts(query).Contains(r.StartUtc))
             return Result<ReservationDto>.Conflict("Odabrani termin nije dostupan.");
 
+        if (await ClientBusyAsync(res.ClientId, r.StartUtc, r.StartUtc.AddMinutes(res.TotalDurationMinutes), res.Id, zone, ct) is { } busy)
+            return Result<ReservationDto>.Conflict(ClientBusyMessage(actor, busy));
+
         var oldStart = res.StartUtc;
         var newSlots = SlotGrid.Occupied(r.StartUtc, res.TotalDurationMinutes, settings.SlotMinutes);
 
         var conflict = false;
+        var conflictByClient = false;
         var strategy = db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
             conflict = false;
+            conflictByClient = false;
             await using var tx = await db.Database.BeginTransactionAsync(ct);
             try
             {
@@ -278,7 +290,7 @@ public class ReservationService(
                 res.EmployeeId = employeeId;
                 res.StartUtc = r.StartUtc;
                 res.EndUtc = r.StartUtc.AddMinutes(res.TotalDurationMinutes);
-                res.Slots = newSlots.Select(t => new ReservationSlot { EmployeeId = employeeId, SlotStartUtc = t }).ToList();
+                res.Slots = newSlots.Select(t => new ReservationSlot { EmployeeId = employeeId, ClientId = res.ClientId, SlotStartUtc = t }).ToList();
                 outbox.Enqueue(new ReservationRescheduled(res.Id, res.ClientId, employeeId, oldStart, r.StartUtc));
                 await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
@@ -286,11 +298,12 @@ public class ReservationService(
             catch (DbUpdateException e) when (IsUniqueViolation(e))
             {
                 conflict = true;
+                conflictByClient = IsClientIndex(e);
                 await tx.RollbackAsync(ct);
             }
         });
 
-        if (conflict) return Result<ReservationDto>.Conflict(TakenMessage);
+        if (conflict) return Result<ReservationDto>.Conflict(conflictByClient ? ClientBusyGenericMessage(actor) : TakenMessage);
         return await GetAsync(actor, id, ct);
     }
 
@@ -317,6 +330,38 @@ public class ReservationService(
 
     private static bool IsUniqueViolation(DbUpdateException e) =>
         e.InnerException is SqlException { Number: 2601 or 2627 };
+
+    /// <summary>True when the unique index that fired is the per-client one (not the per-barber one).</summary>
+    private static bool IsClientIndex(DbUpdateException e) =>
+        e.InnerException?.Message.Contains("ClientId_SlotStartUtc", StringComparison.Ordinal) == true;
+
+    /// <summary>
+    /// The client's own live appointment that overlaps [start, end), if any. A friendly pre-check; the unique
+    /// (ClientId, step) index is what actually decides a race.
+    /// </summary>
+    private async Task<(DateTime Start, DateTime End)?> ClientBusyAsync(
+        string clientId, DateTime start, DateTime end, int? excludeReservationId, TimeZoneInfo zone, CancellationToken ct)
+    {
+        var other = await db.Reservations.AsNoTracking()
+            .Where(x => x.ClientId == clientId && x.Id != excludeReservationId &&
+                        (x.Status == ReservationStatus.Confirmed || x.Status == ReservationStatus.Pending) &&
+                        x.StartUtc < end && x.EndUtc > start)
+            .OrderBy(x => x.StartUtc)
+            .Select(x => new { x.StartUtc, x.EndUtc })
+            .FirstOrDefaultAsync(ct);
+        return other is null ? null : (LocalTime.ToLocal(other.StartUtc, zone), LocalTime.ToLocal(other.EndUtc, zone));
+    }
+
+    private static string ClientBusyMessage(Actor actor, (DateTime Start, DateTime End) busy)
+    {
+        var when = $"{busy.Start:dd.MM.yyyy HH:mm}–{busy.End:HH:mm}";
+        return actor.IsClient
+            ? $"Već imate zakazan termin u to vrijeme ({when})."
+            : $"Klijent već ima zakazan termin u to vrijeme ({when}).";
+    }
+
+    private static string ClientBusyGenericMessage(Actor actor) =>
+        actor.IsClient ? "Već imate zakazan termin u to vrijeme." : "Klijent već ima zakazan termin u to vrijeme.";
 
     private async Task<bool> IsClientAsync(string userId, CancellationToken ct) =>
         await (from ur in db.UserRoles

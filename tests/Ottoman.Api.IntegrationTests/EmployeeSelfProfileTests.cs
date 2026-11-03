@@ -1,0 +1,193 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using FluentAssertions;
+using Ottoman.Application.Auth;
+using Ottoman.Application.Employees;
+
+namespace Ottoman.Api.IntegrationTests;
+
+[Collection("api")]
+public class EmployeeSelfProfileTests(ApiFixture api)
+{
+    private const string Password = "Emp_Pass123!";
+    private static int _seq;
+
+    private async Task<HttpClient> Admin() =>
+        api.CreateClient().As(await api.CreateClient().LoginOk(ApiFixture.AdminEmail, ApiFixture.AdminPassword));
+
+    private async Task<(EmployeeDto Barber, HttpClient Http)> NewBarber(HttpClient admin)
+    {
+        var email = TestClient.UniqueEmail();
+        var created = await admin.PostAsJsonAsync("/api/v1/employees",
+            new CreateEmployeeRequest("Selma", "Brijač", email, null, Password, "Barber", "Stari opis", null, "Female"));
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+        var barber = (await created.Content.ReadFromJsonAsync<EmployeeDto>())!;
+        var http = api.CreateClient().As(await api.CreateClient().LoginOk(email, Password));
+        return (barber, http);
+    }
+
+    private static MultipartFormDataContent Picture()
+    {
+        var bytes = new byte[64];
+        new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(bytes, 0);
+        BitConverter.GetBytes(Interlocked.Increment(ref _seq) + 90000).CopyTo(bytes, 8);
+        var file = new ByteArrayContent(bytes);
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        return new MultipartFormDataContent { { file, "file", "me.png" } };
+    }
+
+    [Fact]
+    public async Task The_avatar_url_centres_on_the_face_and_carries_the_zoom()
+    {
+        var admin = await Admin();
+        var (barber, http) = await NewBarber(admin);
+
+        var withPhoto = await (await http.PutAsync("/api/v1/me/photo", Picture())).Content.ReadFromJsonAsync<UserDto>();
+
+        withPhoto!.PhotoUrl.Should().Contain("c_thumb,g_face,w_512,h_512,z_1,");
+        withPhoto.PhotoZoom.Should().Be(1.0);
+
+        var zoomed = await http.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest(null, "Novi opis", 2.0));
+        var me = (await zoomed.Content.ReadFromJsonAsync<UserDto>())!;
+        me.PhotoUrl.Should().Contain("z_0.5,");
+        me.PhotoZoom.Should().Be(2.0);
+
+        // Everybody who shows this barber gets the cropped picture.
+        var listed = (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{barber.Id}"))!;
+        listed.PhotoUrl.Should().Contain("z_0.5,");
+        listed.PhotoZoom.Should().Be(2.0);
+    }
+
+    [Fact]
+    public async Task A_barber_edits_their_own_gender_and_bio_but_not_the_title_or_status()
+    {
+        var admin = await Admin();
+        var (barber, http) = await NewBarber(admin);
+
+        var res = await http.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest("Male", "Moj opis", null));
+
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        var me = (await res.Content.ReadFromJsonAsync<UserDto>())!;
+        me.Gender.Should().Be("Male");
+        me.Bio.Should().Be("Moj opis");
+        var seen = (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{barber.Id}"))!;
+        seen.Title.Should().Be("Barber");
+        seen.IsActive.Should().BeTrue();
+
+        // A blank bio clears it, an absent gender leaves it alone.
+        var cleared = (await (await http.PutAsJsonAsync("/api/v1/me/employee-profile",
+            new UpdateOwnEmployeeProfileRequest(null, "  ", null))).Content.ReadFromJsonAsync<UserDto>())!;
+        cleared.Bio.Should().BeNull();
+        cleared.Gender.Should().Be("Male");
+    }
+
+    [Fact]
+    public async Task The_admin_has_a_picture_gender_and_bio_on_the_account_without_becoming_a_barber()
+    {
+        var admin = await Admin();
+
+        var withPhoto = await (await admin.PutAsync("/api/v1/me/photo", Picture())).Content.ReadFromJsonAsync<UserDto>();
+        withPhoto!.PhotoUrl.Should().NotBeNull();
+
+        var res = await admin.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest("Male", "Vlasnik", null));
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        var me = (await res.Content.ReadFromJsonAsync<UserDto>())!;
+        me.Gender.Should().Be("Male");
+        me.Bio.Should().Be("Vlasnik");
+        me.PhotoUrl.Should().NotBeNull();
+
+        var barbers = await admin.GetFromJsonAsync<List<EmployeeDto>>("/api/v1/employees");
+        barbers!.Should().NotContain(e => e.Id == me.Id);
+
+        var cleared = (await (await admin.DeleteAsync("/api/v1/me/photo")).Content.ReadFromJsonAsync<UserDto>())!;
+        cleared.PhotoUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Invalid_zoom_gender_or_bio_are_refused()
+    {
+        var admin = await Admin();
+        var (_, http) = await NewBarber(admin);
+        const string url = "/api/v1/me/employee-profile";
+
+        (await http.PutAsJsonAsync(url, new UpdateOwnEmployeeProfileRequest(null, null, 0.5))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await http.PutAsJsonAsync(url, new UpdateOwnEmployeeProfileRequest(null, null, 2.5))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await http.PutAsJsonAsync(url, new UpdateOwnEmployeeProfileRequest("Other", null, null))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await http.PutAsJsonAsync(url, new UpdateOwnEmployeeProfileRequest(null, new string('x', 501), null))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_new_photo_or_removing_it_starts_again_from_the_default_crop()
+    {
+        var admin = await Admin();
+        var (_, http) = await NewBarber(admin);
+        await http.PutAsync("/api/v1/me/photo", Picture());
+        await http.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest(null, null, 1.8));
+
+        var replaced = (await (await http.PutAsync("/api/v1/me/photo", Picture())).Content.ReadFromJsonAsync<UserDto>())!;
+        replaced.PhotoZoom.Should().Be(1.0);
+
+        await http.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest(null, null, 1.5));
+        var removed = (await (await http.DeleteAsync("/api/v1/me/photo")).Content.ReadFromJsonAsync<UserDto>())!;
+        removed.PhotoUrl.Should().BeNull();
+        removed.PhotoZoom.Should().Be(1.0);
+    }
+
+    [Fact]
+    public async Task A_picture_must_be_a_real_picture()
+    {
+        var admin = await Admin();
+        var (_, http) = await NewBarber(admin);
+        var html = new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("<html></html>"));
+        html.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+
+        var res = await http.PutAsync("/api/v1/me/photo", new MultipartFormDataContent { { html, "file", "evil.png" } });
+
+        res.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Only_a_barber_can_use_these_and_only_for_themselves()
+    {
+        var admin = await Admin();
+        var (first, firstHttp) = await NewBarber(admin);
+        var (second, _) = await NewBarber(admin);
+        await firstHttp.PutAsync("/api/v1/me/photo", Picture());
+
+        // The second barber's picture is untouched by the first one's upload.
+        (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{second.Id}"))!.PhotoUrl.Should().BeNull();
+        (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{first.Id}"))!.PhotoUrl.Should().NotBeNull();
+
+        // The admin is staff too: their picture and bio are kept on the account (see the admin test above).
+        (await admin.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest(null, "x", null)))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Clients and anonymous callers are turned away.
+        var (_, auth) = await api.CreateClient().NewClient();
+        var client = api.CreateClient().As(auth);
+        (await client.PutAsync("/api/v1/me/photo", Picture())).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await client.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest(null, "x", null)))
+            .StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await api.CreateClient().PutAsync("/api/v1/me/photo", Picture())).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task The_admin_sets_the_zoom_with_the_rest_of_the_barbers_data()
+    {
+        var admin = await Admin();
+        var (barber, _) = await NewBarber(admin);
+        await admin.PutAsync($"/api/v1/employees/{barber.Id}/photo", Picture());
+
+        var res = await admin.PutAsJsonAsync($"/api/v1/employees/{barber.Id}",
+            new UpdateEmployeeRequest("Selma", "Brijač", null, "Barber", null, true, null, 1.6));
+
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        var dto = (await res.Content.ReadFromJsonAsync<EmployeeDto>())!;
+        dto.PhotoZoom.Should().Be(1.6);
+        dto.PhotoUrl.Should().Contain("z_0.63,");
+
+        (await admin.PutAsJsonAsync($"/api/v1/employees/{barber.Id}",
+            new UpdateEmployeeRequest("Selma", "Brijač", null, "Barber", null, true, null, 3.0))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+}

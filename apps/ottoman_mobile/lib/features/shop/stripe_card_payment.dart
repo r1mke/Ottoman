@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
@@ -38,6 +39,7 @@ class StripeCardPayment extends CardPaymentLauncher {
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: secret,
           merchantDisplayName: 'Ottoman',
+          style: ThemeMode.dark,
         ),
       );
       await Stripe.instance.presentPaymentSheet();

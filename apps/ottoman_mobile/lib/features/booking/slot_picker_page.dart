@@ -40,6 +40,43 @@ class _SlotPickerPageState extends State<SlotPickerPage> {
     super.dispose();
   }
 
+  /// Booking is a commitment, so the customer confirms barber, time and price before it is sent.
+  Future<void> _confirmAndBook() async {
+    final a = _availability;
+    final start = _start;
+    if (a == null || start == null) return;
+    final t = AppLocalizations.of(context);
+    final when = '${a.date} ${a.localTimes[a.starts.indexOf(start)]}';
+    final total = widget.services.fold<double>(0, (s, x) => s + x.price);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.confirmBookingTitle),
+        content: Text(
+          t.confirmBookingBody(
+            widget.employee.fullName,
+            when,
+            '${total.toStringAsFixed(2)} ${t.currencyShort}',
+          ),
+          key: const Key('confirm_booking_text'),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('confirm_booking_cancel'),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            key: const Key('confirm_booking'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(t.book),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) await _book();
+  }
+
   Future<void> _book() async {
     final start = _start;
     if (start == null) return;
@@ -108,6 +145,7 @@ class _SlotPickerPageState extends State<SlotPickerPage> {
                   employeeId: widget.employee.id,
                   serviceIds: widget.services.map((s) => s.id).toList(),
                   controller: _controller,
+                  rich: true,
                   onChanged: (start, availability) => setState(() {
                     _start = start;
                     _attempt = newIdempotencyKey();
@@ -158,7 +196,9 @@ class _SlotPickerPageState extends State<SlotPickerPage> {
                     ),
                   FilledButton(
                     key: const Key('book'),
-                    onPressed: (_start == null || _busy) ? null : _book,
+                    onPressed: (_start == null || _busy)
+                        ? null
+                        : _confirmAndBook,
                     child: _busy
                         ? const SizedBox(
                             width: 20,

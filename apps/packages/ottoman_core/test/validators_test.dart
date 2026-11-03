@@ -68,13 +68,18 @@ void main() {
         'abc',
         '12345',
         '061 abc 456',
+        '+1 202 555 0143',
+        '051 12',
+        '070 123 456',
         '+387 61 123 456 789 000',
+        '+38761123456789',
         '--',
         '061#123456',
       ]) {
         expect(Validators.phone(t, bad), t.invalidPhone, reason: bad);
       }
       expect(t.invalidPhone, contains('061 123 456'));
+      expect(t.invalidPhone, contains('ispravan'));
     });
   });
 

@@ -58,8 +58,9 @@ class _EmployeesPageState extends State<EmployeesPage> {
                     child: ListTile(
                       key: Key('employee_row_${e.id}'),
                       leading: PersonAvatar(
-                        initials: e.initials,
                         photoUrl: e.photoUrl,
+                        gender: e.gender,
+                        seed: e.id,
                       ),
                       title: Text(
                         e.fullName,

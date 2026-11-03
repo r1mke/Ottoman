@@ -12,7 +12,8 @@ using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Employees;
 
-public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users, TimeProvider clock, ImageUrlBuilder images) : IEmployeeService
+public class EmployeeManagement(
+    OttomanDbContext db, UserManager<AppUser> users, TimeProvider clock, ImageUrlBuilder images, IEmployeeTitles titles) : IEmployeeService
 {
     // ------------------------------------------------------------------ read
 
@@ -48,8 +49,9 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
 
         var items = rows.Select(x => new EmployeeDto(
             x.Profile.UserId, x.User.FirstName, x.User.LastName, x.User.FullName, x.Profile.Title, x.Profile.Bio,
-            images.Url(x.Profile.PhotoKey), x.Profile.IsActive, byEmployee[x.Profile.UserId].OrderBy(s => s).ToList(),
-            includePrivate ? x.User.Email : null, includePrivate ? x.User.PhoneNumber : null)).ToList();
+            images.AvatarUrl(x.Profile.PhotoKey, x.Profile.PhotoZoom), x.Profile.IsActive, byEmployee[x.Profile.UserId].OrderBy(s => s).ToList(),
+            includePrivate ? x.User.Email : null, includePrivate ? x.User.PhoneNumber : null,
+            x.Profile.Gender?.ToString(), x.Profile.PhotoZoom)).ToList();
         return new PagedResult<EmployeeDto>(items, total);
     }
 
@@ -75,10 +77,12 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
     }
 
     private EmployeeDto ToDto(EmployeeProfile p, AppUser u, bool includePrivate) => new(
-        p.UserId, u.FirstName, u.LastName, u.FullName, p.Title, p.Bio, images.Url(p.PhotoKey), p.IsActive,
+        p.UserId, u.FirstName, u.LastName, u.FullName, p.Title, p.Bio, images.AvatarUrl(p.PhotoKey, p.PhotoZoom), p.IsActive,
         p.Services.Select(s => s.ServiceId).OrderBy(x => x).ToList(),
         includePrivate ? u.Email : null,
-        includePrivate ? u.PhoneNumber : null);
+        includePrivate ? u.PhoneNumber : null,
+        p.Gender?.ToString(),
+        p.PhotoZoom);
 
     // ----------------------------------------------------------------- write
 
@@ -119,6 +123,7 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
             {
                 UserId = user.Id,
                 Title = r.Title.Trim(),
+                Gender = GenderNames.Parse(r.Gender),
                 Bio = r.Bio?.Trim(),
                 Services = serviceIds.Select(id => new EmployeeService { EmployeeId = user.Id, ServiceId = id }).ToList(),
             });
@@ -126,7 +131,9 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
             await tx.CommitAsync(ct);
         });
 
-        return failure is not null ? Result<EmployeeDto>.Invalid(failure) : await GetAsync(user.Id, true, ct);
+        if (failure is not null) return Result<EmployeeDto>.Invalid(failure);
+        await titles.EnsureAsync(r.Title, ct); // a title typed through the API joins the pick list
+        return await GetAsync(user.Id, true, ct);
     }
 
     public async Task<Result<EmployeeDto>> UpdateAsync(string id, UpdateEmployeeRequest r, CancellationToken ct)
@@ -139,12 +146,38 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
         user.LastName = r.LastName.Trim();
         user.PhoneNumber = string.IsNullOrWhiteSpace(r.Phone) ? null : r.Phone.Trim();
         profile.Title = r.Title.Trim();
+        if (r.Gender is not null) profile.Gender = GenderNames.Parse(r.Gender);
+        if (r.PhotoZoom is { } zoom) profile.PhotoZoom = zoom;
         profile.Bio = r.Bio?.Trim();
         profile.IsActive = r.IsActive;
 
         await users.UpdateAsync(user);
         await db.SaveChangesAsync(ct);
+        await titles.EnsureAsync(r.Title, ct);
         return await GetAsync(id, true, ct);
+    }
+
+    public async Task<Result<bool>> UpdateOwnProfileAsync(string userId, UpdateOwnEmployeeProfileRequest r, CancellationToken ct)
+    {
+        var bio = string.IsNullOrWhiteSpace(r.Bio) ? null : r.Bio.Trim();
+        var profile = await db.EmployeeProfiles.FirstOrDefaultAsync(p => p.UserId == userId, ct);
+        if (profile is not null)
+        {
+            if (r.Gender is not null) profile.Gender = GenderNames.Parse(r.Gender);
+            if (r.PhotoZoom is { } zoom) profile.PhotoZoom = zoom;
+            profile.Bio = bio;
+        }
+        else
+        {
+            // No barber profile: the admin's gender and bio live on the account (the route is staff only).
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user is null) return Result<bool>.NotFound("Profil nije pronađen.");
+            if (r.Gender is not null) user.Gender = GenderNames.Parse(r.Gender);
+            user.Bio = bio;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return Result<bool>.Ok(true);
     }
 
     public async Task<Result<EmployeeDto>> SetServicesAsync(string id, IReadOnlyList<int> serviceIds, CancellationToken ct)
@@ -213,18 +246,6 @@ public class EmployeeManagement(OttomanDbContext db, UserManager<AppUser> users,
         w.BreakEnd is { } be ? HhMm.Format(be) : null);
 
     // --------------------------------------------------------------- time off
-
-    public async Task<Result<IReadOnlyList<TimeOffDto>>> ListTimeOffAsync(string id, CancellationToken ct)
-    {
-        if (!await db.EmployeeProfiles.AnyAsync(p => p.UserId == id, ct))
-            return Result<IReadOnlyList<TimeOffDto>>.NotFound();
-
-        var now = clock.GetUtcNow().UtcDateTime;
-        var rows = await db.TimeOff.AsNoTracking()
-            .Where(t => t.EmployeeId == id && t.EndUtc > now)
-            .OrderBy(t => t.StartUtc).ToListAsync(ct);
-        return Result<IReadOnlyList<TimeOffDto>>.Ok(rows.Select(t => new TimeOffDto(t.Id, t.StartUtc, t.EndUtc, t.Reason)).ToList());
-    }
 
     public async Task<Result<PagedResult<TimeOffDto>>> PageTimeOffAsync(string id, PageQuery page, CancellationToken ct)
     {

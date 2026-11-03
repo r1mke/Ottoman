@@ -105,6 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(labelText: t.phone),
+                  validator: (v) => Validators.phone(t, v),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

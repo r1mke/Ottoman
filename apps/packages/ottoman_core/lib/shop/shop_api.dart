@@ -26,6 +26,7 @@ class ShopApi {
     String sort = 'Name',
     bool includeInactive = false,
     bool lowStock = false,
+    bool onSale = false,
     int page = 1,
     int pageSize = 20,
   }) async => _paged(
@@ -37,6 +38,7 @@ class ShopApi {
         'brandId': ?brandId,
         'sort': sort,
         if (includeInactive) 'includeInactive': true,
+        if (onSale) 'onSale': true,
         if (lowStock) 'lowStock': true,
         'page': page,
         'pageSize': pageSize,
@@ -55,6 +57,7 @@ class ShopApi {
     required int stock,
     int? lowStockThreshold,
     bool isActive = true,
+    double? salePrice,
   }) async {
     final body = {
       'name': name,
@@ -62,6 +65,7 @@ class ShopApi {
       'brandId': brandId,
       'categoryId': categoryId,
       'price': price,
+      'salePrice': salePrice,
       'stock': stock,
       'lowStockThreshold': lowStockThreshold,
       'isActive': isActive,
@@ -82,6 +86,117 @@ class ShopApi {
       body: {'delta': delta},
     ),
   );
+
+  // ---- entry page
+
+  /// Categories and brands with counts and pictures, and the "on sale" shortcut: what the shop offers at a glance.
+  Future<ShopOverview> overview() async => ShopOverview.fromJson(
+    await _api.get<Map<String, dynamic>>('/api/v1/shop/overview'),
+  );
+
+  // ---- front-page sections
+
+  /// Admin: every row as a rule, hidden ones included.
+  Future<List<ShopSectionRule>> sectionRules() async =>
+      (await _api.get<List<dynamic>>('/api/v1/shop/sections/manage'))
+          .map((e) => ShopSectionRule.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+  Future<ShopSectionRule> saveSection({
+    int? id,
+    required String title,
+    required String kind,
+    int? categoryId,
+    int? brandId,
+    int maxItems = 10,
+    bool isActive = true,
+    List<int> productIds = const [],
+    bool showAsCard = false,
+    String layout = ShopSectionLayout.row,
+    String? eyebrow,
+    List<int> entryIds = const [],
+    ShopSectionStyle style = const ShopSectionStyle(),
+  }) async {
+    final body = {
+      'title': title,
+      'kind': kind,
+      'categoryId': categoryId,
+      'brandId': brandId,
+      'maxItems': maxItems,
+      'isActive': isActive,
+      'productIds': productIds,
+      'showAsCard': showAsCard,
+      'layout': layout,
+      'eyebrow': eyebrow,
+      'entryIds': entryIds,
+      'style': style.toJson(),
+    };
+    return ShopSectionRule.fromJson(
+      id == null
+          ? await _api.post<Map<String, dynamic>>(
+              '/api/v1/shop/sections',
+              body: body,
+            )
+          : await _api.put<Map<String, dynamic>>(
+              '/api/v1/shop/sections/$id',
+              body: body,
+            ),
+    );
+  }
+
+  /// Uploads the picture of a section card (JPEG, PNG or WebP, up to 5 MB). It replaces a picked product picture.
+  Future<ShopSectionRule> setSectionImage(
+    int id,
+    List<int> bytes,
+    String filename,
+  ) async => ShopSectionRule.fromJson(
+    await _api.put<Map<String, dynamic>>(
+      '/api/v1/shop/sections/$id/image',
+      body: imageForm(bytes, filename),
+    ),
+  );
+
+  /// Uses one of the pictures of a product as the card picture.
+  Future<ShopSectionRule> pickSectionImage(int id, int productImageId) async =>
+      ShopSectionRule.fromJson(
+        await _api.put<Map<String, dynamic>>(
+          '/api/v1/shop/sections/$id/image/product',
+          body: {'productImageId': productImageId},
+        ),
+      );
+
+  /// Removes the card picture; the card goes back to the automatic cover.
+  Future<ShopSectionRule> clearSectionImage(int id) async =>
+      ShopSectionRule.fromJson(
+        await _api.delete<Map<String, dynamic>>(
+          '/api/v1/shop/sections/$id/image',
+        ),
+      );
+
+  /// The products a section currently holds (what its card opens).
+  Future<List<Product>> sectionProducts(int id) async =>
+      (await _api.get<List<dynamic>>('/api/v1/shop/sections/$id/products'))
+          .map((e) => Product.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+  /// Sets the logo of a brand (admin). It is shown on the shop entry page.
+  Future<Brand> setBrandLogo(int id, List<int> bytes, String filename) async =>
+      Brand.fromJson(
+        await _api.put<Map<String, dynamic>>(
+          '/api/v1/brands/$id/logo',
+          body: imageForm(bytes, filename),
+        ),
+      );
+
+  Future<Brand> clearBrandLogo(int id) async => Brand.fromJson(
+    await _api.delete<Map<String, dynamic>>('/api/v1/brands/$id/logo'),
+  );
+
+  Future<void> deleteSection(int id) =>
+      _api.delete<dynamic>('/api/v1/shop/sections/$id');
+
+  Future<void> reorderSections(List<int> ids) =>
+      _api.put<dynamic>('/api/v1/shop/sections/order', body: {'ids': ids});
 
   Future<void> deactivateProduct(int id) =>
       _api.delete<dynamic>('/api/v1/products/$id');

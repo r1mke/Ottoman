@@ -91,7 +91,19 @@ class _Api implements HttpClientAdapter {
     Object? body;
     var status = 200;
     final path = o.path;
-    if (path.endsWith('/login')) {
+    if (path.endsWith('/salon')) {
+      body = {
+        'name': 'Ottoman',
+        'description': 'Opis salona',
+        'address': null,
+        'phone': null,
+        'mapsUrl': null,
+        'logoUrl': null,
+        'hours': [],
+      };
+    } else if (path.contains('/gallery')) {
+      body = {'items': [], 'totalCount': 0};
+    } else if (path.endsWith('/login')) {
       body = {
         'accessToken': 'a',
         'refreshToken': 'r',
@@ -166,7 +178,34 @@ class _Api implements HttpClientAdapter {
         'count': 1,
       };
     } else if (path.endsWith('/employees') || path.endsWith('/services')) {
-      body = path.endsWith('/employees') ? [_employee] : [];
+      body = path.endsWith('/employees')
+          ? [_employee]
+          : [
+              {
+                'id': 1,
+                'name': 'Šišanje',
+                'description': null,
+                'price': 25,
+                'durationMinutes': 30,
+                'imageUrl': null,
+                'isActive': true,
+              },
+            ];
+    } else if (path.endsWith('/overview')) {
+      body = {
+        'totalProducts': 2,
+        'newestImageUrl': null,
+        'onSale': {'count': 0, 'maxDiscountPercent': 0, 'imageUrl': null},
+        'categories': [],
+        'brands': [],
+        'blocks': [
+          {
+            'sectionId': 1,
+            'kind': 'Recommended',
+            'title': 'Možda vam se sviđa',
+          },
+        ],
+      };
     } else if (path.endsWith('/categories')) {
       body = [];
     } else if (path.endsWith('/products')) {
@@ -195,7 +234,7 @@ class _Api implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Future<_Api> _open(WidgetTester tester) async {
+Future<_Api> _open(WidgetTester tester, {bool book = false}) async {
   tester.view.devicePixelRatio = 1.0;
   tester.view.physicalSize = const Size(420, 1200);
   addTearDown(tester.view.reset);
@@ -218,6 +257,10 @@ Future<_Api> _open(WidgetTester tester) async {
   await tester.enterText(find.byKey(const Key('login_password')), 'pw');
   await tester.tap(find.byKey(const Key('login_submit')));
   await tester.pumpAndSettle();
+  if (book) {
+    await tester.tap(find.byKey(const Key('book_now')));
+    await tester.pumpAndSettle();
+  }
   return api;
 }
 
@@ -225,7 +268,12 @@ void main() {
   testWidgets('home shows barber ratings and a "you might like" row', (
     tester,
   ) async {
-    await _open(tester);
+    await _open(tester, book: true);
+    // The barbers come after the services.
+    await tester.tap(find.byKey(const Key('service_1')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('continue')));
+    await tester.pumpAndSettle();
 
     expect(find.text('Možda vam se sviđa'), findsOneWidget);
     expect(find.byKey(const Key('reco_employee_e1')), findsOneWidget);
@@ -246,7 +294,7 @@ void main() {
   testWidgets('the shop suggests products, and a detail page shows reviews, '
       'the salon reply and similar products', (tester) async {
     await _open(tester);
-    await tester.tap(find.text('Proizvodi').last);
+    await tester.tap(find.text('Shop').last);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('reco_2')), findsOneWidget);
@@ -257,6 +305,8 @@ void main() {
       findsOneWidget,
     );
 
+    await tester.tap(find.byKey(const Key('all_products')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('product_1')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
@@ -276,7 +326,9 @@ void main() {
     tester,
   ) async {
     final api = await _open(tester);
-    await tester.tap(find.text('Proizvodi').last);
+    await tester.tap(find.text('Shop').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('all_products')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('product_1')));
     await tester.pumpAndSettle();
@@ -316,7 +368,9 @@ void main() {
     (tester) async {
       final api = await _open(tester);
       api.canReview = false;
-      await tester.tap(find.text('Proizvodi').last);
+      await tester.tap(find.text('Shop').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('all_products')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('product_1')));
       await tester.pumpAndSettle();

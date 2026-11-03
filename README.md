@@ -5,7 +5,7 @@ Sistem za upravljanje barbershopom: rezervacije termina, webshop proizvoda s pla
 - **Backend:** ASP.NET Core (.NET 10), EF Core + SQL Server, ASP.NET Identity + JWT, RabbitMQ (worker), Stripe.
 - **Klijenti:** Flutter desktop (admin) i Flutter mobile (klijent / zaposlenik), zajednički paket `apps/packages/ottoman_core`.
 
-Dokumentacija: [`docs/`](docs/README.md) — posebno `06-za-odluku.md` (sve odluke koje su donesene samostalno, s razlogom) i `07-recommender.md` (kako rade preporuke).
+Dokumentacija: [`docs/`](docs/README.md) — posebno `06-za-odluku.md` (sve odluke koje su donesene samostalno, s razlogom) i `recommender-dokumentacija.md` (kako rade preporuke).
 
 ## Brzi početak
 
@@ -22,6 +22,16 @@ docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 | Mailpit (razvojni inbox za mailove) | http://localhost:8025 |
 
 Demo korisnici (samo kad je `SEED_DEMO_DATA=true`): `kerim@ottoman.local`, `tarik@ottoman.local` (zaposlenici), `klijent@ottoman.local` (klijent); lozinka `SEED_DEMO_PASSWORD`. Admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
+
+### Pristupni podaci za testiranje
+
+| Uloga | Aplikacija | Korisničko ime (e-mail) | Lozinka |
+|---|---|---|---|
+| Administrator | desktop | `SEED_ADMIN_EMAIL` (`admin@ottoman.local`) | `SEED_ADMIN_PASSWORD` iz `.env` |
+| Zaposlenik | mobile | `kerim@ottoman.local`, `tarik@ottoman.local` | `SEED_DEMO_PASSWORD` iz `.env` (primjer: `Test123!`) |
+| Klijent | mobile | `klijent@ottoman.local` | `SEED_DEMO_PASSWORD` iz `.env` |
+
+Stvarne vrijednosti `.env` datoteke isporučuju se odvojeno, u arhivi `.env-tajne.zip` (lozinka arhive se šalje zasebno); u repozitoriju je samo `deploy/.env.example`. Probna kartica za Stripe sandbox: `4242 4242 4242 4242`, bilo koji budući datum i CVC.
 
 ### Plaćanje karticom (Stripe)
 

@@ -31,10 +31,71 @@ public partial class DatabaseSeeder(
             await db.SaveChangesAsync(ct);
         }
 
+        await SeedSalonBasicsAsync(ct);
+
         if (!string.IsNullOrWhiteSpace(_opt.AdminEmail) && !string.IsNullOrWhiteSpace(_opt.AdminPassword))
             await EnsureUserAsync(_opt.AdminEmail, _opt.AdminPassword, "Admin", "Ottoman", Roles.Admin);
 
         if (_opt.DemoData) await SeedDemoAsync(ct);
+    }
+
+    /// <summary>Opening hours and the haircut styles the gallery starts with; only filled in when there are none.</summary>
+    private async Task SeedSalonBasicsAsync(CancellationToken ct)
+    {
+        if (!await db.SalonOpeningHours.AnyAsync(ct))
+        {
+            for (var d = 0; d < 7; d++)
+            {
+                var day = (DayOfWeek)d;
+                db.SalonOpeningHours.Add(day switch
+                {
+                    DayOfWeek.Sunday => new SalonOpeningHours { Day = day },
+                    DayOfWeek.Saturday => new SalonOpeningHours { Day = day, OpenMinutes = 9 * 60, CloseMinutes = 15 * 60 },
+                    _ => new SalonOpeningHours { Day = day, OpenMinutes = 9 * 60, CloseMinutes = 19 * 60 },
+                });
+            }
+        }
+
+        if (!await db.HaircutCategories.AnyAsync(ct))
+        {
+            var names = new[] { "Buzz cut", "French crop", "Fade", "Klasično šišanje", "Duga kosa", "Brada" };
+            for (var i = 0; i < names.Length; i++)
+                db.HaircutCategories.Add(new HaircutCategory { Name = names[i], SortOrder = i });
+        }
+
+        // The shop front page starts with two rows the admin can then rearrange, edit or delete.
+        if (!await db.ShopSections.AnyAsync(ct))
+        {
+            db.ShopSections.Add(new ShopSection { Title = "Novo u ponudi", Kind = ShopSectionKind.NewArrivals, SortOrder = 0 });
+            db.ShopSections.Add(new ShopSection { Title = "Akcije", Kind = ShopSectionKind.OnSale, SortOrder = 1 });
+        }
+
+        // The category tiles, the brand tiles and "you may like" are blocks like any section: the admin can
+        // reorder, hide or retitle them. A shop that has none yet gets them, ahead of the existing sections.
+        var first = await db.ShopSections.MinAsync(s => (int?)s.SortOrder, ct) ?? 3;
+        async Task EnsureBlock(ShopSectionKind kind, string title, string eyebrow, int maxItems, int order)
+        {
+            if (await db.ShopSections.AnyAsync(s => s.Kind == kind, ct)) return;
+            db.ShopSections.Add(new ShopSection { Title = title, Eyebrow = eyebrow, Kind = kind, MaxItems = maxItems, SortOrder = order });
+        }
+        await EnsureBlock(ShopSectionKind.CategoryTiles, "Kategorije", "Asortiman", 6, first - 3);
+        await EnsureBlock(ShopSectionKind.BrandTiles, "Brendovi", "Marke", 12, first - 2);
+        await EnsureBlock(ShopSectionKind.Recommended, "Možda vam se sviđa", "Za vas", 10, first - 1);
+
+        // A salon profile nobody has touched yet gets a short demo text.
+        var settings = await db.SalonSettings.SingleAsync(ct);
+        if (_opt.DemoData && settings.Description is null && settings.Address is null && settings.MapsUrl is null)
+        {
+            settings.Description = "Ottoman je moderan frizerski salon u kojem se tradicija brijanja spaja s današnjim stilom. "
+                + "Naši frizeri brinu o svakom detalju, od klasičnog šišanja do uređivanja brade.";
+            settings.Address = "Ferhadija 12, 71000 Sarajevo";
+            settings.Phone = "033 123 456";
+            settings.MapsUrl = "https://www.google.com/maps/search/?api=1&query=43.8586,18.4310";
+            settings.Latitude = 43.8586;
+            settings.Longitude = 18.4310;
+        }
+
+        await db.SaveChangesAsync(ct);
     }
 
     private async Task<AppUser> EnsureUserAsync(
@@ -127,7 +188,7 @@ public partial class DatabaseSeeder(
 
     private void AddEmployee(AppUser user, string title, string? bio, IEnumerable<Service> assigned)
     {
-        var profile = new EmployeeProfile { UserId = user.Id, Title = title, Bio = bio };
+        var profile = new EmployeeProfile { UserId = user.Id, Title = title, Bio = bio, Gender = Gender.Male };
         profile.Services = assigned.Select(s => new EmployeeService { EmployeeId = user.Id, ServiceId = s.Id }).ToList();
 
         // Mon-Fri 09:00-17:00 with a lunch break, Sat 09:00-14:00.

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
 using Ottoman.Api.Filters;
 using Ottoman.Application.Common;
-using Ottoman.Application.Images;
 using Ottoman.Application.Notifications;
 
 namespace Ottoman.Api.Controllers;
@@ -44,7 +43,19 @@ public class AnnouncementsController(INotificationService notifications) : Contr
     [HttpPost]
     public async Task<ActionResult<AnnouncementDto>> Create(AnnouncementRequest request, CancellationToken ct)
     {
-        var result = await notifications.CreateAnnouncementAsync(User.UserId(), request, ct);
+        var result = await notifications.CreateAnnouncementAsync(User.UserId(), request, null, ct);
+        return result.Succeeded ? Created($"api/v1/announcements/{result.Value!.Id}", result.Value) : this.ToActionResult(result);
+    }
+
+    /// <summary>The same, with a picture (JPEG, PNG or WebP, up to 5 MB) sent as a form.</summary>
+    [HttpPost("with-image")]
+    [RejectOversizedUpload]
+    [RequestSizeLimit(ImageUpload.RequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
+    public async Task<ActionResult<AnnouncementDto>> CreateWithImage([FromForm] AnnouncementRequest request, IFormFile? file, CancellationToken ct)
+    {
+        await using var stream = file?.OpenReadStream();
+        var result = await notifications.CreateAnnouncementAsync(User.UserId(), request, stream, ct);
         return result.Succeeded ? Created($"api/v1/announcements/{result.Value!.Id}", result.Value) : this.ToActionResult(result);
     }
 
@@ -55,22 +66,4 @@ public class AnnouncementsController(INotificationService notifications) : Contr
     [HttpGet("{id:int}")]
     public async Task<ActionResult<AnnouncementDto>> Get(int id, CancellationToken ct) =>
         this.ToActionResult(await notifications.GetAnnouncementAsync(id, ct));
-
-    [HttpPut("{id:int}/image")]
-    [RejectOversizedUpload]
-    [RequestSizeLimit(ImageUpload.RequestLimit)]
-    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
-    public async Task<ActionResult<AnnouncementDto>> SetImage(int id, IFormFile file, IImageAttachments images, CancellationToken ct)
-    {
-        await using var stream = file.OpenReadStream();
-        var set = await images.SetAnnouncementImageAsync(id, stream, ct);
-        return this.ToActionResult(set.Succeeded ? await notifications.GetAnnouncementAsync(id, ct) : set.As<AnnouncementDto>());
-    }
-
-    [HttpDelete("{id:int}/image")]
-    public async Task<ActionResult<AnnouncementDto>> ClearImage(int id, IImageAttachments images, CancellationToken ct)
-    {
-        var cleared = await images.ClearAnnouncementImageAsync(id, ct);
-        return this.ToActionResult(cleared.Succeeded ? await notifications.GetAnnouncementAsync(id, ct) : cleared.As<AnnouncementDto>());
-    }
 }

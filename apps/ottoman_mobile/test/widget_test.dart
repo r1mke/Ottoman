@@ -94,7 +94,7 @@ void main() {
     await tester.tap(find.byKey(const Key('login_submit')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Proizvodi'), findsWidgets);
+    expect(find.text('Shop'), findsWidgets);
     expect(find.text('Termini'), findsWidgets);
   });
 
@@ -110,7 +110,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Notifikacije'), findsWidgets);
-    expect(find.text('Proizvodi'), findsNothing);
+    expect(find.text('Shop'), findsNothing);
   });
 
   testWidgets('registration shows server password errors per field', (

@@ -26,8 +26,9 @@ public class Announcement
     public bool SendEmail { get; set; }
     public int RecipientCount { get; set; }
 
-    /// <summary>Optional picture (Cloudinary key); news carry a picture.</summary>
+    /// <summary>Storage key of the picture of the news item (optional).</summary>
     public string? ImageKey { get; set; }
+
     public string CreatedByUserId { get; set; } = null!;
     public DateTime CreatedAtUtc { get; set; }
 }

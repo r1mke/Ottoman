@@ -169,9 +169,12 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
     super.dispose();
   }
 
-  void _searchClients() => setState(
-    () => _clients = widget.reservations.clients(search: _search.text),
-  );
+  void _searchClients() {
+    final found = widget.reservations.clients(search: _search.text);
+    setState(() {
+      _clients = found;
+    });
+  }
 
   Future<void> _save() async {
     final start = _start, client = _client, employee = _employee;
@@ -242,8 +245,16 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
                             key: Key('client_${c.id}'),
                             dense: true,
                             selected: _client?.id == c.id,
+                            selectedTileColor: WorkspaceColors.amberSoft,
+                            selectedColor: WorkspaceColors.amberInk,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             title: Text(c.fullName),
                             subtitle: Text(c.email),
+                            trailing: _client?.id == c.id
+                                ? const Icon(Icons.check_circle)
+                                : null,
                             onTap: () => setState(() => _client = c),
                           ),
                       ],
@@ -269,31 +280,23 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
                   }),
                 ),
               ),
-              if (_employee != null)
+              if (_employee != null) ...[
+                const SizedBox(height: 12),
                 FutureBuilder<List<Service>>(
                   future: _services,
-                  builder: (context, snap) => Wrap(
-                    spacing: 8,
-                    children: [
-                      for (final s in (snap.data ?? const <Service>[]).where(
-                        (s) => _employee!.serviceIds.contains(s.id),
-                      ))
-                        FilterChip(
-                          key: Key('new_service_${s.id}'),
-                          label: Text(
-                            '${s.name} · ${s.price.toStringAsFixed(0)} ${t.currencyShort}',
-                          ),
-                          selected: _serviceIds.contains(s.id),
-                          onSelected: (on) => setState(() {
-                            on
-                                ? _serviceIds.add(s.id)
-                                : _serviceIds.remove(s.id);
-                            _start = null;
-                          }),
-                        ),
-                    ],
+                  builder: (context, snap) => _ServicesField(
+                    services: (snap.data ?? const <Service>[])
+                        .where((s) => _employee!.serviceIds.contains(s.id))
+                        .toList(),
+                    selected: _serviceIds,
+                    onToggle: (id, on) => setState(() {
+                      on ? _serviceIds.add(id) : _serviceIds.remove(id);
+                      _start = null;
+                    }),
                   ),
                 ),
+                const SizedBox(height: 4),
+              ],
               if (_employee != null && _serviceIds.isNotEmpty)
                 SlotSelector(
                   catalog: widget.catalog,
@@ -336,6 +339,71 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
           child: Text(t.book),
         ),
       ],
+    );
+  }
+}
+
+/// The services of a booking, picked from a drop-down (several can be ticked) so it looks like the barber field above.
+class _ServicesField extends StatelessWidget {
+  const _ServicesField({
+    required this.services,
+    required this.selected,
+    required this.onToggle,
+  });
+
+  final List<Service> services;
+  final Set<int> selected;
+  final void Function(int id, bool on) onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final chosen = services.where((s) => selected.contains(s.id)).toList();
+    final total = chosen.fold<double>(0, (sum, s) => sum + s.price);
+    final summary = chosen.isEmpty
+        ? ''
+        : '${chosen.map((s) => s.name).join(', ')} \u00b7 ${total.toStringAsFixed(0)} ${t.currencyShort}';
+
+    return LayoutBuilder(
+      builder: (context, box) => MenuAnchor(
+        style: MenuStyle(
+          minimumSize: WidgetStatePropertyAll(Size(box.maxWidth, 0)),
+          maximumSize: WidgetStatePropertyAll(Size(box.maxWidth, 320)),
+          backgroundColor: const WidgetStatePropertyAll(
+            WorkspaceColors.surface,
+          ),
+        ),
+        menuChildren: [
+          for (final s in services)
+            CheckboxMenuButton(
+              key: Key('new_service_${s.id}'),
+              closeOnActivate: false,
+              value: selected.contains(s.id),
+              onChanged: (on) => onToggle(s.id, on ?? false),
+              child: Text(
+                '${s.name} \u00b7 ${s.price.toStringAsFixed(0)} ${t.currencyShort}',
+              ),
+            ),
+        ],
+        builder: (context, controller, _) => InkWell(
+          key: const Key('new_services'),
+          borderRadius: BorderRadius.circular(10),
+          onTap: services.isEmpty
+              ? null
+              : () =>
+                    controller.isOpen ? controller.close() : controller.open(),
+          child: InputDecorator(
+            isEmpty: summary.isEmpty,
+            isFocused: controller.isOpen,
+            decoration: InputDecoration(
+              labelText: t.services,
+              hintText: t.selectServices,
+              suffixIcon: const Icon(Icons.arrow_drop_down),
+            ),
+            child: Text(summary, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+        ),
+      ),
     );
   }
 }

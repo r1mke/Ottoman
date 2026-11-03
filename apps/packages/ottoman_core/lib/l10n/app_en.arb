@@ -32,11 +32,20 @@
   "profileSaved": "Profile saved.",
   "requiredField": "Required",
   "invalidEmail": "Enter an email in the format name@domain.com",
-  "invalidPhone": "Enter a phone number such as 061 123 456 or +387 61 123 456 (6 to 15 digits).",
+  "invalidPhone": "Enter a valid phone number, e.g. 061 123 456 or +387 61 123 456.",
   "invalidName": "Enter 2 to 50 letters (spaces, dots, apostrophes and hyphens are allowed).",
   "invalidPrice": "Enter a price above 0 with at most two decimals (e.g. 12.50).",
   "invalidWholeNumber": "Enter a whole number from {min} to {max}.",
-  "@invalidWholeNumber": { "placeholders": { "min": { "type": "int" }, "max": { "type": "int" } } },
+  "@invalidWholeNumber": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "passwordRules": "At least 8 characters, upper and lower case, a digit and a symbol.",
   "registrationDone": "Account created. You can sign in now.",
   "welcomeBack": "Welcome back",
@@ -50,13 +59,25 @@
   "myProfile": "My profile",
   "comingSoon": "Coming soon",
   "signedInAs": "Signed in as {name}",
-  "@signedInAs": { "placeholders": { "name": { "type": "String" } } },
+  "@signedInAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "genericError": "Something went wrong.",
   "chooseEmployee": "Choose a barber",
-  "chooseEmployeeHint": "To pick services, first choose one of our barbers.",
+  "chooseEmployeeHint": "Barbers who do all of the chosen services are shown.",
   "pricelist": "Services & Prices",
   "minutesShort": "{count} min",
-  "@minutesShort": { "placeholders": { "count": { "type": "int" } } },
+  "@minutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "total": "Total",
   "continueLabel": "Continue",
   "selectServices": "Select one or more services",
@@ -130,7 +151,13 @@
   "lowStock": "Low stock",
   "stock": "Stock",
   "inStockCount": "In stock: {count}",
-  "@inStockCount": { "placeholders": { "count": { "type": "int" } } },
+  "@inStockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "allCategories": "All categories",
   "sortBy": "Sort",
   "sortName": "Name",
@@ -154,7 +181,13 @@
   "noOrders": "No orders",
   "orders": "Orders",
   "orderNumber": "Order #{id}",
-  "@orderNumber": { "placeholders": { "id": { "type": "int" } } },
+  "@orderNumber": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
   "orderStatusPendingPayment": "Awaiting payment",
   "orderStatusPlaced": "Received",
   "orderStatusFulfilled": "Picked up",
@@ -176,7 +209,13 @@
   "manage": "Manage",
   "allStatuses": "All statuses",
   "productsCount": "{count} products",
-  "@productsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@productsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "payment": "Payment",
   "paymentStatusPending": "Awaiting payment",
   "paymentStatusSucceeded": "Paid",
@@ -197,7 +236,13 @@
   "announcementSent": "Message sent.",
   "sentMessages": "Sent messages",
   "recipientsCount": "{count} recipients",
-  "@recipientsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@recipientsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "newMessage": "New message",
   "haveCode": "I have a code",
   "resetCode": "Code from the email",
@@ -259,7 +304,13 @@
   "exportExcel": "Excel",
   "exportPdf": "PDF",
   "savedTo": "Saved: {path}",
-  "@savedTo": { "placeholders": { "path": { "type": "String" } } },
+  "@savedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "showInFolder": "Show",
   "reportRevenue": "Revenue",
   "reportEmployees": "Employees",
@@ -284,9 +335,21 @@
   "clientBlock": "Block",
   "clientUnblock": "Unblock",
   "clientBlockQuestion": "Block client {name}? They are signed out at once and cannot sign in until unblocked.",
-  "@clientBlockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "@clientBlockQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "clientUnblockQuestion": "Unblock client {name}?",
-  "@clientUnblockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "@clientUnblockQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "clientVisits": "Visits",
   "clientNoShows": "No-shows",
   "clientCancelled": "Cancelled",
@@ -316,6 +379,230 @@
   "cancelReasonLabel": "Reason for cancelling",
   "cancelReasonOptionalLabel": "Reason (optional)",
   "cancelReasonRequired": "Enter a reason (at least 3 characters). The client receives it in a notification.",
-  "pictureNotSaved": "The picture was not saved"
-
+  "pictureNotSaved": "The picture was not saved",
+  "chooseAccount": "Who's signing in?",
+  "addAccount": "Add account",
+  "removeFromList": "Remove from list",
+  "backToAccounts": "Back to accounts",
+  "mainPicture": "Main",
+  "pictureHint": "JPEG, PNG or WebP, up to 5 MB. The same picture cannot be added twice.",
+  "manageTitles": "Edit title list",
+  "newTitle": "New title",
+  "titleUsedBy": "In use: {count}",
+  "titleInUseHint": "Barbers still have this title; change theirs before deleting it.",
+  "@titleUsedBy": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gender": "Gender",
+  "genderMale": "Male",
+  "genderFemale": "Female",
+  "done": "Done",
+  "manageAccounts": "Edit accounts",
+  "removeAccountHint": "The account is only removed from the list on this computer.",
+  "zoom": "Zoom",
+  "resetZoom": "Reset",
+  "zoomHint": "The picture centres on the face by itself. Zoom sets how close it gets.",
+  "galleryTitle": "Work gallery",
+  "ourWork": "Our work",
+  "viewGallery": "View gallery",
+  "allStyles": "All",
+  "galleryEmpty": "No work added yet.",
+  "closedDay": "Closed",
+  "openInMaps": "Open in Google Maps",
+  "callSalon": "Call",
+  "findUs": "Find us",
+  "bookAppointment": "Book an appointment",
+  "haircutStyle": "Haircut style",
+  "doneBy": "Barber",
+  "addWork": "Add work",
+  "editWork": "Edit work",
+  "captionOptional": "Caption (optional)",
+  "showOnHome": "Show on home screen",
+  "onHomeBadge": "On home",
+  "noBarber": "No barber",
+  "styles": "Haircut styles",
+  "addStyle": "Add style",
+  "styleName": "Style name",
+  "chooseStyle": "Choose a haircut style.",
+  "choosePicture": "Choose a picture",
+  "deleteWorkQuestion": "Delete this work from the gallery?",
+  "deleteStyleQuestion": "Delete this style?",
+  "workAdded": "Work added.",
+  "salonProfile": "Salon",
+  "salonName": "Salon name",
+  "address": "Address",
+  "mapsLink": "Google Maps link",
+  "logo": "Logo",
+  "openFrom": "From",
+  "openTo": "To",
+  "openDay": "Open",
+  "invalidUrl": "Enter a valid web address (https://...).",
+  "hoursOrder": "Opening time must be before closing time.",
+  "salonSaved": "Salon details saved.",
+  "aboutSalon": "About the salon",
+  "latitude": "Latitude",
+  "longitude": "Longitude",
+  "coordinatesBoth": "Enter both latitude and longitude, or neither.",
+  "invalidCoordinate": "Invalid value.",
+  "chooseServicesHint": "Choose one or more services, then a barber and a time.",
+  "noBarberForServices": "No barber does all of the chosen services. Go back and change your choice.",
+  "quantity": "Quantity",
+  "addedToCartCount": "Added to basket: {count}",
+  "@addedToCartCount": {"placeholders": {"count": {"type": "int"}}},
+  "allProducts": "All products",
+  "salePrice": "Sale price",
+  "salePriceHint": "Leave empty when the product is not on sale",
+  "salePriceTooHigh": "Must be lower than the regular price",
+  "shopSectionsTitle": "Shop front page",
+  "shopSectionsHint": "The rows customers see at the top of the shop. Drag to reorder.",
+  "addSection": "Add section",
+  "editSection": "Edit section",
+  "sectionTitle": "Title",
+  "sectionKind": "What it shows",
+  "kindNewArrivals": "New arrivals (latest added products)",
+  "kindOnSale": "On sale (products with a sale price)",
+  "kindCategory": "Products of a category and/or brand",
+  "kindManual": "Hand-picked products",
+  "sectionMaxItems": "Most products",
+  "sectionVisible": "Shown to customers",
+  "sectionPickProducts": "Pick products",
+  "sectionSelected": "Selected",
+  "noSections": "No sections yet. Add the first one.",
+  "deleteSectionQuestion": "Delete the section? The products stay in the shop.",
+  "searchProducts": "Search products",
+  "mapsLinkHint": "Paste a Google Maps share link. The map pin is read from the link; if that fails, enter latitude and longitude below.",
+  "paymentNotCompleted": "Payment was not completed. No order was placed and your items are still in the basket.",
+  "groupWork": "Work",
+  "groupShop": "Shop",
+  "groupSalon": "Salon",
+  "groupClients": "Clients",
+  "groupAnalytics": "Analytics",
+  "groupAccount": "Account",
+  "any": "Any",
+  "pickCategoryOrBrand": "Pick a category or a brand",
+  "instagramLink": "Instagram (link)",
+  "facebookLink": "Facebook (link)",
+  "connectWithUs": "Connect with us",
+  "findUsHere": "Find us here",
+  "callUs": "Call",
+  "instagram": "Instagram",
+  "facebook": "Facebook",
+  "eyebrowGallery": "Gallery",
+  "eyebrowContact": "Contact",
+  "eyebrowLocation": "Location",
+  "eyebrowSchedule": "Schedule",
+  "eyebrowAbout": "About us",
+  "getToKnowUs": "Get to know us",
+  "welcomeTo": "Welcome to {name}",
+  "@welcomeTo": {"placeholders": {"name": {"type": "String"}}},
+  "groupPersonalData": "Personal data",
+  "groupAboutUs": "About us",
+  "editProfile": "Edit profile",
+  "manageAccount": "Manage account",
+  "privacyPolicy": "Privacy policy",
+  "termsOfUse": "Terms of use",
+  "aboutApp": "About the app",
+  "chooseDate": "Choose a date",
+  "chooseTime": "Choose a time",
+  "unavailableMarkedRed": "Days with no free times are marked in red",
+  "eyebrowAssortment": "Range",
+  "eyebrowBrands": "Brands",
+  "brandsTitle": "Brands",
+  "onSaleTitle": "On sale",
+  "newInStoreTitle": "New in store",
+  "newestProducts": "Latest products",
+  "searchResults": "Search results",
+  "discountUpTo": "up to -{percent}%",
+  "@discountUpTo": {"placeholders": {"percent": {"type": "int"}}},
+  "productsCount": "{count, plural, one{{count} product} other{{count} products}}",
+  "@productsCount": {"placeholders": {"count": {"type": "int"}}},
+  "showAsCard": "Show as a card on the entry page",
+  "cardPicture": "Card picture",
+  "cardPictureAuto": "Automatic picture (first product of the section)",
+  "uploadPicture": "Upload a picture",
+  "pickProductPicture": "Pick a product picture",
+  "removePicture": "Remove picture",
+  "saveSectionFirst": "Save the section first, then add a picture.",
+  "pickPictureTitle": "Choose a product picture",
+  "noPicturesFound": "No products with pictures for this search.",
+  "brandLogoUpload": "Set logo",
+  "brandLogoRemove": "Remove logo",
+  "sectionTitleHint": "A short title that fits on a card",
+  "sectionTitleTooShort": "The title needs at least {min} characters.",
+  "@sectionTitleTooShort": {"placeholders": {"min": {"type": "int"}}},
+  "sectionTitleTooLong": "The title can have at most {max} characters.",
+  "@sectionTitleTooLong": {"placeholders": {"max": {"type": "int"}}},
+  "sectionLayout": "Section layout",
+  "layoutRow": "Row",
+  "layoutGrid": "Grid",
+  "layoutBanner": "Big banner",
+  "layoutRowHint": "Products in one row that scrolls sideways.",
+  "layoutGridHint": "Products in two columns, one under the other.",
+  "layoutBannerHint": "A wide picture with the title, and a row of products under it.",
+  "previewTitle": "Preview in the app",
+  "previewCard": "Card",
+  "previewSection": "Section",
+  "previewSectionTitlePlaceholder": "Section title",
+  "shopTab": "Shop",
+  "sectionEyebrow": "Small text above the title (yellow)",
+  "sectionEyebrowHint": "Optional, e.g. COLLECTION. Shown in yellow letters.",
+  "sectionTitleWhite": "Title (white text)",
+  "sectionEmptyWarning": "This section currently has no products, so customers do not see it. Change what it selects.",
+  "sectionHasProducts": "Currently shows {count} products",
+  "@sectionHasProducts": {"placeholders": {"count": {"type": "int"}}},
+  "sectionEmptyShort": "No products: customers do not see this section",
+  "seeAll": "See all",
+  "kindCategoryTiles": "Category block (tiles)",
+  "kindBrandTiles": "Brand block (cards)",
+  "kindRecommended": "Suggestions (\"You may like\")",
+  "styleTitle": "Look",
+  "backgroundLabel": "Section background",
+  "bgNone": "No panel",
+  "bgSoft": "Dark panel",
+  "bgAmber": "Amber panel",
+  "bannerAlwaysPanel": "A banner always stands on a panel, together with the products under it.",
+  "alignLabel": "Title alignment",
+  "alignLeft": "Left",
+  "alignCenter": "Center",
+  "tileSizeLabel": "Product size",
+  "tileCompact": "Small",
+  "tileNormal": "Medium",
+  "tileLarge": "Large",
+  "showSeeAllLabel": "Show a \"See all\" link under the section",
+  "cardSpanLabel": "Card width",
+  "spanHalf": "Half width",
+  "spanFull": "Full width",
+  "tileCountCategories": "Number of categories (even)",
+  "tileCountBrands": "Number of brands",
+  "tilesManual": "Pick and order by hand",
+  "tilesAutoHint": "Automatic: only those with products are shown, the busiest first.",
+  "tilesPickHint": "Tap to add, drag to reorder. Only those with products are shown.",
+  "tilesSelected": "Selected",
+  "tilesAvailable": "Available",
+  "categoriesEvenError": "The number of chosen categories must be even so the last row is full.",
+  "blockNoDelete": "This block is not deleted, only hidden with the switch.",
+  "sectionShows": "Shows: {count}",
+  "previewSeeAll": "See all",
+  "@sectionShows": {"placeholders": {"count": {"type": "int"}}},
+  "confirmOrderTitle": "Confirm the order",
+  "confirmOrderBody": "An order of {total}. {payment}. Pick-up at the salon.",
+  "@confirmOrderBody": {"placeholders": {"total": {"type": "String"}, "payment": {"type": "String"}}},
+  "confirmBookingTitle": "Confirm the booking",
+  "confirmBookingBody": "Book an appointment with {barber}, {when}, total {total}?",
+  "@confirmBookingBody": {"placeholders": {"barber": {"type": "String"}, "when": {"type": "String"}, "total": {"type": "String"}}},
+  "messagePicture": "Picture (optional)",
+  "addPicture": "Add a picture",
+  "removePictureShort": "Remove",
+  "salonLocation": "Salon location on the map",
+  "salonLocationHint": "Type an address and find it, or click the map to drop the pin.",
+  "searchAddress": "Address to search",
+  "findOnMap": "Find",
+  "addressNotFound": "Address not found. Click the map to drop the pin.",
+  "noPinYet": "No pin yet.",
+  "pinSet": "The pin is set.",
+  "removePin": "Remove pin"
 }

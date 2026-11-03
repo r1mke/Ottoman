@@ -2,6 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace Ottoman.Domain;
 
+/// <summary>Only used to pick a default avatar for a barber without a photo.</summary>
+public enum Gender
+{
+    Male = 1,
+    Female = 2,
+}
+
 public enum ReservationStatus
 {
     Pending = 0,

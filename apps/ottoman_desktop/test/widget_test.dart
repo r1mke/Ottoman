@@ -76,13 +76,18 @@ void main() {
     addTearDown(tester.view.reset);
     final auth = _auth(['Admin']);
     await auth.restore();
-    await tester.pumpWidget(OttomanDesktopApp(auth: auth));
+    await tester.pumpWidget(
+      OttomanDesktopApp(
+        auth: auth,
+        profiles: SavedProfiles(MemorySavedProfilesStore()),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('login_submit')));
     await tester.pump();
 
-    expect(find.text('Unesite ispravan email'), findsOneWidget);
+    expect(find.text('Unesite email u formatu ime@domena.ba'), findsOneWidget);
     expect(auth.status, AuthStatus.unauthenticated);
   });
 
@@ -92,7 +97,12 @@ void main() {
     addTearDown(tester.view.reset);
     final auth = _auth(['Admin']);
     await auth.restore();
-    await tester.pumpWidget(OttomanDesktopApp(auth: auth));
+    await tester.pumpWidget(
+      OttomanDesktopApp(
+        auth: auth,
+        profiles: SavedProfiles(MemorySavedProfilesStore()),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await _signIn(tester);
@@ -107,7 +117,12 @@ void main() {
     addTearDown(tester.view.reset);
     final auth = _auth(['Employee']);
     await auth.restore();
-    await tester.pumpWidget(OttomanDesktopApp(auth: auth));
+    await tester.pumpWidget(
+      OttomanDesktopApp(
+        auth: auth,
+        profiles: SavedProfiles(MemorySavedProfilesStore()),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await _signIn(tester);

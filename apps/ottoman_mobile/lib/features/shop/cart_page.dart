@@ -55,7 +55,7 @@ class CartPage extends StatelessWidget {
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  Text(money(t, p.price)),
+                                  Text(money(t, p.payPrice)),
                                 ],
                               ),
                             ),

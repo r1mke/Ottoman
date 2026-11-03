@@ -107,7 +107,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get invalidPhone =>
-      'Unesite telefon u formatu 061 123 456 ili +387 61 123 456 (6 do 15 cifara).';
+      'Unesite ispravan broj telefona, npr. 061 123 456 ili +387 61 123 456.';
 
   @override
   String get invalidName =>
@@ -172,7 +172,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get chooseEmployeeHint =>
-      'Za odabir usluga prvo odaberite nekog od naših uposlenika.';
+      'Prikazani su uposlenici koji rade sve odabrane usluge.';
 
   @override
   String get pricelist => 'Usluge & Cjenovnik';
@@ -538,7 +538,14 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String productsCount(int count) {
-    return '$count proizvoda';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count proizvoda',
+      few: '$count proizvoda',
+      one: '$count proizvod',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -958,4 +965,661 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get pictureNotSaved => 'Slika nije spremljena';
+
+  @override
+  String get chooseAccount => 'Ko se prijavljuje?';
+
+  @override
+  String get addAccount => 'Dodaj račun';
+
+  @override
+  String get removeFromList => 'Ukloni s liste';
+
+  @override
+  String get backToAccounts => 'Nazad na račune';
+
+  @override
+  String get mainPicture => 'Glavna';
+
+  @override
+  String get pictureHint =>
+      'JPEG, PNG ili WebP, do 5 MB. Ista slika se ne može dodati dvaput.';
+
+  @override
+  String get manageTitles => 'Uredi listu titula';
+
+  @override
+  String get newTitle => 'Nova titula';
+
+  @override
+  String titleUsedBy(int count) {
+    return 'Koristi: $count';
+  }
+
+  @override
+  String get titleInUseHint =>
+      'Titulu koriste uposlenici, promijenite im je prije brisanja.';
+
+  @override
+  String get gender => 'Spol';
+
+  @override
+  String get genderMale => 'Muški';
+
+  @override
+  String get genderFemale => 'Ženski';
+
+  @override
+  String get done => 'Gotovo';
+
+  @override
+  String get manageAccounts => 'Uredi račune';
+
+  @override
+  String get removeAccountHint =>
+      'Račun se samo uklanja s liste na ovom računaru.';
+
+  @override
+  String get zoom => 'Zoom';
+
+  @override
+  String get resetZoom => 'Resetuj';
+
+  @override
+  String get zoomHint =>
+      'Slika se sama centrira na lice. Zoom određuje koliko se približava.';
+
+  @override
+  String get galleryTitle => 'Galerija radova';
+
+  @override
+  String get ourWork => 'Naši radovi';
+
+  @override
+  String get viewGallery => 'Pogledaj galeriju';
+
+  @override
+  String get allStyles => 'Sve';
+
+  @override
+  String get galleryEmpty => 'Još nema dodanih radova.';
+
+  @override
+  String get closedDay => 'Zatvoreno';
+
+  @override
+  String get openInMaps => 'Otvori u Google Maps';
+
+  @override
+  String get callSalon => 'Pozovi';
+
+  @override
+  String get findUs => 'Gdje smo';
+
+  @override
+  String get bookAppointment => 'Rezerviši termin';
+
+  @override
+  String get haircutStyle => 'Stil frizure';
+
+  @override
+  String get doneBy => 'Frizer';
+
+  @override
+  String get addWork => 'Dodaj rad';
+
+  @override
+  String get editWork => 'Uredi rad';
+
+  @override
+  String get captionOptional => 'Opis (nije obavezno)';
+
+  @override
+  String get showOnHome => 'Prikaži na početnoj';
+
+  @override
+  String get onHomeBadge => 'Na početnoj';
+
+  @override
+  String get noBarber => 'Bez uposlenika';
+
+  @override
+  String get styles => 'Stilovi frizura';
+
+  @override
+  String get addStyle => 'Dodaj stil';
+
+  @override
+  String get styleName => 'Naziv stila';
+
+  @override
+  String get chooseStyle => 'Odaberite stil frizure.';
+
+  @override
+  String get choosePicture => 'Odaberite sliku';
+
+  @override
+  String get deleteWorkQuestion => 'Obrisati ovaj rad iz galerije?';
+
+  @override
+  String get deleteStyleQuestion => 'Obrisati ovaj stil?';
+
+  @override
+  String get workAdded => 'Rad je dodan.';
+
+  @override
+  String get salonProfile => 'Salon';
+
+  @override
+  String get salonName => 'Naziv salona';
+
+  @override
+  String get address => 'Adresa';
+
+  @override
+  String get mapsLink => 'Google lokacija (link)';
+
+  @override
+  String get logo => 'Logo';
+
+  @override
+  String get openFrom => 'Od';
+
+  @override
+  String get openTo => 'Do';
+
+  @override
+  String get openDay => 'Radi';
+
+  @override
+  String get invalidUrl => 'Unesite ispravnu web adresu (https://...).';
+
+  @override
+  String get hoursOrder => 'Vrijeme otvaranja mora biti prije zatvaranja.';
+
+  @override
+  String get salonSaved => 'Podaci o salonu su spremljeni.';
+
+  @override
+  String get aboutSalon => 'O salonu';
+
+  @override
+  String get latitude => 'Geografska širina';
+
+  @override
+  String get longitude => 'Geografska dužina';
+
+  @override
+  String get coordinatesBoth => 'Unesite i širinu i dužinu, ili nijednu.';
+
+  @override
+  String get invalidCoordinate => 'Neispravna vrijednost.';
+
+  @override
+  String get chooseServicesHint =>
+      'Odaberite jednu ili više usluga, a zatim uposlenika i termin.';
+
+  @override
+  String get noBarberForServices =>
+      'Nijedan uposlenik ne radi sve odabrane usluge. Vratite se i promijenite odabir.';
+
+  @override
+  String get quantity => 'Količina';
+
+  @override
+  String addedToCartCount(int count) {
+    return 'Dodano u korpu: $count';
+  }
+
+  @override
+  String get allProducts => 'Svi proizvodi';
+
+  @override
+  String get salePrice => 'Akcijska cijena';
+
+  @override
+  String get salePriceHint => 'Ostavite prazno ako proizvod nije na akciji';
+
+  @override
+  String get salePriceTooHigh => 'Mora biti manja od redovne cijene';
+
+  @override
+  String get shopSectionsTitle => 'Početna shopa';
+
+  @override
+  String get shopSectionsHint =>
+      'Redovi koje kupci vide na vrhu shopa. Povucite za promjenu redoslijeda.';
+
+  @override
+  String get addSection => 'Dodaj sekciju';
+
+  @override
+  String get editSection => 'Uredi sekciju';
+
+  @override
+  String get sectionTitle => 'Naslov';
+
+  @override
+  String get sectionKind => 'Šta prikazuje';
+
+  @override
+  String get kindNewArrivals => 'Novo u ponudi (zadnje dodani proizvodi)';
+
+  @override
+  String get kindOnSale => 'Akcije (proizvodi s akcijskom cijenom)';
+
+  @override
+  String get kindCategory => 'Proizvodi jedne kategorije i/ili brenda';
+
+  @override
+  String get kindManual => 'Ručni izbor proizvoda';
+
+  @override
+  String get sectionMaxItems => 'Najviše proizvoda';
+
+  @override
+  String get sectionVisible => 'Prikazano kupcima';
+
+  @override
+  String get sectionPickProducts => 'Odaberite proizvode';
+
+  @override
+  String get sectionSelected => 'Odabrano';
+
+  @override
+  String get noSections => 'Još nema sekcija. Dodajte prvu.';
+
+  @override
+  String get deleteSectionQuestion =>
+      'Obrisati sekciju? Proizvodi ostaju u ponudi.';
+
+  @override
+  String get searchProducts => 'Pretraži proizvode';
+
+  @override
+  String get mapsLinkHint =>
+      'Zalijepite link iz Google Maps (Dijeli). Pin za mapu u aplikaciji se očitava iz linka; ako ne uspije, unesite širinu i dužinu ispod.';
+
+  @override
+  String get paymentNotCompleted =>
+      'Plaćanje nije završeno. Narudžba nije kreirana, a proizvodi su ostali u korpi.';
+
+  @override
+  String get groupWork => 'Rad';
+
+  @override
+  String get groupShop => 'Shop';
+
+  @override
+  String get groupSalon => 'Salon';
+
+  @override
+  String get groupClients => 'Klijenti';
+
+  @override
+  String get groupAnalytics => 'Analitika';
+
+  @override
+  String get groupAccount => 'Račun';
+
+  @override
+  String get any => 'Bilo koji';
+
+  @override
+  String get pickCategoryOrBrand => 'Odaberite kategoriju ili brend';
+
+  @override
+  String get instagramLink => 'Instagram (link)';
+
+  @override
+  String get facebookLink => 'Facebook (link)';
+
+  @override
+  String get connectWithUs => 'Povežite se s nama';
+
+  @override
+  String get findUsHere => 'Pronađite nas ovdje';
+
+  @override
+  String get callUs => 'Pozovi';
+
+  @override
+  String get instagram => 'Instagram';
+
+  @override
+  String get facebook => 'Facebook';
+
+  @override
+  String get eyebrowGallery => 'Galerija';
+
+  @override
+  String get eyebrowContact => 'Kontakt';
+
+  @override
+  String get eyebrowLocation => 'Lokacija';
+
+  @override
+  String get eyebrowSchedule => 'Raspored';
+
+  @override
+  String get eyebrowAbout => 'O nama';
+
+  @override
+  String get getToKnowUs => 'Upoznajte nas';
+
+  @override
+  String welcomeTo(String name) {
+    return 'Dobrodošli u $name';
+  }
+
+  @override
+  String get groupPersonalData => 'Lični podaci';
+
+  @override
+  String get groupAboutUs => 'O nama';
+
+  @override
+  String get editProfile => 'Uredi profil';
+
+  @override
+  String get manageAccount => 'Upravljanje računom';
+
+  @override
+  String get privacyPolicy => 'Pravila privatnosti';
+
+  @override
+  String get termsOfUse => 'Uslovi korištenja';
+
+  @override
+  String get aboutApp => 'O aplikaciji';
+
+  @override
+  String get chooseDate => 'Odaberite datum';
+
+  @override
+  String get chooseTime => 'Odaberite sate';
+
+  @override
+  String get unavailableMarkedRed =>
+      'Nedostupni termini su označeni crvenom bojom';
+
+  @override
+  String get eyebrowAssortment => 'Asortiman';
+
+  @override
+  String get eyebrowBrands => 'Marke';
+
+  @override
+  String get brandsTitle => 'Brendovi';
+
+  @override
+  String get onSaleTitle => 'Akcije';
+
+  @override
+  String get newInStoreTitle => 'Novo u ponudi';
+
+  @override
+  String get newestProducts => 'Najnoviji proizvodi';
+
+  @override
+  String get searchResults => 'Rezultati pretrage';
+
+  @override
+  String discountUpTo(int percent) {
+    return 'do -$percent%';
+  }
+
+  @override
+  String get showAsCard => 'Prikaži kao karticu na ulaznoj stranici';
+
+  @override
+  String get cardPicture => 'Slika kartice';
+
+  @override
+  String get cardPictureAuto => 'Automatska slika (prvi proizvod u sekciji)';
+
+  @override
+  String get uploadPicture => 'Pošalji sliku';
+
+  @override
+  String get pickProductPicture => 'Izaberi sliku proizvoda';
+
+  @override
+  String get saveSectionFirst => 'Prvo spremite sekciju, pa joj dodajte sliku.';
+
+  @override
+  String get pickPictureTitle => 'Odaberite sliku proizvoda';
+
+  @override
+  String get noPicturesFound => 'Nema proizvoda sa slikama za ovu pretragu.';
+
+  @override
+  String get brandLogoUpload => 'Postavi logotip';
+
+  @override
+  String get brandLogoRemove => 'Ukloni logotip';
+
+  @override
+  String get sectionTitleHint => 'Kratak naslov koji lijepo stane na karticu';
+
+  @override
+  String sectionTitleTooShort(int min) {
+    return 'Naslov mora imati najmanje $min znaka.';
+  }
+
+  @override
+  String sectionTitleTooLong(int max) {
+    return 'Naslov može imati najviše $max znaka.';
+  }
+
+  @override
+  String get sectionLayout => 'Oblik sekcije';
+
+  @override
+  String get layoutRow => 'Red';
+
+  @override
+  String get layoutGrid => 'Mreža';
+
+  @override
+  String get layoutBanner => 'Veliki baner';
+
+  @override
+  String get layoutRowHint =>
+      'Proizvodi u jednom redu koji se pomiče u stranu.';
+
+  @override
+  String get layoutGridHint => 'Proizvodi u dvije kolone, jedan ispod drugog.';
+
+  @override
+  String get layoutBannerHint =>
+      'Široka slika s naslovom, a ispod nje red proizvoda.';
+
+  @override
+  String get previewTitle => 'Pregled u aplikaciji';
+
+  @override
+  String get previewCard => 'Kartica';
+
+  @override
+  String get previewSection => 'Sekcija';
+
+  @override
+  String get previewSectionTitlePlaceholder => 'Naslov sekcije';
+
+  @override
+  String get shopTab => 'Shop';
+
+  @override
+  String get sectionEyebrow => 'Mali tekst iznad naslova (žuti)';
+
+  @override
+  String get sectionEyebrowHint =>
+      'Neobavezno, npr. KOLEKCIJA. Prikazuje se žutim slovima.';
+
+  @override
+  String get sectionTitleWhite => 'Naslov (bijeli tekst)';
+
+  @override
+  String get sectionEmptyWarning =>
+      'Ova sekcija trenutno nema nijedan proizvod, pa je kupci ne vide. Promijenite odabir proizvoda.';
+
+  @override
+  String sectionHasProducts(int count) {
+    return 'Trenutno prikazuje $count proizvoda';
+  }
+
+  @override
+  String get sectionEmptyShort => 'Nema proizvoda: kupci ne vide ovu sekciju';
+
+  @override
+  String get seeAll => 'Vidi sve';
+
+  @override
+  String get kindCategoryTiles => 'Blok kategorija (pločice)';
+
+  @override
+  String get kindBrandTiles => 'Blok brendova (kartice)';
+
+  @override
+  String get kindRecommended => 'Preporuke („Možda vam se sviđa“)';
+
+  @override
+  String get styleTitle => 'Izgled';
+
+  @override
+  String get backgroundLabel => 'Pozadina sekcije';
+
+  @override
+  String get bgNone => 'Bez ploče';
+
+  @override
+  String get bgSoft => 'Tamna ploča';
+
+  @override
+  String get bgAmber => 'Jantarna ploča';
+
+  @override
+  String get bannerAlwaysPanel =>
+      'Baner uvijek stoji na ploči, zajedno s proizvodima ispod.';
+
+  @override
+  String get alignLabel => 'Poravnanje naslova';
+
+  @override
+  String get alignLeft => 'Lijevo';
+
+  @override
+  String get alignCenter => 'Sredina';
+
+  @override
+  String get tileSizeLabel => 'Veličina proizvoda';
+
+  @override
+  String get tileCompact => 'Mali';
+
+  @override
+  String get tileNormal => 'Srednji';
+
+  @override
+  String get tileLarge => 'Veliki';
+
+  @override
+  String get showSeeAllLabel => 'Prikaži vezu „Vidi sve“ ispod sekcije';
+
+  @override
+  String get cardSpanLabel => 'Širina kartice';
+
+  @override
+  String get spanHalf => 'Pola širine';
+
+  @override
+  String get spanFull => 'Cijela širina';
+
+  @override
+  String get tileCountCategories => 'Broj kategorija (paran)';
+
+  @override
+  String get tileCountBrands => 'Broj brendova';
+
+  @override
+  String get tilesManual => 'Ručni izbor i redoslijed';
+
+  @override
+  String get tilesAutoHint =>
+      'Automatski: prikazuju se samo oni koji imaju proizvoda, najpopunjeniji prvi.';
+
+  @override
+  String get tilesPickHint =>
+      'Dodirnite da dodate, povucite da promijenite redoslijed. Prikazuju se samo oni koji imaju proizvoda.';
+
+  @override
+  String get tilesSelected => 'Odabrano';
+
+  @override
+  String get tilesAvailable => 'Dostupno';
+
+  @override
+  String get categoriesEvenError =>
+      'Broj odabranih kategorija mora biti paran, da zadnji red bude pun.';
+
+  @override
+  String get blockNoDelete =>
+      'Ovaj blok se ne briše, samo se sakriva prekidačem.';
+
+  @override
+  String sectionShows(int count) {
+    return 'Prikazuje: $count';
+  }
+
+  @override
+  String get previewSeeAll => 'Vidi sve';
+
+  @override
+  String get confirmOrderTitle => 'Potvrda narudžbe';
+
+  @override
+  String confirmOrderBody(String total, String payment) {
+    return 'Narudžba na iznos $total. $payment. Preuzimanje u salonu.';
+  }
+
+  @override
+  String get confirmBookingTitle => 'Potvrda rezervacije';
+
+  @override
+  String confirmBookingBody(String barber, String when, String total) {
+    return 'Rezervisati termin kod $barber, $when, ukupno $total?';
+  }
+
+  @override
+  String get messagePicture => 'Slika (neobavezno)';
+
+  @override
+  String get removePictureShort => 'Ukloni';
+
+  @override
+  String get salonLocation => 'Lokacija salona na mapi';
+
+  @override
+  String get salonLocationHint =>
+      'Upišite adresu i pronađite je, ili kliknite na mapu da postavite oznaku.';
+
+  @override
+  String get searchAddress => 'Adresa za pretragu';
+
+  @override
+  String get findOnMap => 'Pronađi';
+
+  @override
+  String get addressNotFound =>
+      'Adresa nije pronađena. Kliknite na mapu da postavite oznaku.';
+
+  @override
+  String get noPinYet => 'Oznaka još nije postavljena.';
+
+  @override
+  String get pinSet => 'Oznaka je postavljena.';
+
+  @override
+  String get removePin => 'Ukloni oznaku';
 }

@@ -37,11 +37,6 @@ public class DemoImageSeeder(OttomanDbContext db, IImageStore store, IOptions<Im
                 e.PhotoKey = await UploadAsync(e.UserId + e.Title, "ottoman/employees", ct);
                 done++;
             }
-            foreach (var a in await db.Announcements.Where(a => a.ImageKey == null).ToListAsync(ct))
-            {
-                a.ImageKey = await UploadAsync(a.Title, "ottoman/news", ct);
-                done++;
-            }
 
             await db.SaveChangesAsync(ct);
             if (done > 0) log.LogInformation("Seeded {Count} demo pictures", done);

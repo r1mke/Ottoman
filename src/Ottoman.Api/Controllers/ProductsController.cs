@@ -23,13 +23,14 @@ public class ProductsController(IProductCatalog catalog, IImageAttachments image
         [FromQuery] ProductSort sort = ProductSort.Name,
         [FromQuery] bool includeInactive = false,
         [FromQuery] bool lowStock = false,
+        [FromQuery] bool onSale = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
         var admin = User.IsInRole(Roles.Admin);
         return catalog.ListAsync(
-            new ProductQuery(search, categoryId, brandId, sort, includeInactive && admin, lowStock && admin),
+            new ProductQuery(search, categoryId, brandId, sort, includeInactive && admin, lowStock && admin, onSale),
             new PageQuery(page, pageSize), ct);
     }
 
@@ -87,7 +88,7 @@ public class ProductsController(IProductCatalog catalog, IImageAttachments image
 [ApiController]
 [Route("api/v1/brands")]
 [Authorize]
-public class BrandsController(IProductCatalog catalog) : ControllerBase
+public class BrandsController(IProductCatalog catalog, IImageAttachments images) : ControllerBase
 {
     [HttpGet]
     public async Task<IReadOnlyList<BrandDto>> List(
@@ -106,6 +107,27 @@ public class BrandsController(IProductCatalog catalog) : ControllerBase
     [Authorize(Policy = Policies.AdminOnly)]
     public async Task<ActionResult<BrandDto>> Update(int id, NameRequest request, CancellationToken ct) =>
         this.ToActionResult(await catalog.UpdateBrandAsync(id, request, ct));
+
+    /// <summary>Sets the logo of a brand (JPEG, PNG or WebP, up to 5 MB). It is shown on the shop entry page.</summary>
+    [HttpPut("{id:int}/logo")]
+    [Authorize(Policy = Policies.AdminOnly)]
+    [RejectOversizedUpload]
+    [RequestSizeLimit(ImageUpload.RequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
+    public async Task<ActionResult<BrandDto>> SetLogo(int id, IFormFile file, CancellationToken ct)
+    {
+        await using var stream = file.OpenReadStream();
+        var set = await images.SetBrandLogoAsync(id, stream, ct);
+        return this.ToActionResult(set.Succeeded ? await catalog.GetBrandAsync(id, ct) : set.As<BrandDto>());
+    }
+
+    [HttpDelete("{id:int}/logo")]
+    [Authorize(Policy = Policies.AdminOnly)]
+    public async Task<ActionResult<BrandDto>> ClearLogo(int id, CancellationToken ct)
+    {
+        var cleared = await images.ClearBrandLogoAsync(id, ct);
+        return this.ToActionResult(cleared.Succeeded ? await catalog.GetBrandAsync(id, ct) : cleared.As<BrandDto>());
+    }
 
     [HttpDelete("{id:int}")]
     [Authorize(Policy = Policies.AdminOnly)]

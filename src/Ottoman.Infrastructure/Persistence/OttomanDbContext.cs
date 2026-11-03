@@ -18,7 +18,14 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ShopSection> ShopSections => Set<ShopSection>();
+    public DbSet<ShopSectionProduct> ShopSectionProducts => Set<ShopSectionProduct>();
+    public DbSet<ShopSectionEntry> ShopSectionEntries => Set<ShopSectionEntry>();
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<HaircutCategory> HaircutCategories => Set<HaircutCategory>();
+    public DbSet<GalleryItem> GalleryItems => Set<GalleryItem>();
+    public DbSet<SalonOpeningHours> SalonOpeningHours => Set<SalonOpeningHours>();
+    public DbSet<EmployeeTitle> EmployeeTitles => Set<EmployeeTitle>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<ReservationItem> ReservationItems => Set<ReservationItem>();
     public DbSet<ReservationSlot> ReservationSlots => Set<ReservationSlot>();
@@ -55,6 +62,8 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
         {
             e.Property(x => x.FirstName).HasMaxLength(100);
             e.Property(x => x.LastName).HasMaxLength(100);
+            e.Property(x => x.Gender).HasConversion<string>().HasMaxLength(10);
+            e.Property(x => x.Bio).HasMaxLength(500);
         });
 
         b.Entity<EmployeeProfile>(e =>
@@ -84,6 +93,38 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.Name).HasMaxLength(150);
             e.Property(x => x.TimeZoneId).HasMaxLength(64);
             e.Property(x => x.Currency).HasMaxLength(3);
+            e.Property(x => x.Description).HasMaxLength(1000);
+            e.Property(x => x.MapsUrl).HasMaxLength(500);
+            e.Property(x => x.InstagramUrl).HasMaxLength(300);
+            e.Property(x => x.FacebookUrl).HasMaxLength(300);
+            e.Property(x => x.LogoKey).HasMaxLength(200);
+        });
+
+        b.Entity<HaircutCategory>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(100);
+            e.HasIndex(x => x.Name).IsUnique();
+        });
+
+        b.Entity<GalleryItem>(e =>
+        {
+            e.Property(x => x.ImageKey).HasMaxLength(200);
+            e.Property(x => x.ContentHash).HasMaxLength(64);
+            e.Property(x => x.Caption).HasMaxLength(200);
+            e.Property(x => x.EmployeeId).HasMaxLength(450);
+            e.HasIndex(x => x.ContentHash).IsUnique().HasFilter("[ContentHash] IS NOT NULL");
+            e.HasIndex(x => new { x.CategoryId, x.CreatedAtUtc });
+            e.HasIndex(x => x.IsFeatured);
+            e.HasOne<HaircutCategory>().WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<EmployeeProfile>().WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        b.Entity<SalonOpeningHours>(e =>
+        {
+            e.HasKey(x => x.Day);
+            e.Property(x => x.Day).ValueGeneratedNever();
+            e.ToTable(t => t.HasCheckConstraint("CK_SalonOpeningHours_Range",
+                "([OpenMinutes] IS NULL AND [CloseMinutes] IS NULL) OR ([OpenMinutes] >= 0 AND [CloseMinutes] <= 1440 AND [OpenMinutes] < [CloseMinutes])"));
         });
 
         b.Entity<Service>(e =>
@@ -94,18 +135,48 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.ToTable(t => t.HasCheckConstraint("CK_Service_Duration", "[DurationMinutes] > 0 AND [DurationMinutes] % 5 = 0"));
         });
 
-        b.Entity<Brand>(e => { e.Property(x => x.Name).HasMaxLength(100); e.HasIndex(x => x.Name).IsUnique(); });
+        b.Entity<Brand>(e => { e.Property(x => x.Name).HasMaxLength(100); e.Property(x => x.LogoKey).HasMaxLength(300); e.HasIndex(x => x.Name).IsUnique(); });
         b.Entity<Category>(e => { e.Property(x => x.Name).HasMaxLength(100); e.HasIndex(x => x.Name).IsUnique(); });
 
         b.Entity<Product>(e =>
         {
             e.Property(x => x.Name).HasMaxLength(200);
             e.Property(x => x.Price).HasPrecision(18, 2);
+            e.Property(x => x.SalePrice).HasPrecision(18, 2);
+            e.Ignore(x => x.EffectivePrice);
             e.Property(x => x.RowVersion).IsRowVersion();
-            e.ToTable(t => t.HasCheckConstraint("CK_Product_Stock", "[Stock] >= 0"));
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Product_Stock", "[Stock] >= 0");
+                t.HasCheckConstraint("CK_Product_SalePrice", "[SalePrice] IS NULL OR ([SalePrice] > 0 AND [SalePrice] < [Price])");
+            });
             e.HasOne(x => x.Brand).WithMany().HasForeignKey(x => x.BrandId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.SetNull);
             e.HasMany(x => x.Images).WithOne().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<ShopSection>(e =>
+        {
+            e.Property(x => x.Title).HasMaxLength(100);
+            e.Property(x => x.Eyebrow).HasMaxLength(50);
+            e.Property(x => x.ImageKey).HasMaxLength(300);
+            e.Property(x => x.Layout).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.Background).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.TileSize).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.CardSpan).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.HeadingAlign).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.Kind).HasConversion<string>().HasMaxLength(20);
+            e.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Brand).WithMany().HasForeignKey(x => x.BrandId).OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(x => x.Products).WithOne().HasForeignKey(x => x.ShopSectionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(x => x.Entries).WithOne().HasForeignKey(x => x.ShopSectionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.SortOrder);
+        });
+        b.Entity<ShopSectionEntry>(e => e.HasKey(x => new { x.ShopSectionId, x.EntityId }));
+        b.Entity<ShopSectionProduct>(e =>
+        {
+            e.HasKey(x => new { x.ShopSectionId, x.ProductId });
+            e.HasOne<Product>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<Reservation>(e =>
@@ -130,8 +201,30 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.HasOne<Service>().WithMany().HasForeignKey(x => x.ServiceId).OnDelete(DeleteBehavior.Restrict);
         });
 
+        b.Entity<EmployeeProfile>().Property(x => x.Gender).HasConversion<string>().HasMaxLength(10);
+        b.Entity<EmployeeProfile>().Property(x => x.PhotoZoom).HasDefaultValue(1.0);
+
+        b.Entity<EmployeeTitle>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            e.HasIndex(x => x.Name).IsUnique(); // the default collation is case-insensitive
+        });
+
         // The database-level guarantee against double booking.
         b.Entity<ReservationSlot>().HasIndex(x => new { x.EmployeeId, x.SlotStartUtc }).IsUnique();
+
+        // ...and against one client sitting in two chairs at once. Filtered because rows from before this rule have
+        // no client; cancelling removes the rows, so only live appointments hold a client's time.
+        b.Entity<ReservationSlot>()
+            .HasIndex(x => new { x.ClientId, x.SlotStartUtc })
+            .IsUnique()
+            .HasFilter("[ClientId] IS NOT NULL");
+
+        // The same picture twice on one product is refused by the database too, not only by the pre-check.
+        b.Entity<ProductImage>()
+            .HasIndex(x => new { x.ProductId, x.ContentHash })
+            .IsUnique()
+            .HasFilter("[ContentHash] IS NOT NULL");
 
         b.Entity<Payment>(e =>
         {
@@ -233,6 +326,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
         {
             e.Property(x => x.Title).HasMaxLength(120);
             e.Property(x => x.Body).HasMaxLength(2000);
+            e.Property(x => x.ImageKey).HasMaxLength(300);
             e.Property(x => x.Audience).HasConversion<string>().HasMaxLength(20);
             e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });

@@ -123,6 +123,18 @@ public class ReportExporter : IReportExporter
 
     // ---------------------------------------------------------------- PDF
 
+    /// <summary>The logo printed at the top of every PDF; null (and the name as text) if the resource is missing.</summary>
+    private static readonly byte[]? Logo = LoadLogo();
+
+    private static byte[]? LoadLogo()
+    {
+        using var stream = typeof(ReportExporter).Assembly.GetManifestResourceStream("Ottoman.Infrastructure.Reports.logo.png");
+        if (stream is null) return null;
+        using var ms = new MemoryStream();
+        stream.CopyTo(ms);
+        return ms.ToArray();
+    }
+
     private static byte[] Pdf(TableDto table)
     {
         var landscape = table.Columns.Count > 5;
@@ -134,7 +146,8 @@ public class ReportExporter : IReportExporter
 
             page.Header().Column(col =>
             {
-                col.Item().Text("OTTOMAN").Bold().FontSize(11).LetterSpacing(0.2f);
+                if (Logo is { } logo) col.Item().Height(30).AlignLeft().Image(logo).FitHeight();
+                else col.Item().Text("OTTOMAN").Bold().FontSize(11).LetterSpacing(0.2f);
                 col.Item().PaddingTop(2).Text(table.Title).Bold().FontSize(15);
                 col.Item().PaddingBottom(8).Text($"Izrađeno {DateTime.UtcNow:dd.MM.yyyy. HH:mm} UTC").FontSize(8).FontColor(Colors.Grey.Darken1);
             });

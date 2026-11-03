@@ -19,5 +19,14 @@ Future<void> main() async {
   );
   await auth.restore();
 
-  runApp(OttomanDesktopApp(auth: auth));
+  // The cards on the sign-in screen. A session restored from the stored token is remembered too, so signing out
+  // later still leaves a card to pick.
+  final profiles = SavedProfiles(
+    SecureSavedProfilesStore(keyPrefix: 'ottoman.desktop'),
+  );
+  await profiles.load();
+  final user = auth.user;
+  if (user != null) await profiles.remember(user);
+
+  runApp(OttomanDesktopApp(auth: auth, profiles: profiles));
 }

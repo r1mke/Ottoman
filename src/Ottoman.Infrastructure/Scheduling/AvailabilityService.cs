@@ -5,8 +5,34 @@ using Ottoman.Domain.Scheduling;
 namespace Ottoman.Infrastructure.Scheduling;
 
 /// <summary>Loads the facts, then delegates every decision to the pure <see cref="SlotCalculator"/>.</summary>
-public class AvailabilityService(AvailabilityLoader loader) : IAvailabilityService
+public class AvailabilityService(AvailabilityLoader loader, TimeProvider clock) : IAvailabilityService
 {
+    /// <summary>How far ahead a booking can be made; asking beyond that is refused rather than computed.</summary>
+    public const int HorizonDays = 120;
+
+    public async Task<Result<MonthAvailabilityDto>> GetMonthAsync(
+        string employeeId, DateOnly month, IReadOnlyList<int> serviceIds, CancellationToken ct)
+    {
+        var first = new DateOnly(month.Year, month.Month, 1);
+        var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+        if (first > today.AddDays(HorizonDays) || first.AddMonths(1) <= today)
+            return Result<MonthAvailabilityDto>.Ok(new MonthAvailabilityDto(first, []));
+
+        var open = new List<DateOnly>();
+        var last = first.AddMonths(1).AddDays(-1);
+        var from = first < today ? today : first;
+        var until = last > today.AddDays(HorizonDays) ? today.AddDays(HorizonDays) : last;
+        // Each day goes through the same rules as the single-day endpoint, so the calendar never promises a time
+        // that the day itself would not offer.
+        for (var day = from; day <= until; day = day.AddDays(1))
+        {
+            var one = await GetAsync(employeeId, day, serviceIds, false, null, ct);
+            if (!one.Succeeded) return new Result<MonthAvailabilityDto>(one.Status, Error: one.Error);
+            if (one.Value!.Starts.Count > 0) open.Add(day);
+        }
+        return Result<MonthAvailabilityDto>.Ok(new MonthAvailabilityDto(first, open));
+    }
+
     public async Task<Result<AvailabilityDto>> GetAsync(
         string employeeId, DateOnly date, IReadOnlyList<int> serviceIds, bool allTimes, int? excludeReservationId, CancellationToken ct)
     {

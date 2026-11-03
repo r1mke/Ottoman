@@ -7,6 +7,26 @@ class CatalogApi {
 
   final ApiClient _api;
 
+  // ---- barber titles (admin)
+
+  Future<List<EmployeeTitle>> employeeTitles() async {
+    final data = await _api.get<List<dynamic>>('/api/v1/employee-titles');
+    return data
+        .map((e) => EmployeeTitle.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<EmployeeTitle> addEmployeeTitle(String name) async =>
+      EmployeeTitle.fromJson(
+        await _api.post<Map<String, dynamic>>(
+          '/api/v1/employee-titles',
+          body: {'name': name},
+        ),
+      );
+
+  Future<void> deleteEmployeeTitle(int id) =>
+      _api.delete<dynamic>('/api/v1/employee-titles/$id');
+
   // ---- services
 
   Future<List<Service>> services({
@@ -101,6 +121,7 @@ class CatalogApi {
     String? phone,
     required String password,
     required String title,
+    String? gender,
     String? bio,
     List<int> serviceIds = const [],
   }) async => Employee.fromJson(
@@ -113,6 +134,7 @@ class CatalogApi {
         'phone': phone,
         'password': password,
         'title': title,
+        'gender': gender,
         'bio': bio,
         'serviceIds': serviceIds,
       },
@@ -125,6 +147,8 @@ class CatalogApi {
     required String lastName,
     String? phone,
     required String title,
+    String? gender,
+    double? photoZoom,
     String? bio,
     required bool isActive,
   }) async => Employee.fromJson(
@@ -135,6 +159,8 @@ class CatalogApi {
         'lastName': lastName,
         'phone': phone,
         'title': title,
+        'gender': gender,
+        'photoZoom': photoZoom,
         'bio': bio,
         'isActive': isActive,
       },
@@ -194,6 +220,23 @@ class CatalogApi {
           'allTimes': allTimes,
           'excludeReservationId': ?excludeReservationId,
         },
+      ),
+    );
+  }
+
+  /// Which days of [month] can still be booked for [serviceIds] (same rules as [availability]).
+  Future<MonthAvailability> monthAvailability({
+    required String employeeId,
+    required DateTime month,
+    required List<int> serviceIds,
+  }) async {
+    final d =
+        '${month.year.toString().padLeft(4, '0')}-'
+        '${month.month.toString().padLeft(2, '0')}-01';
+    return MonthAvailability.fromJson(
+      await _api.get<Map<String, dynamic>>(
+        '/api/v1/employees/$employeeId/availability/month',
+        query: {'month': d, 'serviceIds': serviceIds},
       ),
     );
   }

@@ -27,7 +27,17 @@ public class MailKitEmailSender(IOptions<SmtpOptions> options) : IEmailSender
         message.From.Add(new MailboxAddress(o.FromName, o.From));
         message.To.Add(new MailboxAddress(toName, toEmail));
         message.Subject = subject;
-        message.Body = new BodyBuilder { HtmlBody = htmlBody, TextBody = textBody }.ToMessageBody();
+        var body = new BodyBuilder { HtmlBody = htmlBody, TextBody = textBody };
+        if (htmlBody.Contains($"cid:{EmailTemplate.LogoContentId}"))
+        {
+            using var logo = typeof(MailKitEmailSender).Assembly.GetManifestResourceStream("Ottoman.Worker.Email.logo.png");
+            if (logo is not null)
+            {
+                var image = body.LinkedResources.Add("logo.png", logo);
+                image.ContentId = EmailTemplate.LogoContentId;
+            }
+        }
+        message.Body = body.ToMessageBody();
 
         using var client = new SmtpClient();
         // Local Mailpit speaks plain SMTP; real providers upgrade with STARTTLS when offered.

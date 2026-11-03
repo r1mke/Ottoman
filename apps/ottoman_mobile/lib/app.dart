@@ -21,8 +21,10 @@ class OttomanMobileApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       onGenerateTitle: (c) => AppLocalizations.of(c).appName,
-      theme: OttomanTheme.light(),
-      darkTheme: OttomanTheme.dark(),
+      // One look for the whole app: black, white and amber, whatever the phone is set to.
+      theme: OttomanTheme.barbershop(),
+      darkTheme: OttomanTheme.barbershop(),
+      themeMode: ThemeMode.dark,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

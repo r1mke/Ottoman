@@ -154,8 +154,10 @@ void main() {
       await tester.tap(find.byKey(const Key('add_picture')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('picture_error')), findsOneWidget);
-      expect(find.textContaining('JPEG'), findsOneWidget);
+      // The refusal comes as a toast, with the accepted type and size.
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining('JPEG'), findsWidgets);
+      expect(find.textContaining('5 MB'), findsOneWidget);
       expect(find.byKey(const Key('add_picture')), findsOneWidget);
     },
   );

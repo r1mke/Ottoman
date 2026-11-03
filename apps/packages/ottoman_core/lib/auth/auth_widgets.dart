@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../network/app_exception.dart';
 import 'auth_controller.dart';
+import 'auth_models.dart';
 
 /// Chooses what to show from the session state.
 class AuthGate extends StatelessWidget {
@@ -41,9 +42,19 @@ class LoginForm extends StatefulWidget {
     required this.auth,
     this.onForgotPassword,
     this.footer,
+    this.initialEmail,
+    this.hideEmail = false,
+    this.onSignedIn,
   });
 
   final AuthController auth;
+
+  /// Pre-fills the e-mail; with [hideEmail] the field is not shown (the account was already chosen).
+  final String? initialEmail;
+  final bool hideEmail;
+
+  /// Runs right after a successful sign-in. The form is about to be replaced, so do not use its context here.
+  final void Function(AppUser user)? onSignedIn;
   final VoidCallback? onForgotPassword;
   final Widget? footer;
 
@@ -53,7 +64,7 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   final _form = GlobalKey<FormState>();
-  final _email = TextEditingController();
+  late final _email = TextEditingController(text: widget.initialEmail);
   final _password = TextEditingController();
   bool _busy = false;
   bool _obscure = true;
@@ -74,6 +85,8 @@ class _LoginFormState extends State<LoginForm> {
     });
     try {
       await widget.auth.login(_email.text.trim(), _password.text);
+      final user = widget.auth.user;
+      if (user != null) widget.onSignedIn?.call(user);
     } on AppException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
@@ -91,20 +104,23 @@ class _LoginFormState extends State<LoginForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextFormField(
-              key: const Key('login_email'),
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.username],
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(labelText: t.email),
-              validator: (v) =>
-                  (v == null || !v.contains('@')) ? t.invalidEmail : null,
-            ),
-            const SizedBox(height: 16),
+            if (!widget.hideEmail) ...[
+              TextFormField(
+                key: const Key('login_email'),
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.username],
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(labelText: t.email),
+                validator: (v) =>
+                    (v == null || !v.contains('@')) ? t.invalidEmail : null,
+              ),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               key: const Key('login_password'),
               controller: _password,
+              autofocus: widget.hideEmail,
               obscureText: _obscure,
               autofillHints: const [AutofillHints.password],
               onFieldSubmitted: (_) => _submit(),

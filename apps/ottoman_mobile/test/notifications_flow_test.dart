@@ -7,19 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 import 'package:ottoman_mobile/app.dart';
 
-Map<String, dynamic> _n(
-  int id,
-  String title, {
-  bool read = false,
-  String? image,
-}) => {
+Map<String, dynamic> _n(int id, String title, {bool read = false}) => {
   'id': id,
   'title': title,
   'body': 'Tekst $title',
   'kind': 'ReservationCreated',
   'createdAtUtc': DateTime.utc(2030, 1, 7, 9).toIso8601String(),
   'isRead': read,
-  'imageUrl': image,
 };
 
 class _Api implements HttpClientAdapter {
@@ -32,7 +26,7 @@ class _Api implements HttpClientAdapter {
     _n(1, 'Termin potvrđen'),
     _n(2, 'Podsjetnik', read: false),
     _n(3, 'Stara poruka', read: true),
-    _n(4, 'Nova akcija', image: 'https://res.cloudinary.com/x/akcija.png'),
+    _n(4, 'Nova akcija'),
   ];
 
   RequestOptions? last(String method, String part) => requests.reversed
@@ -126,31 +120,6 @@ Future<_Api> _open(WidgetTester tester, {String role = 'Client'}) async {
 }
 
 void main() {
-  testWidgets(
-    'news with a picture show a thumbnail and the picture when opened',
-    (tester) async {
-      await _open(tester);
-      await tester.tap(find.byKey(const Key('open_notifications')));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('notification_thumb_4')), findsOneWidget);
-      expect(
-        find.byKey(const Key('notification_thumb_1')),
-        findsNothing,
-        reason: 'ordinary messages keep their icon',
-      );
-
-      await tester.tap(find.byKey(const Key('notification_4')));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('notification_image_4')), findsOneWidget);
-      expect(find.byKey(const Key('dialog_close')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('dialog_close')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('notification_image_4')), findsNothing);
-    },
-  );
-
   testWidgets('new messages appear without a manual refresh', (tester) async {
     final api = await _open(tester);
     await tester.tap(find.byKey(const Key('open_notifications')));
@@ -241,5 +210,27 @@ void main() {
 
     expect(find.byKey(const Key('notification_1')), findsOneWidget);
     expect(find.byKey(const Key('mark_all_read')), findsOneWidget);
+  });
+
+  testWidgets('a news item with a picture shows it in the list and in the '
+      'opened message', (tester) async {
+    final api = await _open(tester);
+    api.items = [
+      {..._n(7, 'Ljetna vijest'), 'imageUrl': 'https://img/vijest.jpg'},
+      _n(8, 'Obična poruka'),
+    ];
+
+    await tester.tap(find.byKey(const Key('open_notifications')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('notification_picture_7')), findsOneWidget);
+    expect(find.byKey(const Key('notification_picture_8')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('notification_7')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('notification_detail_picture')),
+      findsOneWidget,
+    );
   });
 }

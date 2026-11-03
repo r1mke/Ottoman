@@ -6,9 +6,14 @@ import 'features/auth/login_page.dart';
 import 'features/shell/desktop_shell.dart';
 
 class OttomanDesktopApp extends StatelessWidget {
-  const OttomanDesktopApp({super.key, required this.auth});
+  const OttomanDesktopApp({
+    super.key,
+    required this.auth,
+    required this.profiles,
+  });
 
   final AuthController auth;
+  final SavedProfiles profiles;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +32,7 @@ class OttomanDesktopApp extends StatelessWidget {
       home: AuthGate(
         auth: auth,
         signedIn: (_) => DesktopShell(auth: auth),
-        signedOut: (_) => LoginPage(auth: auth),
+        signedOut: (_) => LoginPage(auth: auth, profiles: profiles),
       ),
     );
   }

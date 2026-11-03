@@ -110,6 +110,15 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
     /// <summary>
     /// Start times for the chosen services. Default is the curated offer; <c>allTimes=true</c> lists every 5-minute start.
     /// </summary>
+    /// <summary>Which days of a month can still be booked (the dots of the booking calendar).</summary>
+    [HttpGet("{id}/availability/month")]
+    public async Task<ActionResult<MonthAvailabilityDto>> MonthAvailability(
+        string id,
+        [FromQuery] DateOnly month,
+        [FromQuery] int[] serviceIds,
+        CancellationToken ct = default) =>
+        this.ToActionResult(await availability.GetMonthAsync(id, month, serviceIds, ct));
+
     [HttpGet("{id}/availability")]
     public async Task<ActionResult<AvailabilityDto>> Availability(
         string id,

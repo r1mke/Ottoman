@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
-/// The signed-in admin's or employee's own account: name, phone and password.
+import 'own_photo_section.dart';
+
+/// The signed-in admin's or employee's own account: name, phone and password; for a barber also the picture
+/// (with its zoom), gender and a few words about themselves.
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key, required this.auth});
 
@@ -17,7 +20,10 @@ class ProfilePage extends StatelessWidget {
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: ProfileForm(auth: auth),
+            child: ProfileForm(
+              auth: auth,
+              photoSection: OwnPhotoSection(auth: auth),
+            ),
           ),
         ),
       ),

@@ -293,7 +293,7 @@ abstract class AppLocalizations {
   /// No description provided for @invalidPhone.
   ///
   /// In bs, this message translates to:
-  /// **'Unesite telefon u formatu 061 123 456 ili +387 61 123 456 (6 do 15 cifara).'**
+  /// **'Unesite ispravan broj telefona, npr. 061 123 456 ili +387 61 123 456.'**
   String get invalidPhone;
 
   /// No description provided for @invalidName.
@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// No description provided for @chooseEmployeeHint.
   ///
   /// In bs, this message translates to:
-  /// **'Za odabir usluga prvo odaberite nekog od naših uposlenika.'**
+  /// **'Prikazani su uposlenici koji rade sve odabrane usluge.'**
   String get chooseEmployeeHint;
 
   /// No description provided for @pricelist.
@@ -1121,7 +1121,7 @@ abstract class AppLocalizations {
   /// No description provided for @productsCount.
   ///
   /// In bs, this message translates to:
-  /// **'{count} proizvoda'**
+  /// **'{count, plural, one{{count} proizvod} few{{count} proizvoda} other{{count} proizvoda}}'**
   String productsCount(int count);
 
   /// No description provided for @payment.
@@ -1939,6 +1939,1236 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Slika nije spremljena'**
   String get pictureNotSaved;
+
+  /// No description provided for @chooseAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ko se prijavljuje?'**
+  String get chooseAccount;
+
+  /// No description provided for @addAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodaj račun'**
+  String get addAccount;
+
+  /// No description provided for @removeFromList.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloni s liste'**
+  String get removeFromList;
+
+  /// No description provided for @backToAccounts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nazad na račune'**
+  String get backToAccounts;
+
+  /// No description provided for @mainPicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Glavna'**
+  String get mainPicture;
+
+  /// No description provided for @pictureHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'JPEG, PNG ili WebP, do 5 MB. Ista slika se ne može dodati dvaput.'**
+  String get pictureHint;
+
+  /// No description provided for @manageTitles.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uredi listu titula'**
+  String get manageTitles;
+
+  /// No description provided for @newTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nova titula'**
+  String get newTitle;
+
+  /// No description provided for @titleUsedBy.
+  ///
+  /// In bs, this message translates to:
+  /// **'Koristi: {count}'**
+  String titleUsedBy(int count);
+
+  /// No description provided for @titleInUseHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Titulu koriste uposlenici, promijenite im je prije brisanja.'**
+  String get titleInUseHint;
+
+  /// No description provided for @gender.
+  ///
+  /// In bs, this message translates to:
+  /// **'Spol'**
+  String get gender;
+
+  /// No description provided for @genderMale.
+  ///
+  /// In bs, this message translates to:
+  /// **'Muški'**
+  String get genderMale;
+
+  /// No description provided for @genderFemale.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ženski'**
+  String get genderFemale;
+
+  /// No description provided for @done.
+  ///
+  /// In bs, this message translates to:
+  /// **'Gotovo'**
+  String get done;
+
+  /// No description provided for @manageAccounts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uredi račune'**
+  String get manageAccounts;
+
+  /// No description provided for @removeAccountHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Račun se samo uklanja s liste na ovom računaru.'**
+  String get removeAccountHint;
+
+  /// No description provided for @zoom.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zoom'**
+  String get zoom;
+
+  /// No description provided for @resetZoom.
+  ///
+  /// In bs, this message translates to:
+  /// **'Resetuj'**
+  String get resetZoom;
+
+  /// No description provided for @zoomHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Slika se sama centrira na lice. Zoom određuje koliko se približava.'**
+  String get zoomHint;
+
+  /// No description provided for @galleryTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Galerija radova'**
+  String get galleryTitle;
+
+  /// No description provided for @ourWork.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naši radovi'**
+  String get ourWork;
+
+  /// No description provided for @viewGallery.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pogledaj galeriju'**
+  String get viewGallery;
+
+  /// No description provided for @allStyles.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sve'**
+  String get allStyles;
+
+  /// No description provided for @galleryEmpty.
+  ///
+  /// In bs, this message translates to:
+  /// **'Još nema dodanih radova.'**
+  String get galleryEmpty;
+
+  /// No description provided for @closedDay.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zatvoreno'**
+  String get closedDay;
+
+  /// No description provided for @openInMaps.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otvori u Google Maps'**
+  String get openInMaps;
+
+  /// No description provided for @callSalon.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pozovi'**
+  String get callSalon;
+
+  /// No description provided for @findUs.
+  ///
+  /// In bs, this message translates to:
+  /// **'Gdje smo'**
+  String get findUs;
+
+  /// No description provided for @bookAppointment.
+  ///
+  /// In bs, this message translates to:
+  /// **'Rezerviši termin'**
+  String get bookAppointment;
+
+  /// No description provided for @haircutStyle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Stil frizure'**
+  String get haircutStyle;
+
+  /// No description provided for @doneBy.
+  ///
+  /// In bs, this message translates to:
+  /// **'Frizer'**
+  String get doneBy;
+
+  /// No description provided for @addWork.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodaj rad'**
+  String get addWork;
+
+  /// No description provided for @editWork.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uredi rad'**
+  String get editWork;
+
+  /// No description provided for @captionOptional.
+  ///
+  /// In bs, this message translates to:
+  /// **'Opis (nije obavezno)'**
+  String get captionOptional;
+
+  /// No description provided for @showOnHome.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži na početnoj'**
+  String get showOnHome;
+
+  /// No description provided for @onHomeBadge.
+  ///
+  /// In bs, this message translates to:
+  /// **'Na početnoj'**
+  String get onHomeBadge;
+
+  /// No description provided for @noBarber.
+  ///
+  /// In bs, this message translates to:
+  /// **'Bez uposlenika'**
+  String get noBarber;
+
+  /// No description provided for @styles.
+  ///
+  /// In bs, this message translates to:
+  /// **'Stilovi frizura'**
+  String get styles;
+
+  /// No description provided for @addStyle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodaj stil'**
+  String get addStyle;
+
+  /// No description provided for @styleName.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naziv stila'**
+  String get styleName;
+
+  /// No description provided for @chooseStyle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite stil frizure.'**
+  String get chooseStyle;
+
+  /// No description provided for @choosePicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite sliku'**
+  String get choosePicture;
+
+  /// No description provided for @deleteWorkQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obrisati ovaj rad iz galerije?'**
+  String get deleteWorkQuestion;
+
+  /// No description provided for @deleteStyleQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obrisati ovaj stil?'**
+  String get deleteStyleQuestion;
+
+  /// No description provided for @workAdded.
+  ///
+  /// In bs, this message translates to:
+  /// **'Rad je dodan.'**
+  String get workAdded;
+
+  /// No description provided for @salonProfile.
+  ///
+  /// In bs, this message translates to:
+  /// **'Salon'**
+  String get salonProfile;
+
+  /// No description provided for @salonName.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naziv salona'**
+  String get salonName;
+
+  /// No description provided for @address.
+  ///
+  /// In bs, this message translates to:
+  /// **'Adresa'**
+  String get address;
+
+  /// No description provided for @mapsLink.
+  ///
+  /// In bs, this message translates to:
+  /// **'Google lokacija (link)'**
+  String get mapsLink;
+
+  /// No description provided for @logo.
+  ///
+  /// In bs, this message translates to:
+  /// **'Logo'**
+  String get logo;
+
+  /// No description provided for @openFrom.
+  ///
+  /// In bs, this message translates to:
+  /// **'Od'**
+  String get openFrom;
+
+  /// No description provided for @openTo.
+  ///
+  /// In bs, this message translates to:
+  /// **'Do'**
+  String get openTo;
+
+  /// No description provided for @openDay.
+  ///
+  /// In bs, this message translates to:
+  /// **'Radi'**
+  String get openDay;
+
+  /// No description provided for @invalidUrl.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite ispravnu web adresu (https://...).'**
+  String get invalidUrl;
+
+  /// No description provided for @hoursOrder.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vrijeme otvaranja mora biti prije zatvaranja.'**
+  String get hoursOrder;
+
+  /// No description provided for @salonSaved.
+  ///
+  /// In bs, this message translates to:
+  /// **'Podaci o salonu su spremljeni.'**
+  String get salonSaved;
+
+  /// No description provided for @aboutSalon.
+  ///
+  /// In bs, this message translates to:
+  /// **'O salonu'**
+  String get aboutSalon;
+
+  /// No description provided for @latitude.
+  ///
+  /// In bs, this message translates to:
+  /// **'Geografska širina'**
+  String get latitude;
+
+  /// No description provided for @longitude.
+  ///
+  /// In bs, this message translates to:
+  /// **'Geografska dužina'**
+  String get longitude;
+
+  /// No description provided for @coordinatesBoth.
+  ///
+  /// In bs, this message translates to:
+  /// **'Unesite i širinu i dužinu, ili nijednu.'**
+  String get coordinatesBoth;
+
+  /// No description provided for @invalidCoordinate.
+  ///
+  /// In bs, this message translates to:
+  /// **'Neispravna vrijednost.'**
+  String get invalidCoordinate;
+
+  /// No description provided for @chooseServicesHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite jednu ili više usluga, a zatim uposlenika i termin.'**
+  String get chooseServicesHint;
+
+  /// No description provided for @noBarberForServices.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nijedan uposlenik ne radi sve odabrane usluge. Vratite se i promijenite odabir.'**
+  String get noBarberForServices;
+
+  /// No description provided for @quantity.
+  ///
+  /// In bs, this message translates to:
+  /// **'Količina'**
+  String get quantity;
+
+  /// No description provided for @addedToCartCount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodano u korpu: {count}'**
+  String addedToCartCount(int count);
+
+  /// No description provided for @allProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Svi proizvodi'**
+  String get allProducts;
+
+  /// No description provided for @salePrice.
+  ///
+  /// In bs, this message translates to:
+  /// **'Akcijska cijena'**
+  String get salePrice;
+
+  /// No description provided for @salePriceHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ostavite prazno ako proizvod nije na akciji'**
+  String get salePriceHint;
+
+  /// No description provided for @salePriceTooHigh.
+  ///
+  /// In bs, this message translates to:
+  /// **'Mora biti manja od redovne cijene'**
+  String get salePriceTooHigh;
+
+  /// No description provided for @shopSectionsTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Početna shopa'**
+  String get shopSectionsTitle;
+
+  /// No description provided for @shopSectionsHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Redovi koje kupci vide na vrhu shopa. Povucite za promjenu redoslijeda.'**
+  String get shopSectionsHint;
+
+  /// No description provided for @addSection.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodaj sekciju'**
+  String get addSection;
+
+  /// No description provided for @editSection.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uredi sekciju'**
+  String get editSection;
+
+  /// No description provided for @sectionTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naslov'**
+  String get sectionTitle;
+
+  /// No description provided for @sectionKind.
+  ///
+  /// In bs, this message translates to:
+  /// **'Šta prikazuje'**
+  String get sectionKind;
+
+  /// No description provided for @kindNewArrivals.
+  ///
+  /// In bs, this message translates to:
+  /// **'Novo u ponudi (zadnje dodani proizvodi)'**
+  String get kindNewArrivals;
+
+  /// No description provided for @kindOnSale.
+  ///
+  /// In bs, this message translates to:
+  /// **'Akcije (proizvodi s akcijskom cijenom)'**
+  String get kindOnSale;
+
+  /// No description provided for @kindCategory.
+  ///
+  /// In bs, this message translates to:
+  /// **'Proizvodi jedne kategorije i/ili brenda'**
+  String get kindCategory;
+
+  /// No description provided for @kindManual.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ručni izbor proizvoda'**
+  String get kindManual;
+
+  /// No description provided for @sectionMaxItems.
+  ///
+  /// In bs, this message translates to:
+  /// **'Najviše proizvoda'**
+  String get sectionMaxItems;
+
+  /// No description provided for @sectionVisible.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikazano kupcima'**
+  String get sectionVisible;
+
+  /// No description provided for @sectionPickProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite proizvode'**
+  String get sectionPickProducts;
+
+  /// No description provided for @sectionSelected.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odabrano'**
+  String get sectionSelected;
+
+  /// No description provided for @noSections.
+  ///
+  /// In bs, this message translates to:
+  /// **'Još nema sekcija. Dodajte prvu.'**
+  String get noSections;
+
+  /// No description provided for @deleteSectionQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obrisati sekciju? Proizvodi ostaju u ponudi.'**
+  String get deleteSectionQuestion;
+
+  /// No description provided for @searchProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraži proizvode'**
+  String get searchProducts;
+
+  /// No description provided for @mapsLinkHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zalijepite link iz Google Maps (Dijeli). Pin za mapu u aplikaciji se očitava iz linka; ako ne uspije, unesite širinu i dužinu ispod.'**
+  String get mapsLinkHint;
+
+  /// No description provided for @paymentNotCompleted.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plaćanje nije završeno. Narudžba nije kreirana, a proizvodi su ostali u korpi.'**
+  String get paymentNotCompleted;
+
+  /// No description provided for @groupWork.
+  ///
+  /// In bs, this message translates to:
+  /// **'Rad'**
+  String get groupWork;
+
+  /// No description provided for @groupShop.
+  ///
+  /// In bs, this message translates to:
+  /// **'Shop'**
+  String get groupShop;
+
+  /// No description provided for @groupSalon.
+  ///
+  /// In bs, this message translates to:
+  /// **'Salon'**
+  String get groupSalon;
+
+  /// No description provided for @groupClients.
+  ///
+  /// In bs, this message translates to:
+  /// **'Klijenti'**
+  String get groupClients;
+
+  /// No description provided for @groupAnalytics.
+  ///
+  /// In bs, this message translates to:
+  /// **'Analitika'**
+  String get groupAnalytics;
+
+  /// No description provided for @groupAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Račun'**
+  String get groupAccount;
+
+  /// No description provided for @any.
+  ///
+  /// In bs, this message translates to:
+  /// **'Bilo koji'**
+  String get any;
+
+  /// No description provided for @pickCategoryOrBrand.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite kategoriju ili brend'**
+  String get pickCategoryOrBrand;
+
+  /// No description provided for @instagramLink.
+  ///
+  /// In bs, this message translates to:
+  /// **'Instagram (link)'**
+  String get instagramLink;
+
+  /// No description provided for @facebookLink.
+  ///
+  /// In bs, this message translates to:
+  /// **'Facebook (link)'**
+  String get facebookLink;
+
+  /// No description provided for @connectWithUs.
+  ///
+  /// In bs, this message translates to:
+  /// **'Povežite se s nama'**
+  String get connectWithUs;
+
+  /// No description provided for @findUsHere.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pronađite nas ovdje'**
+  String get findUsHere;
+
+  /// No description provided for @callUs.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pozovi'**
+  String get callUs;
+
+  /// No description provided for @instagram.
+  ///
+  /// In bs, this message translates to:
+  /// **'Instagram'**
+  String get instagram;
+
+  /// No description provided for @facebook.
+  ///
+  /// In bs, this message translates to:
+  /// **'Facebook'**
+  String get facebook;
+
+  /// No description provided for @eyebrowGallery.
+  ///
+  /// In bs, this message translates to:
+  /// **'Galerija'**
+  String get eyebrowGallery;
+
+  /// No description provided for @eyebrowContact.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kontakt'**
+  String get eyebrowContact;
+
+  /// No description provided for @eyebrowLocation.
+  ///
+  /// In bs, this message translates to:
+  /// **'Lokacija'**
+  String get eyebrowLocation;
+
+  /// No description provided for @eyebrowSchedule.
+  ///
+  /// In bs, this message translates to:
+  /// **'Raspored'**
+  String get eyebrowSchedule;
+
+  /// No description provided for @eyebrowAbout.
+  ///
+  /// In bs, this message translates to:
+  /// **'O nama'**
+  String get eyebrowAbout;
+
+  /// No description provided for @getToKnowUs.
+  ///
+  /// In bs, this message translates to:
+  /// **'Upoznajte nas'**
+  String get getToKnowUs;
+
+  /// No description provided for @welcomeTo.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dobrodošli u {name}'**
+  String welcomeTo(String name);
+
+  /// No description provided for @groupPersonalData.
+  ///
+  /// In bs, this message translates to:
+  /// **'Lični podaci'**
+  String get groupPersonalData;
+
+  /// No description provided for @groupAboutUs.
+  ///
+  /// In bs, this message translates to:
+  /// **'O nama'**
+  String get groupAboutUs;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uredi profil'**
+  String get editProfile;
+
+  /// No description provided for @manageAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Upravljanje računom'**
+  String get manageAccount;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pravila privatnosti'**
+  String get privacyPolicy;
+
+  /// No description provided for @termsOfUse.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uslovi korištenja'**
+  String get termsOfUse;
+
+  /// No description provided for @aboutApp.
+  ///
+  /// In bs, this message translates to:
+  /// **'O aplikaciji'**
+  String get aboutApp;
+
+  /// No description provided for @chooseDate.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite datum'**
+  String get chooseDate;
+
+  /// No description provided for @chooseTime.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite sate'**
+  String get chooseTime;
+
+  /// No description provided for @unavailableMarkedRed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nedostupni termini su označeni crvenom bojom'**
+  String get unavailableMarkedRed;
+
+  /// No description provided for @eyebrowAssortment.
+  ///
+  /// In bs, this message translates to:
+  /// **'Asortiman'**
+  String get eyebrowAssortment;
+
+  /// No description provided for @eyebrowBrands.
+  ///
+  /// In bs, this message translates to:
+  /// **'Marke'**
+  String get eyebrowBrands;
+
+  /// No description provided for @brandsTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Brendovi'**
+  String get brandsTitle;
+
+  /// No description provided for @onSaleTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Akcije'**
+  String get onSaleTitle;
+
+  /// No description provided for @newInStoreTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Novo u ponudi'**
+  String get newInStoreTitle;
+
+  /// No description provided for @newestProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Najnoviji proizvodi'**
+  String get newestProducts;
+
+  /// No description provided for @searchResults.
+  ///
+  /// In bs, this message translates to:
+  /// **'Rezultati pretrage'**
+  String get searchResults;
+
+  /// No description provided for @discountUpTo.
+  ///
+  /// In bs, this message translates to:
+  /// **'do -{percent}%'**
+  String discountUpTo(int percent);
+
+  /// No description provided for @showAsCard.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži kao karticu na ulaznoj stranici'**
+  String get showAsCard;
+
+  /// No description provided for @cardPicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Slika kartice'**
+  String get cardPicture;
+
+  /// No description provided for @cardPictureAuto.
+  ///
+  /// In bs, this message translates to:
+  /// **'Automatska slika (prvi proizvod u sekciji)'**
+  String get cardPictureAuto;
+
+  /// No description provided for @uploadPicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pošalji sliku'**
+  String get uploadPicture;
+
+  /// No description provided for @pickProductPicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Izaberi sliku proizvoda'**
+  String get pickProductPicture;
+
+  /// No description provided for @saveSectionFirst.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prvo spremite sekciju, pa joj dodajte sliku.'**
+  String get saveSectionFirst;
+
+  /// No description provided for @pickPictureTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite sliku proizvoda'**
+  String get pickPictureTitle;
+
+  /// No description provided for @noPicturesFound.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema proizvoda sa slikama za ovu pretragu.'**
+  String get noPicturesFound;
+
+  /// No description provided for @brandLogoUpload.
+  ///
+  /// In bs, this message translates to:
+  /// **'Postavi logotip'**
+  String get brandLogoUpload;
+
+  /// No description provided for @brandLogoRemove.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloni logotip'**
+  String get brandLogoRemove;
+
+  /// No description provided for @sectionTitleHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kratak naslov koji lijepo stane na karticu'**
+  String get sectionTitleHint;
+
+  /// No description provided for @sectionTitleTooShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naslov mora imati najmanje {min} znaka.'**
+  String sectionTitleTooShort(int min);
+
+  /// No description provided for @sectionTitleTooLong.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naslov može imati najviše {max} znaka.'**
+  String sectionTitleTooLong(int max);
+
+  /// No description provided for @sectionLayout.
+  ///
+  /// In bs, this message translates to:
+  /// **'Oblik sekcije'**
+  String get sectionLayout;
+
+  /// No description provided for @layoutRow.
+  ///
+  /// In bs, this message translates to:
+  /// **'Red'**
+  String get layoutRow;
+
+  /// No description provided for @layoutGrid.
+  ///
+  /// In bs, this message translates to:
+  /// **'Mreža'**
+  String get layoutGrid;
+
+  /// No description provided for @layoutBanner.
+  ///
+  /// In bs, this message translates to:
+  /// **'Veliki baner'**
+  String get layoutBanner;
+
+  /// No description provided for @layoutRowHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Proizvodi u jednom redu koji se pomiče u stranu.'**
+  String get layoutRowHint;
+
+  /// No description provided for @layoutGridHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Proizvodi u dvije kolone, jedan ispod drugog.'**
+  String get layoutGridHint;
+
+  /// No description provided for @layoutBannerHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Široka slika s naslovom, a ispod nje red proizvoda.'**
+  String get layoutBannerHint;
+
+  /// No description provided for @previewTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pregled u aplikaciji'**
+  String get previewTitle;
+
+  /// No description provided for @previewCard.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kartica'**
+  String get previewCard;
+
+  /// No description provided for @previewSection.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sekcija'**
+  String get previewSection;
+
+  /// No description provided for @previewSectionTitlePlaceholder.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naslov sekcije'**
+  String get previewSectionTitlePlaceholder;
+
+  /// No description provided for @shopTab.
+  ///
+  /// In bs, this message translates to:
+  /// **'Shop'**
+  String get shopTab;
+
+  /// No description provided for @sectionEyebrow.
+  ///
+  /// In bs, this message translates to:
+  /// **'Mali tekst iznad naslova (žuti)'**
+  String get sectionEyebrow;
+
+  /// No description provided for @sectionEyebrowHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Neobavezno, npr. KOLEKCIJA. Prikazuje se žutim slovima.'**
+  String get sectionEyebrowHint;
+
+  /// No description provided for @sectionTitleWhite.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naslov (bijeli tekst)'**
+  String get sectionTitleWhite;
+
+  /// No description provided for @sectionEmptyWarning.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ova sekcija trenutno nema nijedan proizvod, pa je kupci ne vide. Promijenite odabir proizvoda.'**
+  String get sectionEmptyWarning;
+
+  /// No description provided for @sectionHasProducts.
+  ///
+  /// In bs, this message translates to:
+  /// **'Trenutno prikazuje {count} proizvoda'**
+  String sectionHasProducts(int count);
+
+  /// No description provided for @sectionEmptyShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nema proizvoda: kupci ne vide ovu sekciju'**
+  String get sectionEmptyShort;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vidi sve'**
+  String get seeAll;
+
+  /// No description provided for @kindCategoryTiles.
+  ///
+  /// In bs, this message translates to:
+  /// **'Blok kategorija (pločice)'**
+  String get kindCategoryTiles;
+
+  /// No description provided for @kindBrandTiles.
+  ///
+  /// In bs, this message translates to:
+  /// **'Blok brendova (kartice)'**
+  String get kindBrandTiles;
+
+  /// No description provided for @kindRecommended.
+  ///
+  /// In bs, this message translates to:
+  /// **'Preporuke („Možda vam se sviđa“)'**
+  String get kindRecommended;
+
+  /// No description provided for @styleTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Izgled'**
+  String get styleTitle;
+
+  /// No description provided for @backgroundLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pozadina sekcije'**
+  String get backgroundLabel;
+
+  /// No description provided for @bgNone.
+  ///
+  /// In bs, this message translates to:
+  /// **'Bez ploče'**
+  String get bgNone;
+
+  /// No description provided for @bgSoft.
+  ///
+  /// In bs, this message translates to:
+  /// **'Tamna ploča'**
+  String get bgSoft;
+
+  /// No description provided for @bgAmber.
+  ///
+  /// In bs, this message translates to:
+  /// **'Jantarna ploča'**
+  String get bgAmber;
+
+  /// No description provided for @bannerAlwaysPanel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Baner uvijek stoji na ploči, zajedno s proizvodima ispod.'**
+  String get bannerAlwaysPanel;
+
+  /// No description provided for @alignLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Poravnanje naslova'**
+  String get alignLabel;
+
+  /// No description provided for @alignLeft.
+  ///
+  /// In bs, this message translates to:
+  /// **'Lijevo'**
+  String get alignLeft;
+
+  /// No description provided for @alignCenter.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sredina'**
+  String get alignCenter;
+
+  /// No description provided for @tileSizeLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Veličina proizvoda'**
+  String get tileSizeLabel;
+
+  /// No description provided for @tileCompact.
+  ///
+  /// In bs, this message translates to:
+  /// **'Mali'**
+  String get tileCompact;
+
+  /// No description provided for @tileNormal.
+  ///
+  /// In bs, this message translates to:
+  /// **'Srednji'**
+  String get tileNormal;
+
+  /// No description provided for @tileLarge.
+  ///
+  /// In bs, this message translates to:
+  /// **'Veliki'**
+  String get tileLarge;
+
+  /// No description provided for @showSeeAllLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži vezu „Vidi sve“ ispod sekcije'**
+  String get showSeeAllLabel;
+
+  /// No description provided for @cardSpanLabel.
+  ///
+  /// In bs, this message translates to:
+  /// **'Širina kartice'**
+  String get cardSpanLabel;
+
+  /// No description provided for @spanHalf.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pola širine'**
+  String get spanHalf;
+
+  /// No description provided for @spanFull.
+  ///
+  /// In bs, this message translates to:
+  /// **'Cijela širina'**
+  String get spanFull;
+
+  /// No description provided for @tileCountCategories.
+  ///
+  /// In bs, this message translates to:
+  /// **'Broj kategorija (paran)'**
+  String get tileCountCategories;
+
+  /// No description provided for @tileCountBrands.
+  ///
+  /// In bs, this message translates to:
+  /// **'Broj brendova'**
+  String get tileCountBrands;
+
+  /// No description provided for @tilesManual.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ručni izbor i redoslijed'**
+  String get tilesManual;
+
+  /// No description provided for @tilesAutoHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Automatski: prikazuju se samo oni koji imaju proizvoda, najpopunjeniji prvi.'**
+  String get tilesAutoHint;
+
+  /// No description provided for @tilesPickHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dodirnite da dodate, povucite da promijenite redoslijed. Prikazuju se samo oni koji imaju proizvoda.'**
+  String get tilesPickHint;
+
+  /// No description provided for @tilesSelected.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odabrano'**
+  String get tilesSelected;
+
+  /// No description provided for @tilesAvailable.
+  ///
+  /// In bs, this message translates to:
+  /// **'Dostupno'**
+  String get tilesAvailable;
+
+  /// No description provided for @categoriesEvenError.
+  ///
+  /// In bs, this message translates to:
+  /// **'Broj odabranih kategorija mora biti paran, da zadnji red bude pun.'**
+  String get categoriesEvenError;
+
+  /// No description provided for @blockNoDelete.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ovaj blok se ne briše, samo se sakriva prekidačem.'**
+  String get blockNoDelete;
+
+  /// No description provided for @sectionShows.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikazuje: {count}'**
+  String sectionShows(int count);
+
+  /// No description provided for @previewSeeAll.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vidi sve'**
+  String get previewSeeAll;
+
+  /// No description provided for @confirmOrderTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Potvrda narudžbe'**
+  String get confirmOrderTitle;
+
+  /// No description provided for @confirmOrderBody.
+  ///
+  /// In bs, this message translates to:
+  /// **'Narudžba na iznos {total}. {payment}. Preuzimanje u salonu.'**
+  String confirmOrderBody(String total, String payment);
+
+  /// No description provided for @confirmBookingTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Potvrda rezervacije'**
+  String get confirmBookingTitle;
+
+  /// No description provided for @confirmBookingBody.
+  ///
+  /// In bs, this message translates to:
+  /// **'Rezervisati termin kod {barber}, {when}, ukupno {total}?'**
+  String confirmBookingBody(String barber, String when, String total);
+
+  /// No description provided for @messagePicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Slika (neobavezno)'**
+  String get messagePicture;
+
+  /// No description provided for @removePictureShort.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloni'**
+  String get removePictureShort;
+
+  /// No description provided for @salonLocation.
+  ///
+  /// In bs, this message translates to:
+  /// **'Lokacija salona na mapi'**
+  String get salonLocation;
+
+  /// No description provided for @salonLocationHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Upišite adresu i pronađite je, ili kliknite na mapu da postavite oznaku.'**
+  String get salonLocationHint;
+
+  /// No description provided for @searchAddress.
+  ///
+  /// In bs, this message translates to:
+  /// **'Adresa za pretragu'**
+  String get searchAddress;
+
+  /// No description provided for @findOnMap.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pronađi'**
+  String get findOnMap;
+
+  /// No description provided for @addressNotFound.
+  ///
+  /// In bs, this message translates to:
+  /// **'Adresa nije pronađena. Kliknite na mapu da postavite oznaku.'**
+  String get addressNotFound;
+
+  /// No description provided for @noPinYet.
+  ///
+  /// In bs, this message translates to:
+  /// **'Oznaka još nije postavljena.'**
+  String get noPinYet;
+
+  /// No description provided for @pinSet.
+  ///
+  /// In bs, this message translates to:
+  /// **'Oznaka je postavljena.'**
+  String get pinSet;
+
+  /// No description provided for @removePin.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloni oznaku'**
+  String get removePin;
 }
 
 class _AppLocalizationsDelegate

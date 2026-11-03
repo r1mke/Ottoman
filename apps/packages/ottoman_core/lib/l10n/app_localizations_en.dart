@@ -108,7 +108,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidPhone =>
-      'Enter a phone number such as 061 123 456 or +387 61 123 456 (6 to 15 digits).';
+      'Enter a valid phone number, e.g. 061 123 456 or +387 61 123 456.';
 
   @override
   String get invalidName =>
@@ -173,7 +173,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chooseEmployeeHint =>
-      'To pick services, first choose one of our barbers.';
+      'Barbers who do all of the chosen services are shown.';
 
   @override
   String get pricelist => 'Services & Prices';
@@ -539,7 +539,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String productsCount(int count) {
-    return '$count products';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count products',
+      one: '$count product',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -832,7 +838,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pictures => 'Pictures';
 
   @override
-  String get addPicture => 'Add picture';
+  String get addPicture => 'Add a picture';
 
   @override
   String get changePicture => 'Change picture';
@@ -959,4 +965,663 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pictureNotSaved => 'The picture was not saved';
+
+  @override
+  String get chooseAccount => 'Who\'s signing in?';
+
+  @override
+  String get addAccount => 'Add account';
+
+  @override
+  String get removeFromList => 'Remove from list';
+
+  @override
+  String get backToAccounts => 'Back to accounts';
+
+  @override
+  String get mainPicture => 'Main';
+
+  @override
+  String get pictureHint =>
+      'JPEG, PNG or WebP, up to 5 MB. The same picture cannot be added twice.';
+
+  @override
+  String get manageTitles => 'Edit title list';
+
+  @override
+  String get newTitle => 'New title';
+
+  @override
+  String titleUsedBy(int count) {
+    return 'In use: $count';
+  }
+
+  @override
+  String get titleInUseHint =>
+      'Barbers still have this title; change theirs before deleting it.';
+
+  @override
+  String get gender => 'Gender';
+
+  @override
+  String get genderMale => 'Male';
+
+  @override
+  String get genderFemale => 'Female';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get manageAccounts => 'Edit accounts';
+
+  @override
+  String get removeAccountHint =>
+      'The account is only removed from the list on this computer.';
+
+  @override
+  String get zoom => 'Zoom';
+
+  @override
+  String get resetZoom => 'Reset';
+
+  @override
+  String get zoomHint =>
+      'The picture centres on the face by itself. Zoom sets how close it gets.';
+
+  @override
+  String get galleryTitle => 'Work gallery';
+
+  @override
+  String get ourWork => 'Our work';
+
+  @override
+  String get viewGallery => 'View gallery';
+
+  @override
+  String get allStyles => 'All';
+
+  @override
+  String get galleryEmpty => 'No work added yet.';
+
+  @override
+  String get closedDay => 'Closed';
+
+  @override
+  String get openInMaps => 'Open in Google Maps';
+
+  @override
+  String get callSalon => 'Call';
+
+  @override
+  String get findUs => 'Find us';
+
+  @override
+  String get bookAppointment => 'Book an appointment';
+
+  @override
+  String get haircutStyle => 'Haircut style';
+
+  @override
+  String get doneBy => 'Barber';
+
+  @override
+  String get addWork => 'Add work';
+
+  @override
+  String get editWork => 'Edit work';
+
+  @override
+  String get captionOptional => 'Caption (optional)';
+
+  @override
+  String get showOnHome => 'Show on home screen';
+
+  @override
+  String get onHomeBadge => 'On home';
+
+  @override
+  String get noBarber => 'No barber';
+
+  @override
+  String get styles => 'Haircut styles';
+
+  @override
+  String get addStyle => 'Add style';
+
+  @override
+  String get styleName => 'Style name';
+
+  @override
+  String get chooseStyle => 'Choose a haircut style.';
+
+  @override
+  String get choosePicture => 'Choose a picture';
+
+  @override
+  String get deleteWorkQuestion => 'Delete this work from the gallery?';
+
+  @override
+  String get deleteStyleQuestion => 'Delete this style?';
+
+  @override
+  String get workAdded => 'Work added.';
+
+  @override
+  String get salonProfile => 'Salon';
+
+  @override
+  String get salonName => 'Salon name';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get mapsLink => 'Google Maps link';
+
+  @override
+  String get logo => 'Logo';
+
+  @override
+  String get openFrom => 'From';
+
+  @override
+  String get openTo => 'To';
+
+  @override
+  String get openDay => 'Open';
+
+  @override
+  String get invalidUrl => 'Enter a valid web address (https://...).';
+
+  @override
+  String get hoursOrder => 'Opening time must be before closing time.';
+
+  @override
+  String get salonSaved => 'Salon details saved.';
+
+  @override
+  String get aboutSalon => 'About the salon';
+
+  @override
+  String get latitude => 'Latitude';
+
+  @override
+  String get longitude => 'Longitude';
+
+  @override
+  String get coordinatesBoth =>
+      'Enter both latitude and longitude, or neither.';
+
+  @override
+  String get invalidCoordinate => 'Invalid value.';
+
+  @override
+  String get chooseServicesHint =>
+      'Choose one or more services, then a barber and a time.';
+
+  @override
+  String get noBarberForServices =>
+      'No barber does all of the chosen services. Go back and change your choice.';
+
+  @override
+  String get quantity => 'Quantity';
+
+  @override
+  String addedToCartCount(int count) {
+    return 'Added to basket: $count';
+  }
+
+  @override
+  String get allProducts => 'All products';
+
+  @override
+  String get salePrice => 'Sale price';
+
+  @override
+  String get salePriceHint => 'Leave empty when the product is not on sale';
+
+  @override
+  String get salePriceTooHigh => 'Must be lower than the regular price';
+
+  @override
+  String get shopSectionsTitle => 'Shop front page';
+
+  @override
+  String get shopSectionsHint =>
+      'The rows customers see at the top of the shop. Drag to reorder.';
+
+  @override
+  String get addSection => 'Add section';
+
+  @override
+  String get editSection => 'Edit section';
+
+  @override
+  String get sectionTitle => 'Title';
+
+  @override
+  String get sectionKind => 'What it shows';
+
+  @override
+  String get kindNewArrivals => 'New arrivals (latest added products)';
+
+  @override
+  String get kindOnSale => 'On sale (products with a sale price)';
+
+  @override
+  String get kindCategory => 'Products of a category and/or brand';
+
+  @override
+  String get kindManual => 'Hand-picked products';
+
+  @override
+  String get sectionMaxItems => 'Most products';
+
+  @override
+  String get sectionVisible => 'Shown to customers';
+
+  @override
+  String get sectionPickProducts => 'Pick products';
+
+  @override
+  String get sectionSelected => 'Selected';
+
+  @override
+  String get noSections => 'No sections yet. Add the first one.';
+
+  @override
+  String get deleteSectionQuestion =>
+      'Delete the section? The products stay in the shop.';
+
+  @override
+  String get searchProducts => 'Search products';
+
+  @override
+  String get mapsLinkHint =>
+      'Paste a Google Maps share link. The map pin is read from the link; if that fails, enter latitude and longitude below.';
+
+  @override
+  String get paymentNotCompleted =>
+      'Payment was not completed. No order was placed and your items are still in the basket.';
+
+  @override
+  String get groupWork => 'Work';
+
+  @override
+  String get groupShop => 'Shop';
+
+  @override
+  String get groupSalon => 'Salon';
+
+  @override
+  String get groupClients => 'Clients';
+
+  @override
+  String get groupAnalytics => 'Analytics';
+
+  @override
+  String get groupAccount => 'Account';
+
+  @override
+  String get any => 'Any';
+
+  @override
+  String get pickCategoryOrBrand => 'Pick a category or a brand';
+
+  @override
+  String get instagramLink => 'Instagram (link)';
+
+  @override
+  String get facebookLink => 'Facebook (link)';
+
+  @override
+  String get connectWithUs => 'Connect with us';
+
+  @override
+  String get findUsHere => 'Find us here';
+
+  @override
+  String get callUs => 'Call';
+
+  @override
+  String get instagram => 'Instagram';
+
+  @override
+  String get facebook => 'Facebook';
+
+  @override
+  String get eyebrowGallery => 'Gallery';
+
+  @override
+  String get eyebrowContact => 'Contact';
+
+  @override
+  String get eyebrowLocation => 'Location';
+
+  @override
+  String get eyebrowSchedule => 'Schedule';
+
+  @override
+  String get eyebrowAbout => 'About us';
+
+  @override
+  String get getToKnowUs => 'Get to know us';
+
+  @override
+  String welcomeTo(String name) {
+    return 'Welcome to $name';
+  }
+
+  @override
+  String get groupPersonalData => 'Personal data';
+
+  @override
+  String get groupAboutUs => 'About us';
+
+  @override
+  String get editProfile => 'Edit profile';
+
+  @override
+  String get manageAccount => 'Manage account';
+
+  @override
+  String get privacyPolicy => 'Privacy policy';
+
+  @override
+  String get termsOfUse => 'Terms of use';
+
+  @override
+  String get aboutApp => 'About the app';
+
+  @override
+  String get chooseDate => 'Choose a date';
+
+  @override
+  String get chooseTime => 'Choose a time';
+
+  @override
+  String get unavailableMarkedRed =>
+      'Days with no free times are marked in red';
+
+  @override
+  String get eyebrowAssortment => 'Range';
+
+  @override
+  String get eyebrowBrands => 'Brands';
+
+  @override
+  String get brandsTitle => 'Brands';
+
+  @override
+  String get onSaleTitle => 'On sale';
+
+  @override
+  String get newInStoreTitle => 'New in store';
+
+  @override
+  String get newestProducts => 'Latest products';
+
+  @override
+  String get searchResults => 'Search results';
+
+  @override
+  String discountUpTo(int percent) {
+    return 'up to -$percent%';
+  }
+
+  @override
+  String get showAsCard => 'Show as a card on the entry page';
+
+  @override
+  String get cardPicture => 'Card picture';
+
+  @override
+  String get cardPictureAuto =>
+      'Automatic picture (first product of the section)';
+
+  @override
+  String get uploadPicture => 'Upload a picture';
+
+  @override
+  String get pickProductPicture => 'Pick a product picture';
+
+  @override
+  String get saveSectionFirst => 'Save the section first, then add a picture.';
+
+  @override
+  String get pickPictureTitle => 'Choose a product picture';
+
+  @override
+  String get noPicturesFound => 'No products with pictures for this search.';
+
+  @override
+  String get brandLogoUpload => 'Set logo';
+
+  @override
+  String get brandLogoRemove => 'Remove logo';
+
+  @override
+  String get sectionTitleHint => 'A short title that fits on a card';
+
+  @override
+  String sectionTitleTooShort(int min) {
+    return 'The title needs at least $min characters.';
+  }
+
+  @override
+  String sectionTitleTooLong(int max) {
+    return 'The title can have at most $max characters.';
+  }
+
+  @override
+  String get sectionLayout => 'Section layout';
+
+  @override
+  String get layoutRow => 'Row';
+
+  @override
+  String get layoutGrid => 'Grid';
+
+  @override
+  String get layoutBanner => 'Big banner';
+
+  @override
+  String get layoutRowHint => 'Products in one row that scrolls sideways.';
+
+  @override
+  String get layoutGridHint => 'Products in two columns, one under the other.';
+
+  @override
+  String get layoutBannerHint =>
+      'A wide picture with the title, and a row of products under it.';
+
+  @override
+  String get previewTitle => 'Preview in the app';
+
+  @override
+  String get previewCard => 'Card';
+
+  @override
+  String get previewSection => 'Section';
+
+  @override
+  String get previewSectionTitlePlaceholder => 'Section title';
+
+  @override
+  String get shopTab => 'Shop';
+
+  @override
+  String get sectionEyebrow => 'Small text above the title (yellow)';
+
+  @override
+  String get sectionEyebrowHint =>
+      'Optional, e.g. COLLECTION. Shown in yellow letters.';
+
+  @override
+  String get sectionTitleWhite => 'Title (white text)';
+
+  @override
+  String get sectionEmptyWarning =>
+      'This section currently has no products, so customers do not see it. Change what it selects.';
+
+  @override
+  String sectionHasProducts(int count) {
+    return 'Currently shows $count products';
+  }
+
+  @override
+  String get sectionEmptyShort =>
+      'No products: customers do not see this section';
+
+  @override
+  String get seeAll => 'See all';
+
+  @override
+  String get kindCategoryTiles => 'Category block (tiles)';
+
+  @override
+  String get kindBrandTiles => 'Brand block (cards)';
+
+  @override
+  String get kindRecommended => 'Suggestions (\"You may like\")';
+
+  @override
+  String get styleTitle => 'Look';
+
+  @override
+  String get backgroundLabel => 'Section background';
+
+  @override
+  String get bgNone => 'No panel';
+
+  @override
+  String get bgSoft => 'Dark panel';
+
+  @override
+  String get bgAmber => 'Amber panel';
+
+  @override
+  String get bannerAlwaysPanel =>
+      'A banner always stands on a panel, together with the products under it.';
+
+  @override
+  String get alignLabel => 'Title alignment';
+
+  @override
+  String get alignLeft => 'Left';
+
+  @override
+  String get alignCenter => 'Center';
+
+  @override
+  String get tileSizeLabel => 'Product size';
+
+  @override
+  String get tileCompact => 'Small';
+
+  @override
+  String get tileNormal => 'Medium';
+
+  @override
+  String get tileLarge => 'Large';
+
+  @override
+  String get showSeeAllLabel => 'Show a \"See all\" link under the section';
+
+  @override
+  String get cardSpanLabel => 'Card width';
+
+  @override
+  String get spanHalf => 'Half width';
+
+  @override
+  String get spanFull => 'Full width';
+
+  @override
+  String get tileCountCategories => 'Number of categories (even)';
+
+  @override
+  String get tileCountBrands => 'Number of brands';
+
+  @override
+  String get tilesManual => 'Pick and order by hand';
+
+  @override
+  String get tilesAutoHint =>
+      'Automatic: only those with products are shown, the busiest first.';
+
+  @override
+  String get tilesPickHint =>
+      'Tap to add, drag to reorder. Only those with products are shown.';
+
+  @override
+  String get tilesSelected => 'Selected';
+
+  @override
+  String get tilesAvailable => 'Available';
+
+  @override
+  String get categoriesEvenError =>
+      'The number of chosen categories must be even so the last row is full.';
+
+  @override
+  String get blockNoDelete =>
+      'This block is not deleted, only hidden with the switch.';
+
+  @override
+  String sectionShows(int count) {
+    return 'Shows: $count';
+  }
+
+  @override
+  String get previewSeeAll => 'See all';
+
+  @override
+  String get confirmOrderTitle => 'Confirm the order';
+
+  @override
+  String confirmOrderBody(String total, String payment) {
+    return 'An order of $total. $payment. Pick-up at the salon.';
+  }
+
+  @override
+  String get confirmBookingTitle => 'Confirm the booking';
+
+  @override
+  String confirmBookingBody(String barber, String when, String total) {
+    return 'Book an appointment with $barber, $when, total $total?';
+  }
+
+  @override
+  String get messagePicture => 'Picture (optional)';
+
+  @override
+  String get removePictureShort => 'Remove';
+
+  @override
+  String get salonLocation => 'Salon location on the map';
+
+  @override
+  String get salonLocationHint =>
+      'Type an address and find it, or click the map to drop the pin.';
+
+  @override
+  String get searchAddress => 'Address to search';
+
+  @override
+  String get findOnMap => 'Find';
+
+  @override
+  String get addressNotFound =>
+      'Address not found. Click the map to drop the pin.';
+
+  @override
+  String get noPinYet => 'No pin yet.';
+
+  @override
+  String get pinSet => 'The pin is set.';
+
+  @override
+  String get removePin => 'Remove pin';
 }

@@ -17,7 +17,9 @@ public record EmployeeDto(
     bool IsActive,
     IReadOnlyList<int> ServiceIds,
     string? Email,
-    string? Phone);
+    string? Phone,
+    string? Gender = null,
+    double PhotoZoom = 1.0);
 
 public record CreateEmployeeRequest(
     string FirstName,
@@ -27,7 +29,8 @@ public record CreateEmployeeRequest(
     string Password,
     string Title,
     string? Bio,
-    IReadOnlyList<int>? ServiceIds);
+    IReadOnlyList<int>? ServiceIds,
+    string? Gender = null);
 
 public record UpdateEmployeeRequest(
     string FirstName,
@@ -35,7 +38,21 @@ public record UpdateEmployeeRequest(
     string? Phone,
     string Title,
     string? Bio,
-    bool IsActive);
+    bool IsActive,
+    string? Gender = null,
+    double? PhotoZoom = null);
+
+/// <summary>What a barber may change about themselves. Title, services, working hours and status stay with the admin.</summary>
+public record UpdateOwnEmployeeProfileRequest(string? Gender, string? Bio, double? PhotoZoom);
+
+/// <summary>"Male" or "Female"; null means leave as it is (update) or not said (create).</summary>
+public static class GenderNames
+{
+    public static bool IsValid(string? value) => value is null or "Male" or "Female";
+
+    public static Ottoman.Domain.Gender? Parse(string? value) =>
+        Enum.TryParse<Ottoman.Domain.Gender>(value, ignoreCase: false, out var g) ? g : null;
+}
 
 public record SetEmployeeServicesRequest(IReadOnlyList<int> ServiceIds);
 
@@ -64,10 +81,10 @@ public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRe
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(100).WithName("Ime");
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(100).WithName("Prezime");
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256).WithName("Email");
-        RuleFor(x => x.Phone).MaximumLength(30).Matches(@"^[0-9+()\-\s/]*$")
-            .When(x => !string.IsNullOrEmpty(x.Phone)).WithName("Telefon");
+        RuleFor(x => x.Phone).BosnianPhone().WithName("Telefon");
         RuleFor(x => x.Password).Strong();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(100).WithName("Titula");
+        RuleFor(x => x.Gender).Must(GenderNames.IsValid).WithMessage("Spol mora biti Male ili Female.");
         RuleFor(x => x.Bio).MaximumLength(500).WithName("Opis");
     }
 }
@@ -78,9 +95,22 @@ public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRe
     {
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(100).WithName("Ime");
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(100).WithName("Prezime");
-        RuleFor(x => x.Phone).MaximumLength(30).Matches(@"^[0-9+()\-\s/]*$")
-            .When(x => !string.IsNullOrEmpty(x.Phone)).WithName("Telefon");
+        RuleFor(x => x.Phone).BosnianPhone().WithName("Telefon");
         RuleFor(x => x.Title).NotEmpty().MaximumLength(100).WithName("Titula");
+        RuleFor(x => x.Gender).Must(GenderNames.IsValid).WithMessage("Spol mora biti Male ili Female.");
+        RuleFor(x => x.PhotoZoom).Must(Ottoman.Application.Images.ImageRules.ValidZoom)
+            .WithMessage("Zoom mora biti između 1 i 2.");
+        RuleFor(x => x.Bio).MaximumLength(500).WithName("Opis");
+    }
+}
+
+public class UpdateOwnEmployeeProfileRequestValidator : AbstractValidator<UpdateOwnEmployeeProfileRequest>
+{
+    public UpdateOwnEmployeeProfileRequestValidator()
+    {
+        RuleFor(x => x.Gender).Must(GenderNames.IsValid).WithMessage("Spol mora biti Male ili Female.");
+        RuleFor(x => x.PhotoZoom).Must(Ottoman.Application.Images.ImageRules.ValidZoom)
+            .WithMessage("Zoom mora biti između 1 i 2.");
         RuleFor(x => x.Bio).MaximumLength(500).WithName("Opis");
     }
 }
@@ -131,13 +161,15 @@ public interface IEmployeeService
     Task<PagedResult<EmployeeDto>> PageAsync(bool includeInactive, bool includePrivate, string? search, PageQuery page, CancellationToken ct);
     Task<Result<EmployeeDto>> GetAsync(string id, bool includePrivate, CancellationToken ct);
     Task<Result<EmployeeDto>> CreateAsync(CreateEmployeeRequest request, CancellationToken ct);
+    /// <summary>A barber changing their own gender, bio and photo zoom. NotFound for anybody without a barber profile.</summary>
+    Task<Result<bool>> UpdateOwnProfileAsync(string userId, UpdateOwnEmployeeProfileRequest request, CancellationToken ct);
+
     Task<Result<EmployeeDto>> UpdateAsync(string id, UpdateEmployeeRequest request, CancellationToken ct);
     Task<Result<EmployeeDto>> SetServicesAsync(string id, IReadOnlyList<int> serviceIds, CancellationToken ct);
 
     Task<Result<IReadOnlyList<WorkingHoursDto>>> GetWorkingHoursAsync(string id, CancellationToken ct);
     Task<Result<IReadOnlyList<WorkingHoursDto>>> SetWorkingHoursAsync(string id, SetWorkingHoursRequest request, CancellationToken ct);
 
-    Task<Result<IReadOnlyList<TimeOffDto>>> ListTimeOffAsync(string id, CancellationToken ct);
     Task<Result<PagedResult<TimeOffDto>>> PageTimeOffAsync(string id, PageQuery page, CancellationToken ct);
     Task<Result<TimeOffDto>> AddTimeOffAsync(string id, CreateTimeOffRequest request, CancellationToken ct);
     Task<Result<bool>> RemoveTimeOffAsync(string id, int timeOffId, CancellationToken ct);

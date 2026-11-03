@@ -7,6 +7,8 @@ import '../appointments/appointments_page.dart';
 import '../audit/audit_page.dart';
 import '../clients/clients_page.dart';
 import '../employees/employees_page.dart';
+import '../gallery/gallery_page.dart';
+import '../products/shop_sections_page.dart';
 import '../notifications/notifications_page.dart';
 import '../orders/orders_page.dart';
 import '../profile/profile_page.dart';
@@ -14,6 +16,7 @@ import '../products/products_page.dart';
 import '../reports/overview_page.dart';
 import '../reports/reports_page.dart';
 import '../reviews/reviews_page.dart';
+import '../salon/salon_page.dart';
 import '../services/services_page.dart';
 import 'sidebar.dart';
 
@@ -28,6 +31,8 @@ class ShellDeps {
     required this.reports,
     required this.clients,
     required this.audit,
+    required this.gallery,
+    required this.salon,
     required this.user,
     required this.auth,
   });
@@ -40,6 +45,8 @@ class ShellDeps {
   final ReportsApi reports;
   final ClientsApi clients;
   final AuditApi audit;
+  final GalleryApi gallery;
+  final SalonApi salon;
   final AppUser user;
   final AuthController auth;
 }
@@ -48,12 +55,16 @@ class _Section {
   const _Section(
     this.icon,
     this.label, {
+    required this.group,
     this.adminOnly = false,
     this.body,
     this.badge,
   });
   final IconData icon;
   final String Function(AppLocalizations) label;
+
+  /// The heading this entry sits under in the sidebar (entries of one group are kept together).
+  final String Function(AppLocalizations) group;
   final bool adminOnly;
 
   /// Which live count (see [_DesktopShellState._refreshBadges]) this entry shows.
@@ -96,6 +107,8 @@ class _DesktopShellState extends State<DesktopShell> {
   late final ReportsApi _reports = ReportsApi(widget.auth.api);
   late final ClientsApi _clients = ClientsApi(widget.auth.api);
   late final AuditApi _audit = AuditApi(widget.auth.api);
+  late final GalleryApi _gallery = GalleryApi(widget.auth.api);
+  late final SalonApi _salon = SalonApi(widget.auth.api);
 
   /// Live counts for the sidebar: unread messages, products at or under their stock threshold,
   /// and orders waiting to be handed over. Only an admin sees these sections, so only an admin asks.
@@ -158,12 +171,14 @@ class _DesktopShellState extends State<DesktopShell> {
     _Section(
       Icons.dashboard_outlined,
       (t) => t.overview,
+      group: (t) => t.groupWork,
       adminOnly: true,
       body: (d) => OverviewPage(api: d.reports),
     ),
     _Section(
       Icons.schedule_outlined,
       (t) => t.appointments,
+      group: (t) => t.groupWork,
       body: (d) => AppointmentsPage(
         catalog: d.catalog,
         reservations: d.reservations,
@@ -171,20 +186,9 @@ class _DesktopShellState extends State<DesktopShell> {
       ),
     ),
     _Section(
-      Icons.payments_outlined,
-      (t) => t.earnings,
-      adminOnly: true,
-      body: (d) => EarningsPage(api: d.reports),
-    ),
-    _Section(
-      Icons.list_alt_outlined,
-      (t) => t.services,
-      adminOnly: true,
-      body: (d) => ServicesPage(catalog: d.catalog),
-    ),
-    _Section(
       Icons.notifications_outlined,
       (t) => t.notifications,
+      group: (t) => t.groupWork,
       adminOnly: true,
       badge: 'notifications',
       body: (d) =>
@@ -193,6 +197,7 @@ class _DesktopShellState extends State<DesktopShell> {
     _Section(
       Icons.inventory_2_outlined,
       (t) => t.products,
+      group: (t) => t.groupShop,
       adminOnly: true,
       badge: 'products',
       body: (d) => ProductsPage(shop: d.shop),
@@ -200,43 +205,85 @@ class _DesktopShellState extends State<DesktopShell> {
     _Section(
       Icons.receipt_long_outlined,
       (t) => t.orders,
+      group: (t) => t.groupShop,
       adminOnly: true,
       badge: 'orders',
       body: (d) => OrdersPage(shop: d.shop),
     ),
     _Section(
-      Icons.star_outline,
-      (t) => t.reviews,
+      Icons.view_carousel_outlined,
+      (t) => t.shopSectionsTitle,
+      group: (t) => t.groupShop,
       adminOnly: true,
-      body: (d) => ReviewsPage(api: d.reviews),
+      body: (d) => ShopSectionsPage(shop: d.shop),
     ),
     _Section(
-      Icons.groups_outlined,
-      (t) => t.clients,
+      Icons.list_alt_outlined,
+      (t) => t.services,
+      group: (t) => t.groupSalon,
       adminOnly: true,
-      body: (d) => ClientsPage(api: d.clients),
+      body: (d) => ServicesPage(catalog: d.catalog),
     ),
     _Section(
       Icons.content_cut,
       (t) => t.employees,
+      group: (t) => t.groupSalon,
       adminOnly: true,
       body: (d) => EmployeesPage(catalog: d.catalog),
     ),
     _Section(
+      Icons.photo_library_outlined,
+      (t) => t.galleryTitle,
+      group: (t) => t.groupSalon,
+      adminOnly: true,
+      body: (d) => GalleryPage(gallery: d.gallery, catalog: d.catalog),
+    ),
+    _Section(
+      Icons.storefront_outlined,
+      (t) => t.salonProfile,
+      group: (t) => t.groupSalon,
+      adminOnly: true,
+      body: (d) => SalonPage(salon: d.salon),
+    ),
+    _Section(
+      Icons.groups_outlined,
+      (t) => t.clients,
+      group: (t) => t.groupClients,
+      adminOnly: true,
+      body: (d) => ClientsPage(api: d.clients),
+    ),
+    _Section(
+      Icons.star_outline,
+      (t) => t.reviews,
+      group: (t) => t.groupClients,
+      adminOnly: true,
+      body: (d) => ReviewsPage(api: d.reviews),
+    ),
+    _Section(
+      Icons.payments_outlined,
+      (t) => t.earnings,
+      group: (t) => t.groupAnalytics,
+      adminOnly: true,
+      body: (d) => EarningsPage(api: d.reports),
+    ),
+    _Section(
       Icons.insert_chart_outlined,
       (t) => t.reports,
+      group: (t) => t.groupAnalytics,
       adminOnly: true,
       body: (d) => ReportsPage(api: d.reports),
     ),
     _Section(
       Icons.history,
       (t) => t.auditLog,
+      group: (t) => t.groupAnalytics,
       adminOnly: true,
       body: (d) => AuditPage(api: d.audit),
     ),
     _Section(
       Icons.person_outline,
       (t) => t.myProfile,
+      group: (t) => t.groupAccount,
       body: (d) => ProfilePage(auth: d.auth),
     ),
   ];
@@ -267,6 +314,7 @@ class _DesktopShellState extends State<DesktopShell> {
                 SidebarItem(
                   icon: s.icon,
                   label: s.label(t),
+                  group: s.group(t),
                   badge: _badges[s.badge] ?? 0,
                 ),
             ],
@@ -296,6 +344,8 @@ class _DesktopShellState extends State<DesktopShell> {
                           reports: _reports,
                           clients: _clients,
                           audit: _audit,
+                          gallery: _gallery,
+                          salon: _salon,
                           user: user,
                           auth: widget.auth,
                         ),

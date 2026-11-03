@@ -7,11 +7,24 @@ public class EmployeeProfile
     public string Title { get; set; } = "";
     public string? Bio { get; set; }
     public string? PhotoKey { get; set; }
+
+    /// <summary>How close the avatar crops around the face: 1 = Cloudinary's default, 2 = twice as close.</summary>
+    public double PhotoZoom { get; set; } = 1.0;
+
+    /// <summary>Picks the default avatar while there is no photo. Null = not said.</summary>
+    public Gender? Gender { get; set; }
     public bool IsActive { get; set; } = true;
 
     public List<EmployeeService> Services { get; set; } = [];
     public List<WorkingHours> WorkingHours { get; set; } = [];
     public List<TimeOff> TimeOff { get; set; } = [];
+}
+
+/// <summary>A job title an admin can pick for a barber. The list is filled by admins (and by titles already in use).</summary>
+public class EmployeeTitle
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
 }
 
 public class EmployeeService
@@ -60,4 +73,17 @@ public class SalonSettings
     public int MinLeadMinutes { get; set; } = 30;
     public int CancelWindowMinutes { get; set; } = 120;
     public int LowStockDefault { get; set; } = 5;
+
+    /// <summary>A few words about the salon, shown on the home screen.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>A Google Maps link to the salon.</summary>
+    public string? MapsUrl { get; set; }
+    public string? InstagramUrl { get; set; }
+    public string? FacebookUrl { get; set; }
+    public string? LogoKey { get; set; }
+
+    /// <summary>Where the salon is, for the map preview on the home screen.</summary>
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }

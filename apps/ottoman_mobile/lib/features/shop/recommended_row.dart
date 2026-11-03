@@ -1,26 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
-/// A horizontal strip of product suggestions ("Možda vam se sviđa" / "Slično").
-/// Hidden while loading, on error and when there is nothing to suggest: a suggestion row must never get in the way.
+import 'shop_sections.dart';
+
+/// "Možda vam se sviđa" / "Slično": a row that looks like every other section of the shop, with the reason for
+/// each suggestion under the product. Hidden while loading, on error and when there is nothing to suggest:
+/// a suggestion row must never get in the way.
 class RecommendedRow extends StatelessWidget {
   const RecommendedRow({
     super.key,
     required this.title,
+    this.eyebrow,
+    this.centered = false,
+    this.top = 28,
     required this.load,
     required this.cart,
     required this.onOpen,
   });
 
   final String title;
+  final String? eyebrow;
+  final bool centered;
+  final double top;
   final Future<List<Recommended<Product>>> Function() load;
   final CartController cart;
   final void Function(Product) onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
     return FutureBuilder<List<Recommended<Product>>>(
       future: load(),
       builder: (context, snap) {
@@ -29,99 +36,26 @@ class RecommendedRow extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
+            SectionHeading(
+              title,
+              eyebrow: eyebrow,
+              centered: centered,
+              top: 28,
             ),
             SizedBox(
-              height: 190,
+              height: 280,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: items.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, i) {
-                  final p = items[i].item;
-                  final reason = items[i].reason;
-                  return SizedBox(
-                    width: 176,
-                    child: Card(
-                      key: Key('reco_${p.id}'),
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: () => onOpen(p),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                p.name,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              if (p.brandName != null)
-                                Text(
-                                  p.brandName!,
-                                  style: TextStyle(
-                                    color: scheme.outline,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  reason,
-                                  key: Key('reco_reason_${p.id}'),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: scheme.primary,
-                                    fontSize: 11,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                              const Spacer(),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: FittedBox(
-                                      alignment: Alignment.centerLeft,
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        money(t, p.price),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  InkResponse(
-                                    key: Key('reco_add_${p.id}'),
-                                    onTap: () => cart.add(p),
-                                    child: const Icon(
-                                      Icons.add_shopping_cart,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, i) => ProductTile(
+                  product: items[i].item,
+                  cart: cart,
+                  onOpen: onOpen,
+                  keyPrefix: 'reco',
+                  reason: items[i].reason,
+                ),
               ),
             ),
           ],

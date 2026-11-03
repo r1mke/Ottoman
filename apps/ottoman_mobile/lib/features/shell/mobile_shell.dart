@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
-import '../booking/employees_tab.dart';
+import '../home/home_tab.dart';
 import '../notifications/notifications_page.dart';
 import '../profile/profile_page.dart';
 import '../reservations/employee_schedule_tab.dart';
 import '../reservations/my_reservations_tab.dart';
+import '../booking/service_picker_tab.dart';
 import '../services/pricelist_tab.dart';
 import '../shop/shop_tab.dart';
 
@@ -26,6 +27,8 @@ class MobileShell extends StatefulWidget {
     required this.auth,
     this.catalogOverride,
     this.shopOverride,
+    this.salonOverride,
+    this.galleryOverride,
     this.cardPayment = const UnavailableCardPayment(),
     this.push,
   });
@@ -36,6 +39,8 @@ class MobileShell extends StatefulWidget {
   final CatalogApi? catalogOverride;
 
   final ShopApi? shopOverride;
+  final SalonApi? salonOverride;
+  final GalleryApi? galleryOverride;
 
   /// Card payments need the Stripe SDK; until one is plugged in, card checkout is hidden.
   final CardPaymentLauncher cardPayment;
@@ -64,6 +69,10 @@ class _MobileShellState extends State<MobileShell> {
     widget.auth.api,
   );
   late final ShopApi _shop = widget.shopOverride ?? ShopApi(widget.auth.api);
+  late final SalonApi _salon =
+      widget.salonOverride ?? SalonApi(widget.auth.api);
+  late final GalleryApi _gallery =
+      widget.galleryOverride ?? GalleryApi(widget.auth.api);
   int _unread = 0;
   Timer? _poll;
   StreamSubscription<PushNote>? _pushNotes;
@@ -146,7 +155,7 @@ class _MobileShellState extends State<MobileShell> {
         ),
         _Tab(
           Icons.person_outline,
-          (t) => t.profile,
+          (t) => t.groupAccount,
           () => ProfilePage(auth: widget.auth),
         ),
       ];
@@ -155,18 +164,29 @@ class _MobileShellState extends State<MobileShell> {
       _Tab(
         Icons.home_outlined,
         (t) => t.home,
-        () => EmployeesTab(
-          catalog: _catalog,
-          reservations: _reservations,
-          reviews: _reviews,
-          recommendations: _recommendations,
-          onBooked: () => setState(() => _bookingsVersion++),
+        () => HomeTab(
+          salon: _salon,
+          gallery: _gallery,
+          onBook: () =>
+              setState(() => _index = 1), // the Services tab starts the booking
         ),
       ),
       _Tab(
         Icons.list_alt_outlined,
         (t) => t.services,
-        () => PricelistTab(catalog: _catalog),
+        () => ServicePickerTab(
+          key: ValueKey(
+            'services$_bookingsVersion',
+          ), // a fresh choice after each booking
+          catalog: _catalog,
+          reservations: _reservations,
+          reviews: _reviews,
+          recommendations: _recommendations,
+          onBooked: () => setState(() {
+            _bookingsVersion++;
+            _index = 2; // the appointments tab of a client
+          }),
+        ),
       ),
       _Tab(
         Icons.calendar_month_outlined,
@@ -179,7 +199,7 @@ class _MobileShellState extends State<MobileShell> {
       ),
       _Tab(
         Icons.shopping_cart_outlined,
-        (t) => t.products,
+        (t) => t.shopTab,
         () => ShopTab(
           shop: _shop,
           cart: _cart,
@@ -189,8 +209,8 @@ class _MobileShellState extends State<MobileShell> {
         ),
       ),
       _Tab(
-        Icons.settings_outlined,
-        (t) => t.settings,
+        Icons.person_outline,
+        (t) => t.groupAccount,
         () => ProfilePage(auth: widget.auth),
       ),
     ];
@@ -230,13 +250,22 @@ class _MobileShellState extends State<MobileShell> {
         ],
       ),
       body: tab.body(),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: [
-          for (final s in tabs)
-            NavigationDestination(icon: Icon(s.icon), label: s.label(t)),
-        ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          destinations: [
+            for (final s in tabs)
+              NavigationDestination(icon: Icon(s.icon), label: s.label(t)),
+          ],
+        ),
       ),
     );
   }

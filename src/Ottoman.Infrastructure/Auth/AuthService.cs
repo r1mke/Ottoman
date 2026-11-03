@@ -8,6 +8,7 @@ using Ottoman.Contracts;
 using Ottoman.Domain;
 using Ottoman.Domain.Entities;
 using Ottoman.Infrastructure.Identity;
+using Ottoman.Infrastructure.Images;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Auth;
@@ -20,6 +21,7 @@ public class AuthService(
     IOptions<JwtOptions> jwt,
     IResetTokenVault vault,
     IAccessGate gate,
+    ImageUrlBuilder images,
     TimeProvider clock) : IAuthService
 {
     private const string GenericLoginError = "Neispravan email ili lozinka.";
@@ -255,7 +257,17 @@ public class AuthService(
         gate.Invalidate(userId);
     }
 
-    private async Task<UserDto> ToDtoAsync(AppUser user) => new(
-        user.Id, user.Email!, user.FirstName, user.LastName, user.PhoneNumber,
-        (await users.GetRolesAsync(user)).ToList());
+    private async Task<UserDto> ToDtoAsync(AppUser user)
+    {
+        // Barbers carry their photo and gender so the sign-in screen can show them as a card; the admin's
+        // are kept on the account.
+        var profile = await db.EmployeeProfiles.AsNoTracking().Where(p => p.UserId == user.Id)
+            .Select(p => new { p.PhotoKey, p.PhotoZoom, p.Gender, p.Bio }).FirstOrDefaultAsync();
+        return new UserDto(
+            user.Id, user.Email!, user.FirstName, user.LastName, user.PhoneNumber,
+            (await users.GetRolesAsync(user)).ToList(),
+            profile is null ? images.AvatarUrl(user.PhotoKey, 1.0) : images.AvatarUrl(profile.PhotoKey, profile.PhotoZoom),
+            (profile?.Gender ?? user.Gender)?.ToString(),
+            profile is null ? user.Bio : profile.Bio, profile?.PhotoZoom);
+    }
 }

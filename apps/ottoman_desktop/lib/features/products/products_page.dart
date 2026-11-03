@@ -94,6 +94,7 @@ class _ProductsPageState extends State<ProductsPage> {
           brandId: p.brandId,
           categoryId: p.categoryId,
           price: p.price,
+          salePrice: p.salePrice,
           stock: p.stock,
           lowStockThreshold: p.lowStockThreshold,
           isActive: true,
@@ -316,7 +317,32 @@ class _Table extends StatelessWidget {
                             ),
                           ),
                           DataCell(Text(p.categoryName ?? '-')),
-                          DataCell(Text(money(t, p.price))),
+                          DataCell(
+                            p.onSale
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        money(t, p.payPrice),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: scheme.error,
+                                        ),
+                                      ),
+                                      Text(
+                                        money(t, p.price),
+                                        style: TextStyle(
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                          color: scheme.outline,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Text(money(t, p.price)),
+                          ),
                           DataCell(
                             Row(
                               mainAxisSize: MainAxisSize.min,

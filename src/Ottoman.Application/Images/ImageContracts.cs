@@ -32,12 +32,29 @@ public interface IImageAttachments
 {
     Task<Result<bool>> AddProductImageAsync(int productId, Stream content, CancellationToken ct);
     Task<Result<bool>> RemoveProductImageAsync(int productId, int imageId, CancellationToken ct);
+    /// <summary>Adds a picture to the work gallery; the result is the new item's id.</summary>
+    Task<Result<int>> AddGalleryItemAsync(int categoryId, string? employeeId, string? caption, bool featured, Stream content, CancellationToken ct);
+    Task<Result<bool>> RemoveGalleryItemAsync(int id, CancellationToken ct);
+    /// <summary>Uploads the picture of a news item that is about to be created and returns its storage key.</summary>
+    Task<Result<string>> UploadAnnouncementImageAsync(Stream content, CancellationToken ct);
+
+    /// <summary>Deletes an uploaded picture that was never attached (the creation failed afterwards).</summary>
+    Task DiscardImageAsync(string key);
+    Task<Result<bool>> SetBrandLogoAsync(int brandId, Stream content, CancellationToken ct);
+    Task<Result<bool>> ClearBrandLogoAsync(int brandId, CancellationToken ct);
+
+    /// <summary>Uploads the picture of a shop section card (it replaces a picked product picture, if any).</summary>
+    Task<Result<bool>> SetShopSectionImageAsync(int sectionId, Stream content, CancellationToken ct);
+
+    /// <summary>Removes the card picture, uploaded or picked: the card goes back to its automatic cover.</summary>
+    Task<Result<bool>> ClearShopSectionImageAsync(int sectionId, CancellationToken ct);
+    Task<Result<bool>> SetSalonLogoAsync(Stream content, CancellationToken ct);
+    Task<Result<bool>> ClearSalonLogoAsync(CancellationToken ct);
     Task<Result<bool>> SetServiceImageAsync(int serviceId, Stream content, CancellationToken ct);
     Task<Result<bool>> ClearServiceImageAsync(int serviceId, CancellationToken ct);
-    Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct);
-    Task<Result<bool>> ClearEmployeePhotoAsync(string employeeId, CancellationToken ct);
-    Task<Result<bool>> SetAnnouncementImageAsync(int announcementId, Stream content, CancellationToken ct);
-    Task<Result<bool>> ClearAnnouncementImageAsync(int announcementId, CancellationToken ct);
+    /// <param name="onAccount">The caller's own picture when they have no barber profile (the admin): kept on the account.</param>
+    Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct, bool onAccount = false);
+    Task<Result<bool>> ClearEmployeePhotoAsync(string employeeId, CancellationToken ct, bool onAccount = false);
 }
 
 public static class ImageRules
@@ -48,6 +65,23 @@ public static class ImageRules
         string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(cloudName)
             ? null
             : $"https://res.cloudinary.com/{cloudName}/image/upload/{Transform}/{key}";
+
+    public const double MinZoom = 1.0;
+    public const double MaxZoom = 2.0;
+
+    public static bool ValidZoom(double? zoom) => zoom is null || (zoom >= MinZoom && zoom <= MaxZoom);
+
+    /// <summary>
+    /// A square avatar centred on the face Cloudinary detects. Zoom 1..2 is how close to crop (Cloudinary's
+    /// <c>z_</c> is the inverse: smaller is closer); without a face it falls back to the middle of the picture.
+    /// The <c>z_</c> part is always present so a client can swap it for a live preview.
+    /// </summary>
+    public static string? AvatarUrl(string? cloudName, string? key, double zoom)
+    {
+        if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(cloudName)) return null;
+        var z = (1.0 / Math.Clamp(zoom, MinZoom, MaxZoom)).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        return $"https://res.cloudinary.com/{cloudName}/image/upload/c_thumb,g_face,w_512,h_512,z_{z},q_auto,f_auto/{key}";
+    }
 
     /// <summary>
     /// Decides from the first bytes what the file really is. The declared content type and file name come from the

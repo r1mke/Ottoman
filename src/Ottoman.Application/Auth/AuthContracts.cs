@@ -22,7 +22,11 @@ public record UserDto(
     string FirstName,
     string LastName,
     string? Phone,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    string? PhotoUrl = null,
+    string? Gender = null,
+    string? Bio = null,
+    double? PhotoZoom = null);
 
 public record AuthResponse(
     string AccessToken,

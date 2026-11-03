@@ -22,7 +22,13 @@ class _Api implements HttpClientAdapter {
       .where((r) => r.method == method && r.path.contains(pathPart))
       .firstOrNull;
   int count(String method, String pathPart) => requests
-      .where((r) => r.method == method && r.path.contains(pathPart))
+      .where(
+        (r) =>
+            r.method == method &&
+            r.path.contains(pathPart) &&
+            // The month calendar has its own request; these counts are about the day's times.
+            !r.path.endsWith('/availability/month'),
+      )
       .length;
 
   static Map<String, dynamic> reservation({
@@ -65,7 +71,19 @@ class _Api implements HttpClientAdapter {
     Object? body;
     var status = 200;
     final p = o.path;
-    if (p.endsWith('/login')) {
+    if (p.endsWith('/salon')) {
+      body = {
+        'name': 'Ottoman',
+        'description': 'Opis salona',
+        'address': null,
+        'phone': null,
+        'mapsUrl': null,
+        'logoUrl': null,
+        'hours': [],
+      };
+    } else if (p.contains('/gallery')) {
+      body = {'items': [], 'totalCount': 0};
+    } else if (p.endsWith('/login')) {
       body = {
         'accessToken': 'a',
         'refreshToken': 'r',
@@ -107,6 +125,16 @@ class _Api implements HttpClientAdapter {
           'isActive': true,
         },
       ];
+    } else if (p.endsWith('/availability/month')) {
+      final month = o.queryParameters['month'] as String;
+      body = {
+        'month': month,
+        // The 7th and 8th of the month are free; the rest is full.
+        'availableDays': [
+          '${month.substring(0, 8)}07',
+          '${month.substring(0, 8)}08',
+        ],
+      };
     } else if (p.endsWith('/availability')) {
       final all =
           o.queryParameters['allTimes'] == true ||
@@ -184,11 +212,14 @@ Future<void> _start(WidgetTester tester, _Api api) async {
 }
 
 Future<void> _openSlotPicker(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('employee_e1')));
+  // "Book" leads to the Services tab: choose the service, then the barber who does it.
+  await tester.tap(find.byKey(const Key('book_now')));
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('service_1')));
   await tester.pump();
   await tester.tap(find.byKey(const Key('continue')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('employee_e1')));
   await tester.pumpAndSettle();
 }
 
@@ -216,6 +247,8 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('booking_note')), 'Fade');
     await tester.tap(find.byKey(const Key('book')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_booking')));
     await tester.pumpAndSettle();
 
     final post = api.last('POST', '/reservations')!;
@@ -267,6 +300,8 @@ void main() {
       await tester.tap(find.byKey(const Key('slot_09:00')));
       await tester.pump();
       await tester.tap(find.byKey(const Key('book')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_booking')));
       await tester.pumpAndSettle();
 
       expect(

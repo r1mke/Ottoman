@@ -21,7 +21,20 @@ class _Adapter implements HttpClientAdapter {
     calls.add(o.uri.toString());
     Object? body;
     var status = 200;
-    if (o.path.contains('/recommendations') || o.path.contains('/reviews')) {
+    if (o.path.endsWith('/salon')) {
+      body = {
+        'name': 'Ottoman',
+        'description': 'Opis salona',
+        'address': null,
+        'phone': null,
+        'mapsUrl': null,
+        'logoUrl': null,
+        'hours': [],
+      };
+    } else if (o.path.contains('/gallery')) {
+      body = {'items': [], 'totalCount': 0};
+    } else if (o.path.contains('/recommendations') ||
+        o.path.contains('/reviews')) {
       body = [];
     } else if (o.path.endsWith('/login')) {
       body = {
@@ -55,6 +68,19 @@ class _Adapter implements HttpClientAdapter {
             'email': null,
             'phone': null,
           },
+          {
+            'id': 'e2',
+            'firstName': 'Tarik',
+            'lastName': 'Mujkić',
+            'fullName': 'Tarik Mujkić',
+            'title': 'Junior Barber',
+            'bio': null,
+            'photoUrl': null,
+            'isActive': true,
+            'serviceIds': [1],
+            'email': null,
+            'phone': null,
+          },
         ];
       }
     } else if (o.path.endsWith('/services')) {
@@ -73,6 +99,15 @@ class _Adapter implements HttpClientAdapter {
           'name': 'Uređivanje brade',
           'description': null,
           'price': 15,
+          'durationMinutes': 30,
+          'imageUrl': null,
+          'isActive': true,
+        },
+        {
+          'id': 3,
+          'name': 'Bojenje brade',
+          'description': null,
+          'price': 20,
           'durationMinutes': 30,
           'imageUrl': null,
           'isActive': true,
@@ -118,20 +153,22 @@ Future<_Adapter> _signedIn(WidgetTester tester, {bool fail = false}) async {
   return adapter;
 }
 
+/// "Rezerviši termin" on the home tab leads to the Services tab, where booking starts.
+Future<void> _startBooking(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('book_now')));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets(
-    'home lists barbers; picking one shows their services and a running total',
+    '"Book" opens the services; choosing them shows a running total',
     (tester) async {
       await _signedIn(tester);
-
-      expect(find.text('Kerim Begić'), findsOneWidget);
-      expect(find.text('Master Barber'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('employee_e1')));
-      await tester.pumpAndSettle();
+      await _startBooking(tester);
 
       expect(find.text('Šišanje'), findsOneWidget);
       expect(find.byKey(const Key('selection_total')), findsNothing);
+      expect(find.byKey(const Key('continue')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('service_1')));
       await tester.tap(find.byKey(const Key('service_2')));
@@ -142,10 +179,67 @@ void main() {
     },
   );
 
+  testWidgets('only the barbers who do every chosen service are offered', (
+    tester,
+  ) async {
+    await _signedIn(tester);
+    await _startBooking(tester);
+
+    // Both services: only Kerim does the two of them.
+    await tester.tap(find.byKey(const Key('service_1')));
+    await tester.tap(find.byKey(const Key('service_2')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('continue')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kerim Begić'), findsOneWidget);
+    expect(find.text('Tarik Mujkić'), findsNothing);
+
+    // Back, and change the choice to the one service both do.
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('service_2')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('continue')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Kerim Begić'), findsOneWidget);
+    expect(find.text('Tarik Mujkić'), findsOneWidget);
+  });
+
+  testWidgets('a service nobody does says so instead of an empty screen', (
+    tester,
+  ) async {
+    await _signedIn(tester);
+    await _startBooking(tester);
+
+    await tester.tap(find.byKey(const Key('service_3')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('continue')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Nijedan uposlenik ne radi'), findsOneWidget);
+  });
+
+  testWidgets('"Continue" waits for at least one service', (tester) async {
+    await _signedIn(tester);
+    await _startBooking(tester);
+
+    final button = tester.widget<FilledButton>(
+      find.byKey(const Key('continue')),
+    );
+    expect(button.onPressed, isNull);
+  });
+
   testWidgets(
-    'a failing request shows the error state with a retry that reloads',
+    'a failing request for the barbers shows the error state with a retry that reloads',
     (tester) async {
       final adapter = await _signedIn(tester, fail: true);
+      await _startBooking(tester);
+      await tester.tap(find.byKey(const Key('service_1')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('continue')));
+      await tester.pumpAndSettle();
 
       expect(find.text('Pokušaj ponovo'), findsOneWidget);
       final before = adapter.calls
@@ -162,13 +256,15 @@ void main() {
     },
   );
 
-  testWidgets('services tab shows the price list', (tester) async {
+  testWidgets('services tab lists the services with their price and time', (
+    tester,
+  ) async {
     await _signedIn(tester);
 
     await tester.tap(find.text('Usluge').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Šišanje'), findsOneWidget);
-    expect(find.text('25.00 KM'), findsOneWidget);
+    expect(find.textContaining('25.00 KM'), findsOneWidget);
   });
 }

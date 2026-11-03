@@ -28,6 +28,25 @@ class Service {
   );
 }
 
+/// One entry of the pick list of barber titles. [inUse] is how many barbers have it.
+class EmployeeTitle {
+  const EmployeeTitle({
+    required this.id,
+    required this.name,
+    required this.inUse,
+  });
+
+  final int id;
+  final String name;
+  final int inUse;
+
+  factory EmployeeTitle.fromJson(Map<String, dynamic> j) => EmployeeTitle(
+    id: j['id'] as int,
+    name: j['name'] as String,
+    inUse: j['inUse'] as int,
+  );
+}
+
 class Employee {
   const Employee({
     required this.id,
@@ -40,12 +59,20 @@ class Employee {
     this.photoUrl,
     this.email,
     this.phone,
+    this.gender,
+    this.photoZoom = 1.0,
   });
 
   final String id;
   final String firstName;
   final String lastName;
   final String title;
+
+  /// "Male" or "Female"; picks the default avatar while there is no photo.
+  final String? gender;
+
+  /// How close the photo crops around the face, 1 (default) to 2.
+  final double photoZoom;
   final String? bio;
   final String? photoUrl;
   final bool isActive;
@@ -70,6 +97,8 @@ class Employee {
     serviceIds: (j['serviceIds'] as List).cast<int>(),
     email: j['email'] as String?,
     phone: j['phone'] as String?,
+    gender: j['gender'] as String?,
+    photoZoom: (j['photoZoom'] as num?)?.toDouble() ?? 1.0,
   );
 }
 
@@ -138,4 +167,30 @@ class Availability {
         .toList(),
     localTimes: (j['localTimes'] as List).cast<String>(),
   );
+}
+
+/// The days of one month that can still be booked for a barber and a set of services (the calendar dots).
+class MonthAvailability {
+  const MonthAvailability({required this.month, required this.availableDays});
+
+  /// First day of the month.
+  final DateTime month;
+  final Set<DateTime> availableDays;
+
+  bool isAvailable(DateTime day) =>
+      availableDays.contains(DateTime(day.year, day.month, day.day));
+
+  factory MonthAvailability.fromJson(Map<String, dynamic> j) {
+    DateTime day(String s) {
+      final p = DateTime.parse(s);
+      return DateTime(p.year, p.month, p.day);
+    }
+
+    return MonthAvailability(
+      month: day(j['month'] as String),
+      availableDays: {
+        for (final d in (j['availableDays'] as List)) day(d as String),
+      },
+    );
+  }
 }

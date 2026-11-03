@@ -4,6 +4,7 @@ import '../catalog/catalog_api.dart';
 import '../catalog/catalog_models.dart';
 import '../l10n/app_localizations.dart';
 import '../network/app_exception.dart';
+import 'availability_calendar.dart';
 import 'states.dart';
 
 /// Lets the parent re-fetch the times (e.g. after the server says a slot was just taken).
@@ -24,6 +25,7 @@ class SlotSelector extends StatefulWidget {
     this.controller,
     this.horizonDays = 90,
     this.excludeReservationId,
+    this.rich = false,
   });
 
   final CatalogApi catalog;
@@ -38,6 +40,10 @@ class SlotSelector extends StatefulWidget {
   /// Admin only: treat this reservation as free (rescheduling it).
   final int? excludeReservationId;
 
+  /// The mobile look: a month calendar that marks the days that cannot be booked, with headed blocks for the date
+  /// and the time. Off by default (the desktop uses the plain date picker).
+  final bool rich;
+
   @override
   State<SlotSelector> createState() => _SlotSelectorState();
 }
@@ -47,6 +53,13 @@ class _SlotSelectorState extends State<SlotSelector> {
   bool _all = false;
   DateTime? _selected;
   Future<Availability>? _future;
+
+  // Rich calendar: the month on show and what is known about each month's free days.
+  late DateTime _focused = _date;
+  final Map<String, MonthAvailability> _months = {};
+  bool _userPicked = false;
+
+  static String _monthKey(DateTime m) => '${m.year}-${m.month}';
 
   static DateTime _today() {
     final n = DateTime.now();
@@ -58,6 +71,7 @@ class _SlotSelectorState extends State<SlotSelector> {
     super.initState();
     widget.controller?._reload = _reload;
     _load();
+    if (widget.rich) _loadMonth(_focused);
   }
 
   @override
@@ -66,9 +80,56 @@ class _SlotSelectorState extends State<SlotSelector> {
     widget.controller?._reload = _reload;
     if (old.employeeId != widget.employeeId ||
         old.serviceIds.join(',') != widget.serviceIds.join(',')) {
-      _select(null, null);
+      // The parent is being rebuilt right now, so it must not be told to rebuild again until this frame is done.
+      _selected = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onChanged(null, null);
+      });
+      _months.clear();
+      _userPicked = false;
       _load();
+      if (widget.rich) _loadMonth(_focused);
     }
+  }
+
+  /// Fetches which days of [month] are free. A failure leaves the month unmarked: the day view still decides.
+  Future<void> _loadMonth(DateTime month) async {
+    final key = _monthKey(month);
+    if (_months.containsKey(key)) return;
+    final employeeId = widget.employeeId;
+    final serviceIds = widget.serviceIds.join(',');
+    try {
+      final loaded = await widget.catalog.monthAvailability(
+        employeeId: employeeId,
+        month: DateTime(month.year, month.month),
+        serviceIds: widget.serviceIds,
+      );
+      // The barber or the services may have changed while this was on its way.
+      if (!mounted ||
+          employeeId != widget.employeeId ||
+          serviceIds != widget.serviceIds.join(',')) {
+        return;
+      }
+      setState(() => _months[key] = loaded);
+      _pickFirstFreeDay(loaded);
+    } catch (_) {
+      // Left unmarked.
+    }
+  }
+
+  /// When the day shown first (today) is full, start on the first day that has times, unless the customer chose.
+  void _pickFirstFreeDay(MonthAvailability loaded) {
+    if (_userPicked) return;
+    final key = _monthKey(_date);
+    if (_monthKey(loaded.month) != key || loaded.isAvailable(_date)) return;
+    final days =
+        loaded.availableDays.where((d) => !d.isBefore(_today())).toList()
+          ..sort();
+    if (days.isEmpty) return;
+    _date = days.first;
+    _focused = days.first;
+    _select(null, null);
+    _load();
   }
 
   void _load() {
@@ -85,7 +146,9 @@ class _SlotSelectorState extends State<SlotSelector> {
 
   Future<void> _reload() async {
     _select(null, null);
+    _months.clear();
     _load();
+    if (widget.rich) _loadMonth(_focused);
     try {
       await _future;
     } catch (_) {
@@ -106,18 +169,42 @@ class _SlotSelectorState extends State<SlotSelector> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CalendarDatePicker(
-          key: const Key('slot_calendar'),
-          initialDate: _date,
-          firstDate: today,
-          lastDate: today.add(Duration(days: widget.horizonDays)),
-          onDateChanged: (d) {
-            _date = DateTime(d.year, d.month, d.day);
-            _select(null, null);
-            _load();
-          },
-        ),
-        const Divider(),
+        if (widget.rich) ...[
+          _BlockTitle(t.chooseDate),
+          AvailabilityCalendar(
+            selected: _date,
+            first: today,
+            last: today.add(Duration(days: widget.horizonDays)),
+            focused: _focused,
+            available: _months[_monthKey(_focused)]?.availableDays,
+            onSelected: (d) {
+              _userPicked = true;
+              _date = d;
+              _focused = d;
+              _select(null, null);
+              _load();
+            },
+            onMonthChanged: (m) {
+              setState(() => _focused = DateTime(m.year, m.month));
+              _loadMonth(DateTime(m.year, m.month));
+            },
+          ),
+          const SizedBox(height: 24),
+          _BlockTitle(t.chooseTime),
+        ] else ...[
+          CalendarDatePicker(
+            key: const Key('slot_calendar'),
+            initialDate: _date,
+            firstDate: today,
+            lastDate: today.add(Duration(days: widget.horizonDays)),
+            onDateChanged: (d) {
+              _date = DateTime(d.year, d.month, d.day);
+              _select(null, null);
+              _load();
+            },
+          ),
+          const Divider(),
+        ],
         const SizedBox(height: 8),
         FutureBuilder<Availability>(
           future: _future,
@@ -229,6 +316,37 @@ class _SlotSelectorState extends State<SlotSelector> {
       if (evening.isNotEmpty) (label: t.evening, indexes: evening),
     ];
   }
+}
+
+/// The heading of a block of the rich selector: a bold title with a short amber bar under it.
+class _BlockTitle extends StatelessWidget {
+  const _BlockTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(2, 4, 0, 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          text,
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: 56,
+          height: 5,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Localised label for an API reservation status.

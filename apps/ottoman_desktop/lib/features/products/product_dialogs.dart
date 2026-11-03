@@ -43,6 +43,9 @@ class _ProductDialogState extends State<ProductDialog> {
   late final _price = TextEditingController(
     text: widget.product?.price.toStringAsFixed(2),
   );
+  late final _sale = TextEditingController(
+    text: widget.product?.salePrice?.toStringAsFixed(2),
+  );
   late final _stock = TextEditingController(
     text: widget.product?.stock.toString() ?? '0',
   );
@@ -57,7 +60,7 @@ class _ProductDialogState extends State<ProductDialog> {
 
   @override
   void dispose() {
-    for (final c in [_name, _description, _price, _stock, _threshold]) {
+    for (final c in [_name, _description, _price, _sale, _stock, _threshold]) {
       c.dispose();
     }
     super.dispose();
@@ -79,6 +82,9 @@ class _ProductDialogState extends State<ProductDialog> {
         brandId: _brandId,
         categoryId: _categoryId,
         price: double.parse(_price.text.replaceAll(',', '.')),
+        salePrice: _sale.text.trim().isEmpty
+            ? null
+            : double.parse(_sale.text.replaceAll(',', '.')),
         stock: int.parse(_stock.text),
         lowStockThreshold: _threshold.text.trim().isEmpty
             ? null
@@ -194,6 +200,29 @@ class _ProductDialogState extends State<ProductDialog> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const Key('prod_sale'),
+                  controller: _sale,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: '${t.salePrice} (${t.currencyShort})',
+                    helperText: t.salePriceHint,
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    final n = double.tryParse(v.replaceAll(',', '.'));
+                    final regular = double.tryParse(
+                      _price.text.replaceAll(',', '.'),
+                    );
+                    if (n == null || n <= 0) return t.invalidNumber;
+                    return (regular != null && n >= regular)
+                        ? t.salePriceTooHigh
+                        : null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -366,12 +395,18 @@ class _StockDialogState extends State<StockDialog> {
 
 /// Manage brands or categories: add, rename, delete (products keep existing without them).
 class NamesDialog extends StatefulWidget {
-  const NamesDialog.brands({super.key, required this.shop}) : isBrands = true;
+  const NamesDialog.brands({
+    super.key,
+    required this.shop,
+    this.chooser = const FileImageChooser(),
+  }) : isBrands = true;
   const NamesDialog.categories({super.key, required this.shop})
-    : isBrands = false;
+    : isBrands = false,
+      chooser = const FileImageChooser();
 
   final ShopApi shop;
   final bool isBrands;
+  final ImageChooser chooser;
 
   @override
   State<NamesDialog> createState() => _NamesDialogState();
@@ -379,7 +414,7 @@ class NamesDialog extends StatefulWidget {
 
 class _NamesDialogState extends State<NamesDialog> {
   final _new = TextEditingController();
-  List<({int id, String name})>? _items;
+  List<({int id, String name, String? logoUrl})>? _items;
   bool _changed = false;
   String? _error;
 
@@ -399,10 +434,10 @@ class _NamesDialogState extends State<NamesDialog> {
     try {
       final items = widget.isBrands
           ? (await widget.shop.brands())
-                .map((b) => (id: b.id, name: b.name))
+                .map((b) => (id: b.id, name: b.name, logoUrl: b.logoUrl))
                 .toList()
           : (await widget.shop.categories())
-                .map((c) => (id: c.id, name: c.name))
+                .map((c) => (id: c.id, name: c.name, logoUrl: null as String?))
                 .toList();
       if (mounted) setState(() => _items = items);
     } on AppException catch (e) {
@@ -434,6 +469,14 @@ class _NamesDialogState extends State<NamesDialog> {
     });
   }
 
+  Future<void> _setLogo(int id) async {
+    final image = await widget.chooser.choose();
+    if (image == null) return;
+    await _run(() async {
+      await widget.shop.setBrandLogo(id, image.bytes, image.name);
+    });
+  }
+
   Future<void> _rename(int id, String current) async {
     final name = await showDialog<String>(
       context: context,
@@ -455,8 +498,8 @@ class _NamesDialogState extends State<NamesDialog> {
     return AlertDialog(
       title: DialogHeader(widget.isBrands ? t.brands : t.categories),
       content: SizedBox(
-        width: 420,
-        height: 420,
+        width: 520,
+        height: 460,
         child: Column(
           children: [
             Row(
@@ -499,10 +542,63 @@ class _NamesDialogState extends State<NamesDialog> {
                           ListTile(
                             key: Key('name_row_${item.id}'),
                             dense: true,
+                            leading: widget.isBrands
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: item.logoUrl == null
+                                        ? Container(
+                                            key: Key('logo_none_${item.id}'),
+                                            width: 40,
+                                            height: 40,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHighest,
+                                            child: const Icon(
+                                              Icons.image_outlined,
+                                              size: 20,
+                                            ),
+                                          )
+                                        : Container(
+                                            key: Key('logo_${item.id}'),
+                                            width: 40,
+                                            height: 40,
+                                            color: const Color(0xFFF4F4F6),
+                                            padding: const EdgeInsets.all(3),
+                                            child: Image.network(
+                                              item.logoUrl!,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (_, _, _) =>
+                                                  const Icon(
+                                                    Icons.broken_image,
+                                                  ),
+                                            ),
+                                          ),
+                                  )
+                                : null,
                             title: Text(item.name),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                if (widget.isBrands) ...[
+                                  IconButton(
+                                    key: Key('logo_upload_${item.id}'),
+                                    tooltip: t.brandLogoUpload,
+                                    icon: const Icon(Icons.upload_outlined),
+                                    onPressed: () => _setLogo(item.id),
+                                  ),
+                                  if (item.logoUrl != null)
+                                    IconButton(
+                                      key: Key('logo_clear_${item.id}'),
+                                      tooltip: t.brandLogoRemove,
+                                      icon: const Icon(
+                                        Icons.hide_image_outlined,
+                                      ),
+                                      onPressed: () => _run(
+                                        () async =>
+                                            widget.shop.clearBrandLogo(item.id),
+                                      ),
+                                    ),
+                                ],
                                 IconButton(
                                   tooltip: t.edit,
                                   icon: const Icon(Icons.edit_outlined),

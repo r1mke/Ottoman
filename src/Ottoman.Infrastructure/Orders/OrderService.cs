@@ -40,7 +40,7 @@ public class OrderService(
         // Prices come from the catalogue, never from the request.
         var products = await db.Products.AsNoTracking()
             .Where(p => ids.Contains(p.Id) && p.IsActive)
-            .Select(p => new { p.Id, p.Name, p.Price, p.LowStockThreshold })
+            .Select(p => new { p.Id, p.Name, Price = p.SalePrice ?? p.Price, p.LowStockThreshold })
             .ToListAsync(ct);
         if (products.Count != ids.Count) return Result<OrderDto>.Invalid("Neki od proizvoda više nije dostupan.");
 
@@ -85,7 +85,7 @@ public class OrderService(
                     // Atomic conditional update: succeeds only if enough stock is left AND the price is still the one
                     // the customer was quoted. No read-then-write, so concurrent buyers of the last piece cannot both win.
                     var rows = await db.Products
-                        .Where(p => p.Id == productId && p.IsActive && p.Stock >= qty && p.Price == seenPrice)
+                        .Where(p => p.Id == productId && p.IsActive && p.Stock >= qty && (p.SalePrice ?? p.Price) == seenPrice)
                         .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock - qty), ct);
                     if (rows == 0)
                     {

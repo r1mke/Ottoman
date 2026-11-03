@@ -60,12 +60,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   child: NetworkPicture(
-                    key: Key('notification_image_${n.id}'),
+                    key: const Key('notification_detail_picture'),
                     url: n.imageUrl,
                     height: 180,
-                    fallbackIcon: Icons.campaign_outlined,
                   ),
                 ),
               ),
@@ -106,35 +105,41 @@ class _NotificationsPageState extends State<NotificationsPage> {
             return Card(
               key: Key('notification_${n.id}'),
               color: n.isRead ? null : scheme.primaryContainer,
-              child: ListTile(
-                onTap: () => _open(n),
-                leading: n.imageUrl == null
-                    ? Icon(notificationIcon(n.kind))
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: NetworkPicture(
-                          key: Key('notification_thumb_${n.id}'),
-                          url: n.imageUrl,
-                          width: 48,
-                          height: 48,
-                          fallbackIcon: Icons.campaign_outlined,
-                        ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (n.imageUrl != null)
+                    InkWell(
+                      onTap: () => _open(n),
+                      child: NetworkPicture(
+                        key: Key('notification_picture_${n.id}'),
+                        url: n.imageUrl,
+                        height: 150,
                       ),
-                title: Text(
-                  n.title,
-                  style: TextStyle(
-                    fontWeight: n.isRead ? FontWeight.w500 : FontWeight.w800,
+                    ),
+                  ListTile(
+                    onTap: () => _open(n),
+                    leading: Icon(notificationIcon(n.kind)),
+                    title: Text(
+                      n.title,
+                      style: TextStyle(
+                        fontWeight: n.isRead
+                            ? FontWeight.w500
+                            : FontWeight.w800,
+                      ),
+                    ),
+                    subtitle: Text(
+                      n.body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Text(
+                      formatWhen(n.createdAtUtc),
+                      style: TextStyle(color: scheme.outline, fontSize: 11),
+                    ),
                   ),
-                ),
-                subtitle: Text(
-                  n.body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Text(
-                  formatWhen(n.createdAtUtc),
-                  style: TextStyle(color: scheme.outline, fontSize: 11),
-                ),
+                ],
               ),
             );
           },

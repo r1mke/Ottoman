@@ -200,7 +200,8 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ImageKey")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<int>("RecipientCount")
                         .HasColumnType("int");
@@ -293,6 +294,10 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("LogoKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -377,11 +382,20 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("Gender")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<string>("PhotoKey")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("PhotoZoom")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(1.0);
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -406,6 +420,100 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.HasIndex("ServiceId");
 
                     b.ToTable("EmployeeServices");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.EmployeeTitle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("EmployeeTitles");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.GalleryItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Caption")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmployeeId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ImageKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsFeatured")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentHash")
+                        .IsUnique()
+                        .HasFilter("[ContentHash] IS NOT NULL");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("IsFeatured");
+
+                    b.HasIndex("CategoryId", "CreatedAtUtc");
+
+                    b.ToTable("GalleryItems");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.HaircutCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("HaircutCategories");
                 });
 
             modelBuilder.Entity("Ottoman.Domain.Entities.IdempotencyRecord", b =>
@@ -708,6 +816,10 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<decimal?>("SalePrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
@@ -719,6 +831,8 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Products", t =>
                         {
+                            t.HasCheckConstraint("CK_Product_SalePrice", "[SalePrice] IS NULL OR ([SalePrice] > 0 AND [SalePrice] < [Price])");
+
                             t.HasCheckConstraint("CK_Product_Stock", "[Stock] >= 0");
                         });
                 });
@@ -730,6 +844,9 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentHash")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("FileKey")
                         .IsRequired()
@@ -743,7 +860,9 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId", "ContentHash")
+                        .IsUnique()
+                        .HasFilter("[ContentHash] IS NOT NULL");
 
                     b.ToTable("ProductImages");
                 });
@@ -929,6 +1048,9 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ClientId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("EmployeeId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -942,6 +1064,10 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ReservationId");
+
+                    b.HasIndex("ClientId", "SlotStartUtc")
+                        .IsUnique()
+                        .HasFilter("[ClientId] IS NOT NULL");
 
                     b.HasIndex("EmployeeId", "SlotStartUtc")
                         .IsUnique();
@@ -1007,6 +1133,25 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.SalonOpeningHours", b =>
+                {
+                    b.Property<int>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CloseMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OpenMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Day");
+
+                    b.ToTable("SalonOpeningHours", t =>
+                        {
+                            t.HasCheckConstraint("CK_SalonOpeningHours_Range", "([OpenMinutes] IS NULL AND [CloseMinutes] IS NULL) OR ([OpenMinutes] >= 0 AND [CloseMinutes] <= 1440 AND [OpenMinutes] < [CloseMinutes])");
+                        });
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.SalonSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -1023,8 +1168,34 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("FacebookUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("InstagramUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("LogoKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
                     b.Property<int>("LowStockDefault")
                         .HasColumnType("int");
+
+                    b.Property<string>("MapsUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("MinLeadMinutes")
                         .HasColumnType("int");
@@ -1092,6 +1263,126 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Service_Duration", "[DurationMinutes] > 0 AND [DurationMinutes] % 5 = 0");
                         });
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.ShopSection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Background")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("BrandId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CardSpan")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Eyebrow")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("HeadingAlign")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ImageKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int?>("ImageProductImageId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Layout")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("MaxItems")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ShowAsCard")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowSeeAll")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TileSize")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BrandId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.ToTable("ShopSections");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.ShopSectionEntry", b =>
+                {
+                    b.Property<int>("ShopSectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("ShopSectionId", "EntityId");
+
+                    b.ToTable("ShopSectionEntries");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.ShopSectionProduct", b =>
+                {
+                    b.Property<int>("ShopSectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("ShopSectionId", "ProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ShopSectionProducts");
                 });
 
             modelBuilder.Entity("Ottoman.Domain.Entities.TimeOff", b =>
@@ -1209,6 +1500,10 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<string>("Bio")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -1224,6 +1519,10 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("bit");
@@ -1391,6 +1690,20 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.GalleryItem", b =>
+                {
+                    b.HasOne("Ottoman.Domain.Entities.HaircutCategory", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Ottoman.Domain.Entities.EmployeeProfile", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.IdempotencyRecord", b =>
                 {
                     b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
@@ -1526,6 +1839,47 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.ShopSection", b =>
+                {
+                    b.HasOne("Ottoman.Domain.Entities.Brand", "Brand")
+                        .WithMany()
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Ottoman.Domain.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Brand");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.ShopSectionEntry", b =>
+                {
+                    b.HasOne("Ottoman.Domain.Entities.ShopSection", null)
+                        .WithMany("Entries")
+                        .HasForeignKey("ShopSectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.ShopSectionProduct", b =>
+                {
+                    b.HasOne("Ottoman.Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ottoman.Domain.Entities.ShopSection", null)
+                        .WithMany("Products")
+                        .HasForeignKey("ShopSectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.TimeOff", b =>
                 {
                     b.HasOne("Ottoman.Domain.Entities.EmployeeProfile", null)
@@ -1587,6 +1941,13 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Ottoman.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("Ottoman.Domain.Entities.ShopSection", b =>
+                {
+                    b.Navigation("Entries");
+
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

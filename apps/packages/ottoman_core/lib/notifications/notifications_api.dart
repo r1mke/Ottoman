@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../network/api_client.dart';
 import '../reservations/reservation_models.dart';
 
@@ -16,13 +18,13 @@ class AppNotification {
   final String title;
   final String body;
 
+  /// The picture of a news item; null for the ordinary messages of the system.
+  final String? imageUrl;
+
   /// Category such as ReservationCreated, Reminder, OrderPaid, Announcement.
   final String kind;
   final DateTime createdAtUtc;
   final bool isRead;
-
-  /// Picture of a news item (announcement); null for ordinary messages.
-  final String? imageUrl;
 
   AppNotification asRead() => AppNotification(
     id: id,
@@ -133,29 +135,42 @@ class NotificationsApi {
     required String audience,
     String? targetUserId,
     bool sendEmail = false,
-  }) async => AnnouncementItem.fromJson(
-    await _api.post<Map<String, dynamic>>(
-      '/api/v1/announcements',
-      body: {
+    List<int>? imageBytes,
+    String? imageName,
+  }) async {
+    // A news item with a picture goes as a form; one without goes as plain JSON.
+    if (imageBytes != null) {
+      final form = FormData.fromMap({
         'title': title,
         'body': body,
         'audience': audience,
-        'targetUserId': targetUserId,
-        'sendEmail': sendEmail,
-      },
-    ),
-  );
-
-  Future<AnnouncementItem> setAnnouncementImage(
-    int id,
-    List<int> bytes,
-    String filename,
-  ) async => AnnouncementItem.fromJson(
-    await _api.put<Map<String, dynamic>>(
-      '/api/v1/announcements/$id/image',
-      body: imageForm(bytes, filename),
-    ),
-  );
+        'targetUserId': ?targetUserId,
+        'sendEmail': sendEmail.toString(),
+        'file': MultipartFile.fromBytes(
+          imageBytes,
+          filename: imageName ?? 'obavijest.jpg',
+        ),
+      });
+      return AnnouncementItem.fromJson(
+        await _api.post<Map<String, dynamic>>(
+          '/api/v1/announcements/with-image',
+          body: form,
+        ),
+      );
+    }
+    return AnnouncementItem.fromJson(
+      await _api.post<Map<String, dynamic>>(
+        '/api/v1/announcements',
+        body: {
+          'title': title,
+          'body': body,
+          'audience': audience,
+          'targetUserId': targetUserId,
+          'sendEmail': sendEmail,
+        },
+      ),
+    );
+  }
 
   Future<Paged<AnnouncementItem>> announcements({
     int page = 1,

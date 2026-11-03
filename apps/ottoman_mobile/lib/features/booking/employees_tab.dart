@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
-import 'employee_services_page.dart';
 import 'slot_picker_page.dart';
 
-/// Step 1 of booking: choose a barber (mockup "Uposlenici").
+/// Step 2 of booking: choose a barber among those who do every service chosen in step 1.
 class EmployeesTab extends StatefulWidget {
   const EmployeesTab({
     super.key,
@@ -12,6 +11,7 @@ class EmployeesTab extends StatefulWidget {
     required this.reservations,
     required this.reviews,
     required this.recommendations,
+    required this.services,
     required this.onBooked,
   });
 
@@ -19,6 +19,9 @@ class EmployeesTab extends StatefulWidget {
   final ReservationsApi reservations;
   final ReviewsApi reviews;
   final RecommendationsApi recommendations;
+
+  /// The services chosen in step 1; only barbers who do all of them are offered.
+  final List<Service> services;
 
   /// Called after a successful booking so other tabs can refresh.
   final VoidCallback onBooked;
@@ -44,31 +47,32 @@ class _EmployeesTabState extends State<EmployeesTab> {
   void _open(BuildContext context, Employee employee) =>
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => EmployeeServicesPage(
+          builder: (_) => SlotPickerPage(
             catalog: catalog,
+            reservations: reservations,
             employee: employee,
-            onContinue: (ctx, services) => Navigator.of(ctx).push(
-              MaterialPageRoute<void>(
-                builder: (_) => SlotPickerPage(
-                  catalog: catalog,
-                  reservations: reservations,
-                  employee: employee,
-                  services: services,
-                  onBooked: onBooked,
-                ),
-              ),
-            ),
+            services: widget.services,
+            onBooked: onBooked,
           ),
         ),
       );
+
+  /// Only the barbers who do every chosen service (the server checks it again when booking).
+  Future<List<Employee>> _qualified() async {
+    final wanted = widget.services.map((s) => s.id);
+    return (await catalog.employees())
+        .where((e) => wanted.every(e.serviceIds.contains))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AsyncView<List<Employee>>(
-      load: catalog.employees,
+      load: _qualified,
       skeleton: const _EmployeeGridSkeleton(),
       isEmpty: (e) => e.isEmpty,
+      emptyMessage: t.noBarberForServices,
       builder: (context, employees, reload) => RefreshIndicator(
         onRefresh: reload,
         child: CustomScrollView(
@@ -99,7 +103,11 @@ class _EmployeesTabState extends State<EmployeesTab> {
               child: FutureBuilder<List<Recommended<Employee>>>(
                 future: _recommended,
                 builder: (context, snap) {
-                  final picks = snap.data;
+                  // Only suggestions the person could actually book for these services.
+                  final offered = employees.map((e) => e.id).toSet();
+                  final picks = snap.data
+                      ?.where((p) => offered.contains(p.item.id))
+                      .toList();
                   if (picks == null || picks.isEmpty) {
                     return const SizedBox.shrink();
                   }
@@ -242,8 +250,9 @@ class _EmployeeCard extends StatelessWidget {
             children: [
               PersonAvatar(
                 radius: 40,
-                initials: employee.initials,
                 photoUrl: employee.photoUrl,
+                gender: employee.gender,
+                seed: employee.id,
               ),
               const SizedBox(height: 12),
               Text(

@@ -62,17 +62,8 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.content_cut, size: 48),
-                  const SizedBox(height: 8),
-                  Text(
-                    t.appName,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
+                  const OttomanLogo(key: Key('login_logo'), height: 150),
+                  const SizedBox(height: 12),
                   Text(
                     t.signInSubtitle,
                     textAlign: TextAlign.center,

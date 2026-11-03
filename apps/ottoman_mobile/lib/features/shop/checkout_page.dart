@@ -38,6 +38,37 @@ class _CheckoutPageState extends State<CheckoutPage> {
     super.dispose();
   }
 
+  /// Sending an order cannot be taken back, so the customer confirms it first.
+  Future<void> _confirmAndSubmit() async {
+    final t = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.confirmOrderTitle),
+        content: Text(
+          t.confirmOrderBody(
+            money(t, widget.cart.total),
+            _payment == PaymentMethod.card ? t.payByCard : t.payOnReceipt,
+          ),
+          key: const Key('confirm_order_text'),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('confirm_order_cancel'),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            key: const Key('confirm_order'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(t.placeOrder),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) await _submit();
+  }
+
   Future<void> _submit() async {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -54,22 +85,42 @@ class _CheckoutPageState extends State<CheckoutPage> {
         idempotencyKey: _attempt,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
-      // The order exists (and its stock is held) from here on, whatever happens with the payment.
-      widget.cart.clear();
-
-      var message = t.orderPlaced;
       if (order.awaitsPayment) {
+        // The card sheet needs a payment tied to an order, so the order exists while it is open. If it is closed
+        // or declined nothing was paid: withdraw the order (stock goes back) and keep the basket as it was.
         final result = await widget.cardPayment.pay(order);
-        message = result == CardPaymentResult.paid
-            ? t.orderPlaced
-            : t.orderAwaitsPayment;
+        if (result != CardPaymentResult.paid) {
+          await _withdraw(order);
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                result == CardPaymentResult.unavailable
+                    ? t.cardUnavailable
+                    : t.paymentNotCompleted,
+              ),
+            ),
+          );
+          return;
+        }
       }
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      widget.cart.clear();
+      messenger.showSnackBar(SnackBar(content: Text(t.orderPlaced)));
       navigator.popUntil((r) => r.isFirst);
     } on AppException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Cancels an order whose payment never happened. A new attempt gets a new key, otherwise the server would
+  /// hand back the cancelled order. If the cancel itself fails, the unpaid order simply expires on its own.
+  Future<void> _withdraw(ShopOrder order) async {
+    _attempt = newIdempotencyKey();
+    try {
+      await widget.shop.cancelOrder(order.id);
+    } on AppException {
+      // Left to the server's expiry of unpaid orders.
     }
   }
 
@@ -145,7 +196,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
-            onPressed: _busy ? null : _submit,
+            onPressed: _busy ? null : _confirmAndSubmit,
             child: _busy
                 ? const SizedBox(
                     width: 22,

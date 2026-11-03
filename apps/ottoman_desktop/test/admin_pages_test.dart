@@ -134,7 +134,12 @@ Future<_Recorder> _adminShell(WidgetTester tester) async {
     ),
   );
   await auth.restore();
-  await tester.pumpWidget(OttomanDesktopApp(auth: auth));
+  await tester.pumpWidget(
+    OttomanDesktopApp(
+      auth: auth,
+      profiles: SavedProfiles(MemorySavedProfilesStore()),
+    ),
+  );
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('login_email')), 'a@b.c');
   await tester.enterText(find.byKey(const Key('login_password')), 'pw');

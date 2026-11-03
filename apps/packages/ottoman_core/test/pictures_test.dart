@@ -184,15 +184,48 @@ void main() {
     },
   );
 
-  testWidgets('PersonAvatar always shows the initials underneath', (
+  testWidgets('PersonAvatar without a photo shows a default chosen by gender', (
     tester,
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: PersonAvatar(initials: 'KH')),
+        home: Scaffold(
+          body: Row(
+            children: [
+              PersonAvatar(gender: 'Male'),
+              PersonAvatar(gender: 'Female'),
+              PersonAvatar(),
+            ],
+          ),
+        ),
       ),
     );
-    expect(find.text('KH'), findsOneWidget);
+    await tester.pump();
+    final assets = tester
+        .widgetList<Image>(find.byKey(const Key('avatar-default')))
+        .map((i) => (i.image as AssetImage).assetName)
+        .toList();
+    expect(assets, hasLength(3));
+    expect(assets[0], startsWith('assets/avatars/male_'));
+    expect(assets[1], startsWith('assets/avatars/female_'));
+    expect(assets[2], 'assets/avatars/neutral.png');
     expect(find.byKey(const Key('avatar-photo')), findsNothing);
+  });
+
+  test('the same seed always gets the same drawn avatar, other seeds spread over all of them', () {
+    expect(AvatarGender.male.asset('abc'), AvatarGender.male.asset('abc'));
+    expect(AvatarGender.male.asset(null), 'assets/avatars/male_1.png');
+    final used = {
+      for (var i = 0; i < 40; i++) AvatarGender.female.asset('barber-$i'),
+    };
+    expect(used, hasLength(AvatarGender.variants));
+    expect(AvatarGender.unknown.asset('x'), AvatarGender.unknown.asset('y'));
+  });
+
+  test('only Male and Female pick a gendered avatar', () {
+    expect(AvatarGender.parse('Male'), AvatarGender.male);
+    expect(AvatarGender.parse('Female'), AvatarGender.female);
+    expect(AvatarGender.parse(null), AvatarGender.unknown);
+    expect(AvatarGender.parse('male'), AvatarGender.unknown);
   });
 }

@@ -8,6 +8,10 @@ abstract final class Validators {
     r'^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$',
   );
   static final _phoneChars = RegExp(r'^\+?[0-9 /().\-]+$');
+  // National number after 0 / +387 / 00387: mobile 060-067 (+ 6 digits), landline area codes 03x, 049, 05x (+ 6).
+  static final _bosnianPhone = RegExp(
+    r'^(?:\+387|00387|0)(?:6[0-7]\d{6,7}|(?:3\d|49|5\d)\d{6})$',
+  );
   static final _name = RegExp(r"^[\p{L}][\p{L} .'\-]*$", unicode: true);
   static final _money = RegExp(r'^\d{1,6}([.,]\d{1,2})?$');
 
@@ -20,12 +24,13 @@ abstract final class Validators {
     return s.length <= 254 && _email.hasMatch(s) ? null : t.invalidEmail;
   }
 
-  /// Optional unless [required]. 6 to 15 digits, with spaces, dashes, slashes, brackets and a leading + allowed.
+  /// Optional unless [required]. A Bosnian number (mobile 06x or landline), as 061 123 456 or +387 61 123 456;
+  /// spaces, dashes, slashes and brackets are allowed as separators.
   static String? phone(AppLocalizations t, String? v, {bool required = false}) {
     final s = (v ?? '').trim();
     if (s.isEmpty) return required ? t.requiredField : null;
-    final digits = s.replaceAll(RegExp(r'\D'), '').length;
-    return _phoneChars.hasMatch(s) && digits >= 6 && digits <= 15
+    final compact = s.replaceAll(RegExp(r'[ /().\-]'), '');
+    return _phoneChars.hasMatch(s) && _bosnianPhone.hasMatch(compact)
         ? null
         : t.invalidPhone;
   }

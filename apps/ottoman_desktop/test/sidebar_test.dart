@@ -120,4 +120,29 @@ void main() {
     );
     expect(size.height, 44);
   });
+
+  testWidgets('a heading appears once above each run of entries of one group', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        items: const [
+          SidebarItem(icon: Icons.dashboard, label: 'Pregled', group: 'Rad'),
+          SidebarItem(icon: Icons.schedule, label: 'Raspored', group: 'Rad'),
+          SidebarItem(
+            icon: Icons.inventory_2,
+            label: 'Proizvodi',
+            group: 'Shop',
+          ),
+          SidebarItem(icon: Icons.person, label: 'Moj profil'),
+        ],
+      ),
+    );
+
+    expect(find.text('RAD'), findsOneWidget);
+    expect(find.text('SHOP'), findsOneWidget);
+    expect(find.byKey(const Key('nav_group_Rad')), findsOneWidget);
+    // Entries keep their position-based keys, headings do not shift them.
+    expect(find.byKey(const Key('nav_3')), findsOneWidget);
+  });
 }

@@ -1,9 +1,10 @@
 using FluentValidation;
 using Ottoman.Application.Common;
+using Ottoman.Domain.Entities;
 
 namespace Ottoman.Application.Shop;
 
-public record BrandDto(int Id, string Name);
+public record BrandDto(int Id, string Name, string? LogoUrl = null);
 
 public record CategoryDto(int Id, string Name, string? Description);
 
@@ -32,7 +33,8 @@ public record ProductDto(
     bool IsLowStock,
     bool IsActive,
     string? ImageUrl,
-    IReadOnlyList<ProductImageDto> Images);
+    IReadOnlyList<ProductImageDto> Images,
+    decimal? SalePrice = null);
 
 public record ProductImageDto(int Id, string Url);
 
@@ -45,7 +47,8 @@ public record ProductUpsertRequest(
     decimal Price,
     int Stock,
     int? LowStockThreshold,
-    bool IsActive = true);
+    bool IsActive = true,
+    decimal? SalePrice = null);
 
 public class ProductUpsertRequestValidator : AbstractValidator<ProductUpsertRequest>
 {
@@ -54,6 +57,9 @@ public class ProductUpsertRequestValidator : AbstractValidator<ProductUpsertRequ
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200).WithName("Naziv");
         RuleFor(x => x.Description).MaximumLength(2000).WithName("Opis");
         RuleFor(x => x.Price).GreaterThan(0).LessThanOrEqualTo(100_000).PrecisionScale(18, 2, false).WithName("Cijena");
+        RuleFor(x => x.SalePrice).GreaterThan(0).PrecisionScale(18, 2, false)
+            .Must((x, sale) => sale < x.Price).WithMessage("Akcijska cijena mora biti manja od redovne cijene.")
+            .When(x => x.SalePrice.HasValue).WithName("Akcijska cijena");
         RuleFor(x => x.Stock).InclusiveBetween(0, 100_000).WithName("Zaliha");
         RuleFor(x => x.LowStockThreshold).InclusiveBetween(0, 100_000).When(x => x.LowStockThreshold.HasValue).WithName("Prag zalihe");
     }
@@ -82,10 +88,30 @@ public record ProductQuery(
     int? BrandId = null,
     ProductSort Sort = ProductSort.Name,
     bool IncludeInactive = false,
-    bool OnlyLowStock = false);
+    bool OnlyLowStock = false,
+    bool OnlyOnSale = false);
+
+/// <summary>A category or brand on the shop's entry page: how many products it has on the shelf and a picture.</summary>
+/// <param name="IsLogo">The picture is a brand logo (shown whole, on a light ground), not a product photo.</param>
+public record ShopTileDto(int Id, string Name, int ProductCount, string? ImageUrl, bool IsLogo = false);
+
+/// <summary>Everything the shop entry page shows. Only products that are active and in stock are counted.</summary>
+public record ShopOverviewDto(
+    IReadOnlyList<ShopTileDto> Categories,
+    IReadOnlyList<ShopTileDto> Brands,
+    IReadOnlyList<ShopCardDto> Cards,
+    IReadOnlyList<ShopBlockDto> Blocks);
+
+/// <summary>A shop section the admin chose to show as a card on the entry page.</summary>
+/// <param name="MaxDiscountPercent">The deepest discount among its products (0 when none is on sale).</param>
+public record ShopCardDto(
+    int SectionId, string Title, ShopSectionKind Kind, int ProductCount, int MaxDiscountPercent, string? ImageUrl, string? Eyebrow = null,
+    ShopSectionStyle? Style = null);
 
 public interface IProductCatalog
 {
+    Task<ShopOverviewDto> GetOverviewAsync(CancellationToken ct);
+
     Task<PagedResult<ProductDto>> ListAsync(ProductQuery query, PageQuery page, CancellationToken ct);
     Task<Result<ProductDto>> GetAsync(int id, bool includeInactive, CancellationToken ct);
 
@@ -98,6 +124,7 @@ public interface IProductCatalog
 
     Task<IReadOnlyList<BrandDto>> ListBrandsAsync(CancellationToken ct);
     Task<PagedResult<BrandDto>> PageBrandsAsync(string? search, PageQuery page, CancellationToken ct);
+    Task<Result<BrandDto>> GetBrandAsync(int id, CancellationToken ct);
     Task<Result<BrandDto>> CreateBrandAsync(NameRequest request, CancellationToken ct);
     Task<Result<BrandDto>> UpdateBrandAsync(int id, NameRequest request, CancellationToken ct);
     Task<Result<bool>> DeleteBrandAsync(int id, CancellationToken ct);

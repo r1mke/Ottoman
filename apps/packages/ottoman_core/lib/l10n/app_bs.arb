@@ -32,11 +32,20 @@
   "profileSaved": "Profil je spremljen.",
   "requiredField": "Obavezno polje",
   "invalidEmail": "Unesite email u formatu ime@domena.ba",
-  "invalidPhone": "Unesite telefon u formatu 061 123 456 ili +387 61 123 456 (6 do 15 cifara).",
+  "invalidPhone": "Unesite ispravan broj telefona, npr. 061 123 456 ili +387 61 123 456.",
   "invalidName": "Unesite 2 do 50 slova (dozvoljeni su razmak, tačka, apostrof i crtica).",
   "invalidPrice": "Unesite cijenu veću od 0, najviše dvije decimale (npr. 12,50).",
   "invalidWholeNumber": "Unesite cijeli broj od {min} do {max}.",
-  "@invalidWholeNumber": { "placeholders": { "min": { "type": "int" }, "max": { "type": "int" } } },
+  "@invalidWholeNumber": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "passwordRules": "Najmanje 8 znakova, veliko i malo slovo, broj i poseban znak.",
   "registrationDone": "Račun je kreiran. Sada se možete prijaviti.",
   "welcomeBack": "Dobrodošli nazad",
@@ -50,13 +59,25 @@
   "myProfile": "Moj profil",
   "comingSoon": "Uskoro dostupno",
   "signedInAs": "Prijavljeni ste kao {name}",
-  "@signedInAs": { "placeholders": { "name": { "type": "String" } } },
+  "@signedInAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "genericError": "Došlo je do greške.",
   "chooseEmployee": "Odaberite uposlenika",
-  "chooseEmployeeHint": "Za odabir usluga prvo odaberite nekog od naših uposlenika.",
+  "chooseEmployeeHint": "Prikazani su uposlenici koji rade sve odabrane usluge.",
   "pricelist": "Usluge & Cjenovnik",
   "minutesShort": "{count} min",
-  "@minutesShort": { "placeholders": { "count": { "type": "int" } } },
+  "@minutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "total": "Ukupno",
   "continueLabel": "Nastavi",
   "selectServices": "Odaberite jednu ili više usluga",
@@ -130,7 +151,13 @@
   "lowStock": "Niska zaliha",
   "stock": "Zaliha",
   "inStockCount": "Na zalihi: {count}",
-  "@inStockCount": { "placeholders": { "count": { "type": "int" } } },
+  "@inStockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "allCategories": "Sve kategorije",
   "sortBy": "Sortiraj",
   "sortName": "Naziv",
@@ -154,7 +181,13 @@
   "noOrders": "Nema narudžbi",
   "orders": "Narudžbe",
   "orderNumber": "Narudžba #{id}",
-  "@orderNumber": { "placeholders": { "id": { "type": "int" } } },
+  "@orderNumber": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
   "orderStatusPendingPayment": "Čeka plaćanje",
   "orderStatusPlaced": "Zaprimljena",
   "orderStatusFulfilled": "Preuzeta",
@@ -176,7 +209,13 @@
   "manage": "Upravljaj",
   "allStatuses": "Svi statusi",
   "productsCount": "{count} proizvoda",
-  "@productsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@productsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "payment": "Plaćanje",
   "paymentStatusPending": "Čeka uplatu",
   "paymentStatusSucceeded": "Plaćeno",
@@ -197,7 +236,13 @@
   "announcementSent": "Poruka je poslana.",
   "sentMessages": "Poslane poruke",
   "recipientsCount": "{count} primalaca",
-  "@recipientsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@recipientsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "newMessage": "Nova poruka",
   "haveCode": "Imam kod",
   "resetCode": "Kod iz maila",
@@ -259,7 +304,13 @@
   "exportExcel": "Excel",
   "exportPdf": "PDF",
   "savedTo": "Spremljeno: {path}",
-  "@savedTo": { "placeholders": { "path": { "type": "String" } } },
+  "@savedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "showInFolder": "Prikaži",
   "reportRevenue": "Prihod",
   "reportEmployees": "Uposlenici",
@@ -284,9 +335,21 @@
   "clientBlock": "Blokiraj",
   "clientUnblock": "Odblokiraj",
   "clientBlockQuestion": "Blokirati klijenta {name}? Odmah će biti odjavljen i neće se moći prijaviti dok ga ne odblokirate.",
-  "@clientBlockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "@clientBlockQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "clientUnblockQuestion": "Odblokirati klijenta {name}?",
-  "@clientUnblockQuestion": { "placeholders": { "name": { "type": "String" } } },
+  "@clientUnblockQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "clientVisits": "Posjete",
   "clientNoShows": "Nije došao",
   "clientCancelled": "Otkazano",
@@ -316,6 +379,230 @@
   "cancelReasonLabel": "Razlog otkazivanja",
   "cancelReasonOptionalLabel": "Razlog (nije obavezan)",
   "cancelReasonRequired": "Unesite razlog (najmanje 3 znaka). Klijent ga dobija u obavijesti.",
-  "pictureNotSaved": "Slika nije spremljena"
-
+  "pictureNotSaved": "Slika nije spremljena",
+  "chooseAccount": "Ko se prijavljuje?",
+  "addAccount": "Dodaj račun",
+  "removeFromList": "Ukloni s liste",
+  "backToAccounts": "Nazad na račune",
+  "mainPicture": "Glavna",
+  "pictureHint": "JPEG, PNG ili WebP, do 5 MB. Ista slika se ne može dodati dvaput.",
+  "manageTitles": "Uredi listu titula",
+  "newTitle": "Nova titula",
+  "titleUsedBy": "Koristi: {count}",
+  "titleInUseHint": "Titulu koriste uposlenici, promijenite im je prije brisanja.",
+  "@titleUsedBy": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gender": "Spol",
+  "genderMale": "Muški",
+  "genderFemale": "Ženski",
+  "done": "Gotovo",
+  "manageAccounts": "Uredi račune",
+  "removeAccountHint": "Račun se samo uklanja s liste na ovom računaru.",
+  "zoom": "Zoom",
+  "resetZoom": "Resetuj",
+  "zoomHint": "Slika se sama centrira na lice. Zoom određuje koliko se približava.",
+  "galleryTitle": "Galerija radova",
+  "ourWork": "Naši radovi",
+  "viewGallery": "Pogledaj galeriju",
+  "allStyles": "Sve",
+  "galleryEmpty": "Još nema dodanih radova.",
+  "closedDay": "Zatvoreno",
+  "openInMaps": "Otvori u Google Maps",
+  "callSalon": "Pozovi",
+  "findUs": "Gdje smo",
+  "bookAppointment": "Rezerviši termin",
+  "haircutStyle": "Stil frizure",
+  "doneBy": "Frizer",
+  "addWork": "Dodaj rad",
+  "editWork": "Uredi rad",
+  "captionOptional": "Opis (nije obavezno)",
+  "showOnHome": "Prikaži na početnoj",
+  "onHomeBadge": "Na početnoj",
+  "noBarber": "Bez uposlenika",
+  "styles": "Stilovi frizura",
+  "addStyle": "Dodaj stil",
+  "styleName": "Naziv stila",
+  "chooseStyle": "Odaberite stil frizure.",
+  "choosePicture": "Odaberite sliku",
+  "deleteWorkQuestion": "Obrisati ovaj rad iz galerije?",
+  "deleteStyleQuestion": "Obrisati ovaj stil?",
+  "workAdded": "Rad je dodan.",
+  "salonProfile": "Salon",
+  "salonName": "Naziv salona",
+  "address": "Adresa",
+  "mapsLink": "Google lokacija (link)",
+  "logo": "Logo",
+  "openFrom": "Od",
+  "openTo": "Do",
+  "openDay": "Radi",
+  "invalidUrl": "Unesite ispravnu web adresu (https://...).",
+  "hoursOrder": "Vrijeme otvaranja mora biti prije zatvaranja.",
+  "salonSaved": "Podaci o salonu su spremljeni.",
+  "aboutSalon": "O salonu",
+  "latitude": "Geografska širina",
+  "longitude": "Geografska dužina",
+  "coordinatesBoth": "Unesite i širinu i dužinu, ili nijednu.",
+  "invalidCoordinate": "Neispravna vrijednost.",
+  "chooseServicesHint": "Odaberite jednu ili više usluga, a zatim uposlenika i termin.",
+  "noBarberForServices": "Nijedan uposlenik ne radi sve odabrane usluge. Vratite se i promijenite odabir.",
+  "quantity": "Količina",
+  "addedToCartCount": "Dodano u korpu: {count}",
+  "@addedToCartCount": {"placeholders": {"count": {"type": "int"}}},
+  "allProducts": "Svi proizvodi",
+  "salePrice": "Akcijska cijena",
+  "salePriceHint": "Ostavite prazno ako proizvod nije na akciji",
+  "salePriceTooHigh": "Mora biti manja od redovne cijene",
+  "shopSectionsTitle": "Početna shopa",
+  "shopSectionsHint": "Redovi koje kupci vide na vrhu shopa. Povucite za promjenu redoslijeda.",
+  "addSection": "Dodaj sekciju",
+  "editSection": "Uredi sekciju",
+  "sectionTitle": "Naslov",
+  "sectionKind": "Šta prikazuje",
+  "kindNewArrivals": "Novo u ponudi (zadnje dodani proizvodi)",
+  "kindOnSale": "Akcije (proizvodi s akcijskom cijenom)",
+  "kindCategory": "Proizvodi jedne kategorije i/ili brenda",
+  "kindManual": "Ručni izbor proizvoda",
+  "sectionMaxItems": "Najviše proizvoda",
+  "sectionVisible": "Prikazano kupcima",
+  "sectionPickProducts": "Odaberite proizvode",
+  "sectionSelected": "Odabrano",
+  "noSections": "Još nema sekcija. Dodajte prvu.",
+  "deleteSectionQuestion": "Obrisati sekciju? Proizvodi ostaju u ponudi.",
+  "searchProducts": "Pretraži proizvode",
+  "mapsLinkHint": "Zalijepite link iz Google Maps (Dijeli). Pin za mapu u aplikaciji se očitava iz linka; ako ne uspije, unesite širinu i dužinu ispod.",
+  "paymentNotCompleted": "Plaćanje nije završeno. Narudžba nije kreirana, a proizvodi su ostali u korpi.",
+  "groupWork": "Rad",
+  "groupShop": "Shop",
+  "groupSalon": "Salon",
+  "groupClients": "Klijenti",
+  "groupAnalytics": "Analitika",
+  "groupAccount": "Račun",
+  "any": "Bilo koji",
+  "pickCategoryOrBrand": "Odaberite kategoriju ili brend",
+  "instagramLink": "Instagram (link)",
+  "facebookLink": "Facebook (link)",
+  "connectWithUs": "Povežite se s nama",
+  "findUsHere": "Pronađite nas ovdje",
+  "callUs": "Pozovi",
+  "instagram": "Instagram",
+  "facebook": "Facebook",
+  "eyebrowGallery": "Galerija",
+  "eyebrowContact": "Kontakt",
+  "eyebrowLocation": "Lokacija",
+  "eyebrowSchedule": "Raspored",
+  "eyebrowAbout": "O nama",
+  "getToKnowUs": "Upoznajte nas",
+  "welcomeTo": "Dobrodošli u {name}",
+  "@welcomeTo": {"placeholders": {"name": {"type": "String"}}},
+  "groupPersonalData": "Lični podaci",
+  "groupAboutUs": "O nama",
+  "editProfile": "Uredi profil",
+  "manageAccount": "Upravljanje računom",
+  "privacyPolicy": "Pravila privatnosti",
+  "termsOfUse": "Uslovi korištenja",
+  "aboutApp": "O aplikaciji",
+  "chooseDate": "Odaberite datum",
+  "chooseTime": "Odaberite sate",
+  "unavailableMarkedRed": "Nedostupni termini su označeni crvenom bojom",
+  "eyebrowAssortment": "Asortiman",
+  "eyebrowBrands": "Marke",
+  "brandsTitle": "Brendovi",
+  "onSaleTitle": "Akcije",
+  "newInStoreTitle": "Novo u ponudi",
+  "newestProducts": "Najnoviji proizvodi",
+  "searchResults": "Rezultati pretrage",
+  "discountUpTo": "do -{percent}%",
+  "@discountUpTo": {"placeholders": {"percent": {"type": "int"}}},
+  "productsCount": "{count, plural, one{{count} proizvod} few{{count} proizvoda} other{{count} proizvoda}}",
+  "@productsCount": {"placeholders": {"count": {"type": "int"}}},
+  "showAsCard": "Prikaži kao karticu na ulaznoj stranici",
+  "cardPicture": "Slika kartice",
+  "cardPictureAuto": "Automatska slika (prvi proizvod u sekciji)",
+  "uploadPicture": "Pošalji sliku",
+  "pickProductPicture": "Izaberi sliku proizvoda",
+  "removePicture": "Ukloni sliku",
+  "saveSectionFirst": "Prvo spremite sekciju, pa joj dodajte sliku.",
+  "pickPictureTitle": "Odaberite sliku proizvoda",
+  "noPicturesFound": "Nema proizvoda sa slikama za ovu pretragu.",
+  "brandLogoUpload": "Postavi logotip",
+  "brandLogoRemove": "Ukloni logotip",
+  "sectionTitleHint": "Kratak naslov koji lijepo stane na karticu",
+  "sectionTitleTooShort": "Naslov mora imati najmanje {min} znaka.",
+  "@sectionTitleTooShort": {"placeholders": {"min": {"type": "int"}}},
+  "sectionTitleTooLong": "Naslov može imati najviše {max} znaka.",
+  "@sectionTitleTooLong": {"placeholders": {"max": {"type": "int"}}},
+  "sectionLayout": "Oblik sekcije",
+  "layoutRow": "Red",
+  "layoutGrid": "Mreža",
+  "layoutBanner": "Veliki baner",
+  "layoutRowHint": "Proizvodi u jednom redu koji se pomiče u stranu.",
+  "layoutGridHint": "Proizvodi u dvije kolone, jedan ispod drugog.",
+  "layoutBannerHint": "Široka slika s naslovom, a ispod nje red proizvoda.",
+  "previewTitle": "Pregled u aplikaciji",
+  "previewCard": "Kartica",
+  "previewSection": "Sekcija",
+  "previewSectionTitlePlaceholder": "Naslov sekcije",
+  "shopTab": "Shop",
+  "sectionEyebrow": "Mali tekst iznad naslova (žuti)",
+  "sectionEyebrowHint": "Neobavezno, npr. KOLEKCIJA. Prikazuje se žutim slovima.",
+  "sectionTitleWhite": "Naslov (bijeli tekst)",
+  "sectionEmptyWarning": "Ova sekcija trenutno nema nijedan proizvod, pa je kupci ne vide. Promijenite odabir proizvoda.",
+  "sectionHasProducts": "Trenutno prikazuje {count} proizvoda",
+  "@sectionHasProducts": {"placeholders": {"count": {"type": "int"}}},
+  "sectionEmptyShort": "Nema proizvoda: kupci ne vide ovu sekciju",
+  "seeAll": "Vidi sve",
+  "kindCategoryTiles": "Blok kategorija (pločice)",
+  "kindBrandTiles": "Blok brendova (kartice)",
+  "kindRecommended": "Preporuke („Možda vam se sviđa“)",
+  "styleTitle": "Izgled",
+  "backgroundLabel": "Pozadina sekcije",
+  "bgNone": "Bez ploče",
+  "bgSoft": "Tamna ploča",
+  "bgAmber": "Jantarna ploča",
+  "bannerAlwaysPanel": "Baner uvijek stoji na ploči, zajedno s proizvodima ispod.",
+  "alignLabel": "Poravnanje naslova",
+  "alignLeft": "Lijevo",
+  "alignCenter": "Sredina",
+  "tileSizeLabel": "Veličina proizvoda",
+  "tileCompact": "Mali",
+  "tileNormal": "Srednji",
+  "tileLarge": "Veliki",
+  "showSeeAllLabel": "Prikaži vezu „Vidi sve“ ispod sekcije",
+  "cardSpanLabel": "Širina kartice",
+  "spanHalf": "Pola širine",
+  "spanFull": "Cijela širina",
+  "tileCountCategories": "Broj kategorija (paran)",
+  "tileCountBrands": "Broj brendova",
+  "tilesManual": "Ručni izbor i redoslijed",
+  "tilesAutoHint": "Automatski: prikazuju se samo oni koji imaju proizvoda, najpopunjeniji prvi.",
+  "tilesPickHint": "Dodirnite da dodate, povucite da promijenite redoslijed. Prikazuju se samo oni koji imaju proizvoda.",
+  "tilesSelected": "Odabrano",
+  "tilesAvailable": "Dostupno",
+  "categoriesEvenError": "Broj odabranih kategorija mora biti paran, da zadnji red bude pun.",
+  "blockNoDelete": "Ovaj blok se ne briše, samo se sakriva prekidačem.",
+  "sectionShows": "Prikazuje: {count}",
+  "previewSeeAll": "Vidi sve",
+  "@sectionShows": {"placeholders": {"count": {"type": "int"}}},
+  "confirmOrderTitle": "Potvrda narudžbe",
+  "confirmOrderBody": "Narudžba na iznos {total}. {payment}. Preuzimanje u salonu.",
+  "@confirmOrderBody": {"placeholders": {"total": {"type": "String"}, "payment": {"type": "String"}}},
+  "confirmBookingTitle": "Potvrda rezervacije",
+  "confirmBookingBody": "Rezervisati termin kod {barber}, {when}, ukupno {total}?",
+  "@confirmBookingBody": {"placeholders": {"barber": {"type": "String"}, "when": {"type": "String"}, "total": {"type": "String"}}},
+  "messagePicture": "Slika (neobavezno)",
+  "addPicture": "Dodaj sliku",
+  "removePictureShort": "Ukloni",
+  "salonLocation": "Lokacija salona na mapi",
+  "salonLocationHint": "Upišite adresu i pronađite je, ili kliknite na mapu da postavite oznaku.",
+  "searchAddress": "Adresa za pretragu",
+  "findOnMap": "Pronađi",
+  "addressNotFound": "Adresa nije pronađena. Kliknite na mapu da postavite oznaku.",
+  "noPinYet": "Oznaka još nije postavljena.",
+  "pinSet": "Oznaka je postavljena.",
+  "removePin": "Ukloni oznaku"
 }

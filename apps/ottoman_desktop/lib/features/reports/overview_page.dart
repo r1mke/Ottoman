@@ -67,6 +67,7 @@ class _Dashboard extends StatelessWidget {
             children: [
               _KpiCard(
                 id: 'revenue',
+                icon: Icons.payments_outlined,
                 title: t.kpiRevenue,
                 value: money(t, d.revenue.value),
                 change: d.revenue.changePercent,
@@ -75,6 +76,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'services',
+                icon: Icons.content_cut,
                 accent: WorkspaceColors.amber,
                 title: t.kpiServices,
                 value: money(t, d.servicesRevenue.value),
@@ -83,6 +85,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'products',
+                icon: Icons.shopping_bag_outlined,
                 accent: WorkspaceColors.amber,
                 title: t.kpiProducts,
                 value: money(t, d.productsRevenue.value),
@@ -91,6 +94,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'appointments',
+                icon: Icons.event_available_outlined,
                 accent: WorkspaceColors.info,
                 title: t.kpiAppointments,
                 value: d.appointments.value.toStringAsFixed(0),
@@ -99,6 +103,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'orders',
+                icon: Icons.receipt_long_outlined,
                 accent: WorkspaceColors.info,
                 title: t.kpiOrders,
                 value: d.orders.value.toStringAsFixed(0),
@@ -107,6 +112,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'clients',
+                icon: Icons.person_add_alt_1_outlined,
                 accent: WorkspaceColors.info,
                 title: t.kpiNewClients,
                 value: d.newClients.value.toStringAsFixed(0),
@@ -115,12 +121,14 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'ticket',
+                icon: Icons.sell_outlined,
                 title: t.kpiAverageTicket,
                 value: money(t, d.averageTicket),
                 t: t,
               ),
               _KpiCard(
                 id: 'noshow',
+                icon: Icons.event_busy_outlined,
                 accent: WorkspaceColors.danger,
                 title: t.kpiNoShow,
                 value: '${d.noShowRate}%',
@@ -128,6 +136,7 @@ class _Dashboard extends StatelessWidget {
               ),
               _KpiCard(
                 id: 'cancelled',
+                icon: Icons.cancel_outlined,
                 title: t.kpiCancelled,
                 value: '${d.cancellationRate}%',
                 t: t,
@@ -223,14 +232,15 @@ class _Dashboard extends StatelessWidget {
           ?.copyWith(fontWeight: FontWeight.w700);
 }
 
-/// One headline number: a white card with a coloured top edge, the figure, and how it moved against the
-/// previous period (green up, red down). The top colour groups related figures at a glance.
+/// One headline number: a white card with the figure, how it moved against the previous period (green up, red
+/// down) and a softly tinted icon tile whose colour groups related figures at a glance.
 class _KpiCard extends StatelessWidget {
   const _KpiCard({
     required this.id,
     required this.title,
     required this.value,
     required this.t,
+    required this.icon,
     this.change,
     this.accent = WorkspaceColors.neutral,
   });
@@ -240,67 +250,83 @@ class _KpiCard extends StatelessWidget {
   final String value;
   final double? change;
   final AppLocalizations t;
+  final IconData icon;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       key: Key('kpi_$id'),
-      clipBehavior: Clip.antiAlias,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: accent, width: 4)),
-        ),
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-        child: Column(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: WorkspaceColors.muted,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                key: Key('kpi_value_$id'),
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            if (change != null)
-              Row(
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    change! >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                    size: 14,
-                    color: _color(change!),
-                  ),
-                  const SizedBox(width: 2),
                   Text(
-                    '${change!.abs().toStringAsFixed(1)}%',
-                    key: Key('kpi_change_$id'),
-                    style: TextStyle(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: WorkspaceColors.muted,
                       fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: _color(change!),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      key: Key('kpi_value_$id'),
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (change != null)
+                    Row(
+                      children: [
+                        Icon(
+                          change! >= 0
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 14,
+                          color: _color(change!),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${change!.abs().toStringAsFixed(1)}%',
+                          key: Key('kpi_change_$id'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _color(change!),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    const SizedBox(height: 16),
                 ],
-              )
-            else
-              const SizedBox(height: 16),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: accent),
+            ),
           ],
         ),
       ),

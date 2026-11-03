@@ -8,7 +8,7 @@ class CartLine {
   final int quantity;
 
   /// Display only. The server recomputes every price at checkout.
-  double get total => product.price * quantity;
+  double get total => product.payPrice * quantity;
 }
 
 /// The shopping basket lives on the device; the server only ever receives product ids and quantities.

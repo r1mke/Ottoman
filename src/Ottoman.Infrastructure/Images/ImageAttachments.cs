@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -27,22 +29,34 @@ public class ImageAttachments(
         if (existing.Count >= Options.MaxImagesPerProduct)
             return Result<bool>.Conflict($"Proizvod može imati najviše {Options.MaxImagesPerProduct} slika.");
 
-        var upload = await UploadAsync(content, "ottoman/products", ct);
-        if (upload.Error is not null) return Result<bool>.Invalid(upload.Error);
+        var prepared = await PrepareAsync(content, ct);
+        if (prepared.Error is not null) return Result<bool>.Invalid(prepared.Error);
+        using var buffer = prepared.Buffer!;
 
+        if (await db.ProductImages.AnyAsync(i => i.ProductId == productId && i.ContentHash == prepared.Hash, ct))
+            return Result<bool>.Conflict(SamePictureMessage);
+
+        var key = await store.UploadAsync(buffer, "ottoman/products", ct);
         try
         {
             db.ProductImages.Add(new ProductImage
             {
                 ProductId = productId,
-                FileKey = upload.Key!,
+                FileKey = key,
+                ContentHash = prepared.Hash,
                 SortOrder = existing.Count == 0 ? 0 : existing.Max() + 1,
             });
             await db.SaveChangesAsync(ct);
         }
+        catch (DbUpdateException e) when (e.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            // A parallel upload of the same picture got there first.
+            await TryDeleteAsync(key);
+            return Result<bool>.Conflict(SamePictureMessage);
+        }
         catch
         {
-            await TryDeleteAsync(upload.Key!);
+            await TryDeleteAsync(key);
             throw;
         }
         return Result<bool>.Ok(true);
@@ -56,6 +70,114 @@ public class ImageAttachments(
         if (rows == 1) await TryDeleteAsync(image.FileKey);
         return Result<bool>.Ok(true);
     }
+
+    // ----------------------------------------------------------------- gallery
+
+    public async Task<Result<int>> AddGalleryItemAsync(
+        int categoryId, string? employeeId, string? caption, bool featured, Stream content, CancellationToken ct)
+    {
+        if (!await db.HaircutCategories.AnyAsync(c => c.Id == categoryId, ct))
+            return Result<int>.Invalid("Odabrana kategorija frizure ne postoji.");
+        if (employeeId is not null && !await db.EmployeeProfiles.AnyAsync(p => p.UserId == employeeId, ct))
+            return Result<int>.Invalid("Odabrani uposlenik ne postoji.");
+
+        var prepared = await PrepareAsync(content, ct);
+        if (prepared.Error is not null) return Result<int>.Invalid(prepared.Error);
+        using var buffer = prepared.Buffer!;
+
+        if (await db.GalleryItems.AnyAsync(i => i.ContentHash == prepared.Hash, ct))
+            return Result<int>.Conflict(SamePictureMessage);
+
+        var key = await store.UploadAsync(buffer, "ottoman/gallery", ct);
+        try
+        {
+            var item = new GalleryItem
+            {
+                ImageKey = key,
+                ContentHash = prepared.Hash,
+                CategoryId = categoryId,
+                EmployeeId = employeeId,
+                Caption = string.IsNullOrWhiteSpace(caption) ? null : caption.Trim(),
+                IsFeatured = featured,
+            };
+            db.GalleryItems.Add(item);
+            await db.SaveChangesAsync(ct);
+            return Result<int>.Ok(item.Id);
+        }
+        catch (DbUpdateException e) when (e.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            await TryDeleteAsync(key);
+            return Result<int>.Conflict(SamePictureMessage);
+        }
+        catch
+        {
+            await TryDeleteAsync(key);
+            throw;
+        }
+    }
+
+    public async Task<Result<bool>> RemoveGalleryItemAsync(int id, CancellationToken ct)
+    {
+        var item = await db.GalleryItems.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id, ct);
+        if (item is null) return Result<bool>.NotFound();
+        var rows = await db.GalleryItems.Where(i => i.Id == id).ExecuteDeleteAsync(ct);
+        if (rows == 1) await TryDeleteAsync(item.ImageKey);
+        return Result<bool>.Ok(true);
+    }
+
+    // ------------------------------------------------------------- salon logo
+
+    public Task<Result<bool>> SetSalonLogoAsync(Stream content, CancellationToken ct) => ReplaceLogoAsync(content, ct);
+
+    public Task<Result<bool>> ClearSalonLogoAsync(CancellationToken ct) => ReplaceLogoAsync(null, ct);
+
+    private Task<Result<bool>> ReplaceLogoAsync(Stream? content, CancellationToken ct) =>
+        ReplaceAsync(
+            async () => await db.SalonSettings.Select(s => new KeyRow(s.LogoKey)).FirstOrDefaultAsync(ct),
+            key => db.SalonSettings.ExecuteUpdateAsync(s => s.SetProperty(x => x.LogoKey, key), ct),
+            content, "ottoman/salon", ct);
+
+    // ---------------------------------------------------------------- news items
+
+    public async Task<Result<string>> UploadAnnouncementImageAsync(Stream content, CancellationToken ct)
+    {
+        var prepared = await PrepareAsync(content, ct);
+        if (prepared.Error is not null) return Result<string>.Invalid(prepared.Error);
+        using var buffer = prepared.Buffer!;
+        return Result<string>.Ok(await store.UploadAsync(buffer, "ottoman/announcements", ct));
+    }
+
+    public Task DiscardImageAsync(string key) => TryDeleteAsync(key);
+
+    // ------------------------------------------------------------ brand logos
+
+    public Task<Result<bool>> SetBrandLogoAsync(int brandId, Stream content, CancellationToken ct) =>
+        ReplaceBrandLogoAsync(brandId, content, ct);
+
+    public Task<Result<bool>> ClearBrandLogoAsync(int brandId, CancellationToken ct) =>
+        ReplaceBrandLogoAsync(brandId, null, ct);
+
+    private Task<Result<bool>> ReplaceBrandLogoAsync(int brandId, Stream? content, CancellationToken ct) =>
+        ReplaceAsync(
+            async () => await db.Brands.Where(b => b.Id == brandId).Select(b => new KeyRow(b.LogoKey)).FirstOrDefaultAsync(ct),
+            key => db.Brands.Where(b => b.Id == brandId).ExecuteUpdateAsync(s => s.SetProperty(x => x.LogoKey, key), ct),
+            content, "ottoman/brands", ct);
+
+    // --------------------------------------------------------- shop section cards
+
+    public Task<Result<bool>> SetShopSectionImageAsync(int sectionId, Stream content, CancellationToken ct) =>
+        ReplaceSectionImageAsync(sectionId, content, ct);
+
+    public Task<Result<bool>> ClearShopSectionImageAsync(int sectionId, CancellationToken ct) =>
+        ReplaceSectionImageAsync(sectionId, null, ct);
+
+    private Task<Result<bool>> ReplaceSectionImageAsync(int sectionId, Stream? content, CancellationToken ct) =>
+        ReplaceAsync(
+            async () => await db.ShopSections.Where(s => s.Id == sectionId).Select(s => new KeyRow(s.ImageKey)).FirstOrDefaultAsync(ct),
+            // An uploaded picture and a picked product picture exclude each other.
+            key => db.ShopSections.Where(s => s.Id == sectionId)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.ImageKey, key).SetProperty(x => x.ImageProductImageId, (int?)null), ct),
+            content, "ottoman/shop", ct);
 
     // ---------------------------------------------------------------- services
 
@@ -73,37 +195,39 @@ public class ImageAttachments(
 
     // --------------------------------------------------------------- employees
 
-    public Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct) =>
-        ReplaceEmployeeAsync(employeeId, content, ct);
+    public Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct, bool onAccount = false) =>
+        ReplaceEmployeeAsync(employeeId, content, onAccount, ct);
 
-    public Task<Result<bool>> ClearEmployeePhotoAsync(string employeeId, CancellationToken ct) =>
-        ReplaceEmployeeAsync(employeeId, null, ct);
+    public Task<Result<bool>> ClearEmployeePhotoAsync(string employeeId, CancellationToken ct, bool onAccount = false) =>
+        ReplaceEmployeeAsync(employeeId, null, onAccount, ct);
 
-    private Task<Result<bool>> ReplaceEmployeeAsync(string employeeId, Stream? content, CancellationToken ct) =>
+    private async Task<Result<bool>> ReplaceEmployeeAsync(string employeeId, Stream? content, bool onAccount, CancellationToken ct)
+    {
+        // An account without a barber profile (the admin) keeps its picture on the account itself.
+        if (onAccount && !await db.EmployeeProfiles.AnyAsync(p => p.UserId == employeeId, ct))
+            return await ReplaceAsync(
+                async () => await db.Users.Where(u => u.Id == employeeId).Select(u => new KeyRow(u.PhotoKey)).FirstOrDefaultAsync(ct),
+                key => db.Users.Where(u => u.Id == employeeId).ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key), ct),
+                content, "ottoman/employees", ct);
+        return await ReplaceBarberAsync(employeeId, content, ct);
+    }
+
+    private Task<Result<bool>> ReplaceBarberAsync(string employeeId, Stream? content, CancellationToken ct) =>
         ReplaceAsync(
             async () => await db.EmployeeProfiles.Where(p => p.UserId == employeeId).Select(p => new KeyRow(p.PhotoKey)).FirstOrDefaultAsync(ct),
-            key => db.EmployeeProfiles.Where(p => p.UserId == employeeId).ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key), ct),
+            key => db.EmployeeProfiles.Where(p => p.UserId == employeeId)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key).SetProperty(x => x.PhotoZoom, 1.0), ct),
             content, "ottoman/employees", ct);
-
-    // ------------------------------------------------------------ announcements
-
-    public Task<Result<bool>> SetAnnouncementImageAsync(int announcementId, Stream content, CancellationToken ct) =>
-        ReplaceAnnouncementAsync(announcementId, content, ct);
-
-    public Task<Result<bool>> ClearAnnouncementImageAsync(int announcementId, CancellationToken ct) =>
-        ReplaceAnnouncementAsync(announcementId, null, ct);
-
-    private Task<Result<bool>> ReplaceAnnouncementAsync(int announcementId, Stream? content, CancellationToken ct) =>
-        ReplaceAsync(
-            async () => await db.Announcements.Where(a => a.Id == announcementId).Select(a => new KeyRow(a.ImageKey)).FirstOrDefaultAsync(ct),
-            key => db.Announcements.Where(a => a.Id == announcementId).ExecuteUpdateAsync(s => s.SetProperty(x => x.ImageKey, key), ct),
-            content, "ottoman/news", ct);
 
     // ----------------------------------------------------------------- helpers
 
     private sealed record KeyRow(string? Key);
 
     private sealed record UploadOutcome(string? Key, string? Error);
+
+    private sealed record Prepared(MemoryStream? Buffer, string? Hash, string? Error);
+
+    private const string SamePictureMessage = "Ta slika je već dodana. Odaberite drugu.";
 
     /// <summary>Upload first, switch the column in one statement, then delete the old picture (a failure only leaves an orphan).</summary>
     private async Task<Result<bool>> ReplaceAsync(
@@ -143,7 +267,16 @@ public class ImageAttachments(
     /// <summary>Reads at most the allowed size, checks the real file type from its first bytes, then stores it.</summary>
     private async Task<UploadOutcome> UploadAsync(Stream content, string folder, CancellationToken ct)
     {
-        using var buffer = new MemoryStream();
+        var prepared = await PrepareAsync(content, ct);
+        if (prepared.Error is not null) return new UploadOutcome(null, prepared.Error);
+        using var buffer = prepared.Buffer!;
+        return new UploadOutcome(await store.UploadAsync(buffer, folder, ct), null);
+    }
+
+    /// <summary>Reads at most the allowed size and checks the real file type from its first bytes. The caller owns the buffer.</summary>
+    private async Task<Prepared> PrepareAsync(Stream content, CancellationToken ct)
+    {
+        var buffer = new MemoryStream();
         var chunk = new byte[81920];
         int read;
         while ((read = await content.ReadAsync(chunk, ct)) > 0)
@@ -154,10 +287,15 @@ public class ImageAttachments(
 
         var head = buffer.GetBuffer().AsSpan(0, (int)Math.Min(buffer.Length, 16));
         var problem = ImageRules.Check(buffer.Length, head, Options.MaxBytes);
-        if (problem is not null) return new UploadOutcome(null, problem);
+        if (problem is not null)
+        {
+            buffer.Dispose();
+            return new Prepared(null, null, problem);
+        }
 
+        var hash = Convert.ToHexString(SHA256.HashData(buffer.GetBuffer().AsSpan(0, (int)buffer.Length)));
         buffer.Position = 0;
-        return new UploadOutcome(await store.UploadAsync(buffer, folder, ct), null);
+        return new Prepared(buffer, hash, null);
     }
 
     private async Task TryDeleteAsync(string key)

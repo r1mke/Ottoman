@@ -83,4 +83,6 @@ public sealed class FakeImageStore : IImageStore
 public class ImageUrlBuilder(IOptions<ImageOptions> options)
 {
     public string? Url(string? key) => ImageRules.DeliveryUrl(options.Value.CloudName, key);
+
+    public string? AvatarUrl(string? key, double zoom) => ImageRules.AvatarUrl(options.Value.CloudName, key, zoom);
 }

@@ -92,13 +92,17 @@ public static class DependencyInjection
         services.AddScoped<IClientQueries, ClientQueries>();
         services.AddScoped<IServiceCatalog, ServiceCatalog>();
         services.AddScoped<IEmployeeService, EmployeeManagement>();
+        services.AddScoped<IEmployeeTitles, Employees.EmployeeTitles>();
         services.AddScoped<AvailabilityLoader>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<ISalonSettingsService, SalonSettingsService>();
+        services.AddScoped<Ottoman.Application.Salon.ISalonProfileService, Salon.SalonProfileService>();
+        services.AddScoped<Ottoman.Application.Gallery.IGalleryService, Gallery.GalleryService>();
 
         services.AddOptions<PaymentOptions>().Bind(config.GetSection(PaymentOptions.Section));
         services.AddScoped<IProductCatalog, ProductCatalog>();
+        services.AddScoped<Ottoman.Application.Shop.IShopSectionService, Shop.ShopSectionService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentWebhookHandler, PaymentWebhookHandler>();
         if (string.IsNullOrWhiteSpace(config[$"{PaymentOptions.Section}:SecretKey"]))

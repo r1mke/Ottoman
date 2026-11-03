@@ -37,12 +37,16 @@ public class ReservationItem
 
 /// <summary>
 /// One row per occupied booking step. UNIQUE(EmployeeId, SlotStartUtc) lets the
-/// database itself reject overlapping reservations.
+/// database itself reject overlapping reservations of one barber, and UNIQUE(ClientId, SlotStartUtc) rejects a
+/// client being booked with two barbers at the same time.
 /// </summary>
 public class ReservationSlot
 {
     public int Id { get; set; }
     public string EmployeeId { get; set; } = null!;
+
+    /// <summary>The client the step belongs to. Null only on rows created before this rule existed.</summary>
+    public string? ClientId { get; set; }
     public DateTime SlotStartUtc { get; set; }
     public int ReservationId { get; set; }
 }

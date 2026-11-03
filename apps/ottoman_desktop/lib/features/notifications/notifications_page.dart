@@ -16,8 +16,6 @@ class NotificationsPage extends StatefulWidget {
 
   /// Only used to find a single client when sending a personal message.
   final ReservationsApi reservations;
-
-  /// Where the optional picture comes from (a file dialog; faked in tests).
   final ImageChooser chooser;
 
   @override
@@ -56,6 +54,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  Future<void> _pickPicture() async {
+    final image = await widget.chooser.choose();
+    if (image != null && mounted) setState(() => _picture = image);
+  }
+
   Future<void> _send() async {
     final t = AppLocalizations.of(context);
     if (!_form.currentState!.validate()) return;
@@ -69,46 +72,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _error = null;
     });
     try {
-      final sent = await widget.api.announce(
+      await widget.api.announce(
         title: _title.text.trim(),
         body: _body.text.trim(),
         audience: _audience,
         targetUserId: _audience == Audience.user ? _target!.id : null,
         sendEmail: _email,
+        imageBytes: _picture?.bytes,
+        imageName: _picture?.name,
       );
-      final picture = _picture;
-      String? pictureProblem;
-      if (picture != null) {
-        try {
-          await widget.api.setAnnouncementImage(
-            sent.id,
-            picture.bytes,
-            picture.name,
-          );
-        } on AppException catch (e) {
-          // The message is already sent; say so, and why the picture is missing.
-          pictureProblem = e.message;
-        }
-      }
       // The form is emptied after a successful send, as the next message starts from scratch.
       _title.clear();
       _body.clear();
+      _picture = null;
       _form.currentState?.reset();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            pictureProblem == null
-                ? t.announcementSent
-                : '${t.announcementSent} ${t.pictureNotSaved}: $pictureProblem',
-          ),
-        ),
-      );
-      if (mounted) {
-        setState(() {
-          _picture = null;
-          _version++;
-        });
-      }
+      messenger.showSnackBar(SnackBar(content: Text(t.announcementSent)));
+      if (mounted) setState(() => _version++);
     } on AppException catch (e) {
       final detail = e.errors.values.expand((x) => x).join('\n');
       if (mounted) setState(() => _error = detail.isEmpty ? e.message : detail);
@@ -225,53 +204,39 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               : null,
                         ),
                         const SizedBox(height: 4),
-                        Row(
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            OutlinedButton.icon(
-                              key: const Key('msg_picture'),
-                              onPressed: _busy
-                                  ? null
-                                  : () async {
-                                      final chosen = await widget.chooser
-                                          .choose();
-                                      if (chosen != null && mounted) {
-                                        setState(() => _picture = chosen);
-                                      }
-                                    },
-                              icon: const Icon(
-                                Icons.add_photo_alternate_outlined,
-                              ),
-                              label: Text(
-                                _picture == null
-                                    ? t.addPicture
-                                    : t.changePicture,
-                              ),
-                            ),
-                            if (_picture != null) ...[
-                              const SizedBox(width: 12),
+                            if (_picture != null)
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.memory(
                                   _picture!.bytes,
                                   key: const Key('msg_picture_preview'),
-                                  width: 56,
-                                  height: 56,
+                                  width: 96,
+                                  height: 64,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const SizedBox(
-                                    width: 56,
-                                    height: 56,
-                                    child: Icon(Icons.image_outlined),
-                                  ),
                                 ),
                               ),
-                              IconButton(
+                            OutlinedButton.icon(
+                              key: const Key('msg_picture_add'),
+                              onPressed: _pickPicture,
+                              icon: const Icon(Icons.image_outlined, size: 18),
+                              label: Text(
+                                _picture == null
+                                    ? t.messagePicture
+                                    : t.addPicture,
+                              ),
+                            ),
+                            if (_picture != null)
+                              TextButton(
                                 key: const Key('msg_picture_remove'),
-                                tooltip: t.removePicture,
-                                icon: const Icon(Icons.close),
                                 onPressed: () =>
                                     setState(() => _picture = null),
+                                child: Text(t.removePictureShort),
                               ),
-                            ],
                           ],
                         ),
                         CheckboxListTile(
@@ -334,16 +299,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         return Card(
                           key: Key('sent_${a.id}'),
                           child: ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: NetworkPicture(
-                                key: Key('sent_picture_${a.id}'),
-                                url: a.imageUrl,
-                                width: 48,
-                                height: 48,
-                                fallbackIcon: Icons.campaign_outlined,
-                              ),
-                            ),
+                            leading: a.imageUrl == null
+                                ? const Icon(Icons.campaign_outlined)
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: NetworkPicture(
+                                      key: Key('sent_picture_${a.id}'),
+                                      url: a.imageUrl,
+                                      width: 52,
+                                      height: 52,
+                                    ),
+                                  ),
                             title: Text(
                               a.title,
                               style: const TextStyle(

@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 class SidebarItem {
-  const SidebarItem({required this.icon, required this.label, this.badge = 0});
+  const SidebarItem({
+    required this.icon,
+    required this.label,
+    this.badge = 0,
+    this.group,
+  });
 
   final IconData icon;
   final String label;
+
+  /// Heading shown above the first entry of each run of equal groups; null = no heading.
+  final String? group;
 
   /// Count shown as an amber pill; zero hides it.
   final int badge;
@@ -44,31 +52,11 @@ class Sidebar extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
             child: Row(
               children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: WorkspaceColors.amber,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'O',
-                    style: TextStyle(
-                      color: WorkspaceColors.ink,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  t.appName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 2.7,
-                    fontSize: 15,
-                  ),
+                const OttomanLogo(
+                  key: Key('sidebar_logo'),
+                  variant: LogoVariant.horizontal,
+                  light: true,
+                  height: 40,
                 ),
               ],
             ),
@@ -76,13 +64,21 @@ class Sidebar extends StatelessWidget {
           Expanded(
             child: ListView(
               children: [
-                for (var i = 0; i < items.length; i++)
+                for (var i = 0; i < items.length; i++) ...[
+                  if (items[i].group != null &&
+                      (i == 0 || items[i].group != items[i - 1].group))
+                    _GroupHeading(
+                      key: Key('nav_group_${items[i].group}'),
+                      label: items[i].group!,
+                      first: i == 0,
+                    ),
                   _Entry(
                     key: Key('nav_$i'),
                     item: items[i],
                     selected: i == selected,
                     onTap: () => onSelect(i),
                   ),
+                ],
               ],
             ),
           ),
@@ -116,6 +112,27 @@ class Sidebar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GroupHeading extends StatelessWidget {
+  const _GroupHeading({super.key, required this.label, required this.first});
+
+  final String label;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(12, first ? 0 : 18, 12, 6),
+    child: Text(
+      label.toUpperCase(),
+      style: const TextStyle(
+        color: WorkspaceColors.sidebarMuted,
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+      ),
+    ),
+  );
 }
 
 class _Entry extends StatelessWidget {
