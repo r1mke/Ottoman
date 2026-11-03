@@ -699,6 +699,22 @@ public class ShopTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task Simultaneous_orders_cannot_push_a_client_past_the_unpaid_order_cap()
+    {
+        var p = await NewProduct(stock: 50);
+        var (_, client) = await NewClient();
+        for (var i = 0; i < 4; i++) (await Order(client, p)).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var results = await Task.WhenAll(Enumerable.Range(0, 6)
+            .Select(i => Order(client, p, 1, i % 2 == 0 ? PaymentMethod.Card : PaymentMethod.OnReceipt)));
+
+        var codes = string.Join(",", results.Select(r => (int)r.StatusCode));
+        results.Count(r => r.StatusCode == HttpStatusCode.Created).Should().Be(1, codes);
+        results.Count(r => r.StatusCode == HttpStatusCode.BadRequest).Should().Be(5, codes);
+        (await StockOf(p)).Should().Be(45, "refused orders took nothing off the shelf");
+    }
+
+    [Fact]
     public async Task Pay_at_pickup_orders_cannot_hold_the_whole_shelf_either()
     {
         var p = await NewProduct(stock: 100);

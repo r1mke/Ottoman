@@ -71,14 +71,27 @@ public class OrderService(
         order.TotalPrice = OrderPricing.Total(order.Items.Select(i => new OrderLine(i.ProductId, i.UnitPrice, i.Quantity)));
 
         string? shortOf = null;
+        string? overLimit = null;
         var strategy = db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
             shortOf = null;
+            overLimit = null;
             db.ChangeTracker.Clear();
             await using var tx = await db.Database.BeginTransactionAsync(ct);
             try
             {
+                // The check above was a fast pre-check; two orders of the same client at once must not both pass the
+                // cap. Lock the client's row and count again inside this transaction.
+                await db.LockUserAsync(actor.UserId, ct);
+                var heldNow = await UnpaidHoldsAsync(actor.UserId, ct);
+                overLimit = OrderLimits.CheckNewOrder(heldNow.Orders, heldNow.Units, lines.Sum(l => l.Quantity));
+                if (overLimit is not null)
+                {
+                    await tx.RollbackAsync(ct);
+                    return;
+                }
+
                 foreach (var item in order.Items)
                 {
                     var seenPrice = item.UnitPrice;
@@ -119,6 +132,7 @@ public class OrderService(
             }
         });
 
+        if (overLimit is not null) return Result<OrderDto>.Invalid(overLimit);
         if (shortOf is not null)
             return Result<OrderDto>.Conflict($"„{shortOf}“ nema dovoljno na zalihi ili mu se cijena promijenila. Osvježite košaricu.");
 

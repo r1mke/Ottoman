@@ -257,6 +257,25 @@ public class ReservationTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task Simultaneous_bookings_cannot_push_a_client_past_the_active_booking_limit()
+    {
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var sisanje = await ServiceId("Šišanje");
+        var first = Days.Next();
+        foreach (var hour in new[] { 9, 10, 11, 13 })
+            (await Book(client, kerim, At(first, hour), [sisanje])).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // One more is allowed (limit 5); six at once at six different free times must not all get in.
+        var day = Days.Next();
+        var results = await Task.WhenAll(new[] { 9, 10, 11, 13, 14, 15 }.Select(h => Book(client, kerim, At(day, h), [sisanje])));
+
+        var codes = string.Join(",", results.Select(r => (int)r.StatusCode));
+        results.Count(r => r.StatusCode == HttpStatusCode.Created).Should().Be(1, codes);
+        results.Count(r => r.StatusCode == HttpStatusCode.BadRequest).Should().Be(5, codes);
+    }
+
+    [Fact]
     public async Task Admin_cannot_book_or_move_an_appointment_onto_the_clients_other_appointment()
     {
         var admin = await Admin();

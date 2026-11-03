@@ -56,9 +56,7 @@ public class ReservationService(
         // Salon staff may book at short notice; clients must respect the lead time.
         if (!actor.IsClient) query = query with { MinLeadMinutes = 0 };
 
-        var activeCount = await db.Reservations.CountAsync(x =>
-            x.ClientId == clientId && x.EndUtc > now &&
-            (x.Status == ReservationStatus.Confirmed || x.Status == ReservationStatus.Pending), ct);
+        var activeCount = await ActiveCountAsync(clientId, now, ct);
         var violations = BookingPolicy.Validate(r.StartUtc, now, chosen.Count, activeCount, r.Note, bypassClientLimit: !actor.IsClient);
         if (violations.Count > 0) return Result<ReservationDto>.Invalid(string.Join(" ", violations));
 
@@ -96,14 +94,30 @@ public class ReservationService(
 
         var taken = false;
         var takenByClient = false;
+        IReadOnlyList<string> overLimit = [];
         var strategy = db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
         {
             taken = false;
             takenByClient = false;
+            overLimit = [];
             await using var tx = await db.Database.BeginTransactionAsync(ct);
             try
             {
+                if (actor.IsClient)
+                {
+                    // The count above was a fast pre-check. Two bookings of the same client at once must not both
+                    // pass the limit: lock the client's row, then count again inside this transaction.
+                    await db.LockUserAsync(clientId, ct);
+                    var fresh = await ActiveCountAsync(clientId, now, ct);
+                    overLimit = BookingPolicy.Validate(r.StartUtc, now, chosen.Count, fresh, r.Note, bypassClientLimit: false);
+                    if (overLimit.Count > 0)
+                    {
+                        await tx.RollbackAsync(ct);
+                        return;
+                    }
+                }
+
                 await db.SaveChangesAsync(ct); // assigns the id; the unique (employee, step) index decides races
                 outbox.Enqueue(new ReservationCreated(
                     reservation.Id, clientId, r.EmployeeId, reservation.StartUtc, reservation.EndUtc, reservation.TotalPrice));
@@ -119,9 +133,19 @@ public class ReservationService(
             }
         });
 
+        if (overLimit.Count > 0)
+        {
+            db.Entry(reservation).State = EntityState.Detached;
+            return Result<ReservationDto>.Invalid(string.Join(" ", overLimit));
+        }
         if (!taken) return await GetAsync(actor, reservation.Id, ct);
         return Result<ReservationDto>.Conflict(takenByClient ? ClientBusyGenericMessage(actor) : TakenMessage);
     }
+
+    private Task<int> ActiveCountAsync(string clientId, DateTime now, CancellationToken ct) =>
+        db.Reservations.CountAsync(x =>
+            x.ClientId == clientId && x.EndUtc > now &&
+            (x.Status == ReservationStatus.Confirmed || x.Status == ReservationStatus.Pending), ct);
 
     // ------------------------------------------------------------------ read
 
