@@ -23,7 +23,6 @@ public class OrderService(
     TimeProvider clock,
     ILogger<OrderService> log) : IOrderService
 {
-    private const int MaxPendingOrdersPerClient = 5;
     private PaymentOptions Pay => paymentOptions.Value;
     private DateTime Now => clock.GetUtcNow().UtcDateTime;
 
@@ -46,10 +45,11 @@ public class OrderService(
             .ToListAsync(ct);
         if (products.Count != ids.Count) return Result<OrderDto>.Invalid("Neki od proizvoda više nije dostupan.");
 
-        // Unpaid card orders hold stock; cap them so one account cannot hoard the shelf.
-        var pending = await db.Orders.CountAsync(o => o.ClientId == actor.UserId && o.Status == OrderStatus.PendingPayment, ct);
-        if (r.PaymentMethod == PaymentMethod.Card && pending >= MaxPendingOrdersPerClient)
-            return Result<OrderDto>.Invalid("Imate previše neplaćenih narudžbi. Platite ili otkažite neku od njih.");
+        // Unpaid orders (card awaiting payment, pay-at-pickup not yet collected) hold stock for free; cap them so one
+        // account cannot hoard the shelf, whatever the payment method.
+        var held = await UnpaidHoldsAsync(actor.UserId, ct);
+        var limit = OrderLimits.CheckNewOrder(held.Orders, held.Units, lines.Sum(l => l.Quantity));
+        if (limit is not null) return Result<OrderDto>.Invalid(limit);
 
         var now = Now;
         var order = new Order
@@ -139,6 +139,16 @@ public class OrderService(
 
         var dto = await LoadDtoAsync(actor, order.Id, ct);
         return Result<OrderDto>.Ok(dto! with { PaymentClientSecret = secret });
+    }
+
+    /// <summary>The client's orders that hold stock nobody paid for yet (same rule as <see cref="OrderLimits.IsUnpaidHold"/>).</summary>
+    private async Task<(int Orders, int Units)> UnpaidHoldsAsync(string clientId, CancellationToken ct)
+    {
+        var unpaid = db.Orders.Where(o => o.ClientId == clientId
+            && (o.Status == OrderStatus.PendingPayment || (o.Status == OrderStatus.Placed && o.PaymentMethod == PaymentMethod.OnReceipt)));
+        var orders = await unpaid.CountAsync(ct);
+        var units = orders == 0 ? 0 : await unpaid.SelectMany(o => o.Items).SumAsync(i => i.Quantity, ct);
+        return (orders, units);
     }
 
     private async Task<string> AttachPaymentAsync(Order order, CancellationToken ct)

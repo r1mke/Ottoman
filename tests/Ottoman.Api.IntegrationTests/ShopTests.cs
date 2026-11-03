@@ -694,6 +694,27 @@ public class ShopTests(ApiFixture api)
         for (var i = 0; i < 5; i++) (await Order(client, p)).StatusCode.Should().Be(HttpStatusCode.Created);
 
         (await Order(client, p)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await Order(client, p, 1, PaymentMethod.OnReceipt)).StatusCode.Should().Be(HttpStatusCode.Created); // not a card hold
+        (await Order(client, p, 1, PaymentMethod.OnReceipt)).StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "paying at pickup holds stock just the same");
+    }
+
+    [Fact]
+    public async Task Pay_at_pickup_orders_cannot_hold_the_whole_shelf_either()
+    {
+        var p = await NewProduct(stock: 100);
+        var (_, client) = await NewClient();
+        for (var i = 0; i < 2; i++)
+            (await Order(client, p, 20, PaymentMethod.OnReceipt)).StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // 40 held; another 20 would pass the unit cap.
+        (await Order(client, p, 20, PaymentMethod.OnReceipt)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Order(client, p, 10, PaymentMethod.OnReceipt)).StatusCode.Should().Be(HttpStatusCode.Created);
+        (await StockOf(p)).Should().Be(50);
+
+        // Collected (fulfilled) orders no longer count.
+        var admin = await Admin();
+        var mine = (await client.GetFromJsonAsync<PagedResult<OrderDto>>("/api/v1/orders?pageSize=10"))!.Items;
+        (await admin.PostAsync($"/api/v1/orders/{mine[0].Id}/fulfil", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await Order(client, p, 5, PaymentMethod.OnReceipt)).StatusCode.Should().Be(HttpStatusCode.Created);
     }
 }

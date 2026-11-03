@@ -104,3 +104,26 @@ public class OrderStateMachineTests
         OrderStateMachine.AcceptsPayment(OrderStatus.Cancelled).Should().BeFalse();
     }
 }
+
+public class OrderLimitsTests
+{
+    [Theory]
+    [InlineData(OrderStatus.PendingPayment, PaymentMethod.Card, true)]
+    [InlineData(OrderStatus.Placed, PaymentMethod.OnReceipt, true)]
+    [InlineData(OrderStatus.Placed, PaymentMethod.Card, false)]
+    [InlineData(OrderStatus.Fulfilled, PaymentMethod.OnReceipt, false)]
+    [InlineData(OrderStatus.Cancelled, PaymentMethod.OnReceipt, false)]
+    [InlineData(OrderStatus.Expired, PaymentMethod.Card, false)]
+    public void Only_open_orders_nobody_paid_for_count_as_unpaid_holds(OrderStatus status, PaymentMethod method, bool unpaid) =>
+        OrderLimits.IsUnpaidHold(status, method).Should().Be(unpaid);
+
+    [Fact]
+    public void A_client_may_hold_a_few_unpaid_orders_and_a_limited_number_of_pieces()
+    {
+        OrderLimits.CheckNewOrder(0, 0, 1).Should().BeNull();
+        OrderLimits.CheckNewOrder(OrderLimits.MaxUnpaidOrdersPerClient - 1, 0, 1).Should().BeNull();
+        OrderLimits.CheckNewOrder(OrderLimits.MaxUnpaidOrdersPerClient, 0, 1).Should().NotBeNull();
+        OrderLimits.CheckNewOrder(1, OrderLimits.MaxUnpaidUnitsPerClient - 10, 10).Should().BeNull();
+        OrderLimits.CheckNewOrder(1, OrderLimits.MaxUnpaidUnitsPerClient - 10, 11).Should().NotBeNull();
+    }
+}
