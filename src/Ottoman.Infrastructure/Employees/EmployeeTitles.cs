@@ -45,6 +45,45 @@ public class EmployeeTitles(OttomanDbContext db) : IEmployeeTitles
         return Result<EmployeeTitleDto>.Ok(new EmployeeTitleDto(title.Id, title.Name, 0));
     }
 
+    public async Task<Result<EmployeeTitleDto>> UpdateAsync(int id, string name, CancellationToken ct)
+    {
+        var clean = Clean(name);
+        if (clean.Length == 0) return Result<EmployeeTitleDto>.Invalid("Unesite naziv titule.");
+        var current = await db.EmployeeTitles.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (current is null) return Result<EmployeeTitleDto>.NotFound("Titula nije pronađena.");
+        if (await db.EmployeeTitles.AnyAsync(t => t.Id != id && t.Name == clean, ct)) return Result<EmployeeTitleDto>.Conflict(Duplicate);
+
+        var oldName = current.Name;
+        var strategy = db.Database.CreateExecutionStrategy();
+        var duplicate = false;
+        await strategy.ExecuteAsync(async () =>
+        {
+            duplicate = false;
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                await db.EmployeeTitles.Where(t => t.Id == id).ExecuteUpdateAsync(s => s.SetProperty(t => t.Name, clean), ct);
+                // Barbers carry the title by name: they move with the rename, in the same transaction.
+                await db.EmployeeProfiles.Where(p => p.Title == oldName).ExecuteUpdateAsync(s => s.SetProperty(p => p.Title, clean), ct);
+                await tx.CommitAsync(ct);
+            }
+            catch (DbUpdateException e) when (IsUniqueViolation(e))
+            {
+                duplicate = true;
+                await tx.RollbackAsync(ct);
+            }
+            catch (SqlException e) when (e.Number is 2601 or 2627)
+            {
+                duplicate = true;
+                await tx.RollbackAsync(ct);
+            }
+        });
+        if (duplicate) return Result<EmployeeTitleDto>.Conflict(Duplicate);
+
+        var inUse = await db.EmployeeProfiles.CountAsync(p => p.Title == clean, ct);
+        return Result<EmployeeTitleDto>.Ok(new EmployeeTitleDto(id, clean, inUse));
+    }
+
     public async Task<Result<bool>> DeleteAsync(int id, CancellationToken ct)
     {
         var title = await db.EmployeeTitles.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);

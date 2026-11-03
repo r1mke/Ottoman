@@ -1687,4 +1687,10 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get clearSearch => 'Obriši pretragu';
+
+  @override
+  String get renameTitle => 'Preimenuj titulu';
+
+  @override
+  String get titleName => 'Naziv titule';
 }

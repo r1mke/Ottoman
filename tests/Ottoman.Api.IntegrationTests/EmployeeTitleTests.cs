@@ -108,6 +108,47 @@ public class EmployeeTitleTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task Renaming_a_title_keeps_the_barbers_who_have_it()
+    {
+        var admin = await Admin();
+        var title = Unique("Stara");
+        var created = await admin.PostAsJsonAsync("/api/v1/employees", new CreateEmployeeRequest(
+            "Preimenovan", "Frizer", TestClient.UniqueEmail(), null, "Emp_Pass123!", title, null, null));
+        created.StatusCode.Should().Be(HttpStatusCode.Created);
+        var barber = (await created.Content.ReadFromJsonAsync<EmployeeDto>())!;
+        var entry = (await List(admin)).Single(t => t.Name == title);
+
+        var renamed = Unique("Nova");
+        var res = await admin.PutAsJsonAsync($"{Url}/{entry.Id}", new UpdateEmployeeTitleRequest("  " + renamed + "  "));
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        var dto = (await res.Content.ReadFromJsonAsync<EmployeeTitleDto>())!;
+        dto.Name.Should().Be(renamed);
+        dto.InUse.Should().Be(1);
+
+        (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{barber.Id}"))!.Title.Should().Be(renamed);
+        (await List(admin)).Should().NotContain(t => t.Name == title);
+    }
+
+    [Fact]
+    public async Task Renaming_to_an_existing_title_is_a_conflict_and_an_unknown_one_is_not_found()
+    {
+        var admin = await Admin();
+        var a = (await (await Add(admin, Unique("Prva"))).Content.ReadFromJsonAsync<EmployeeTitleDto>())!;
+        var b = (await (await Add(admin, Unique("Druga"))).Content.ReadFromJsonAsync<EmployeeTitleDto>())!;
+
+        (await admin.PutAsJsonAsync($"{Url}/{a.Id}", new UpdateEmployeeTitleRequest(b.Name.ToUpperInvariant())))
+            .StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await admin.PutAsJsonAsync($"{Url}/{a.Id}", new UpdateEmployeeTitleRequest(""))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.PutAsJsonAsync($"{Url}/999999", new UpdateEmployeeTitleRequest("Nema je"))).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // The same name in another case is a rename of itself, not a conflict.
+        (await admin.PutAsJsonAsync($"{Url}/{a.Id}", new UpdateEmployeeTitleRequest(a.Name.ToUpperInvariant())))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var kerim = api.CreateClient().As(await api.CreateClient().LoginOk("kerim@ottoman.local", ApiFixture.DemoPassword));
+        (await kerim.PutAsJsonAsync($"{Url}/{a.Id}", new UpdateEmployeeTitleRequest("Hakeri"))).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task Only_admins_can_see_or_change_the_list()
     {
         var anonymous = api.CreateClient();

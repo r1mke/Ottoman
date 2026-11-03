@@ -713,6 +713,16 @@ class _TitleListDialogState extends State<TitleListDialog> {
     });
   }
 
+  Future<void> _rename(EmployeeTitle x) async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => _RenameTitleDialog(current: x.name),
+    );
+    final clean = name?.trim() ?? '';
+    if (clean.isEmpty || clean == x.name || !mounted) return;
+    await _run(() => widget.catalog.updateEmployeeTitle(x.id, clean));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -774,27 +784,40 @@ class _TitleListDialogState extends State<TitleListDialog> {
                             subtitle: x.inUse > 0
                                 ? Text(t.titleUsedBy(x.inUse))
                                 : null,
-                            trailing: IconButton(
-                              key: Key('title_delete_${x.id}'),
-                              tooltip: x.inUse > 0
-                                  ? t.titleInUseHint
-                                  : t.delete,
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: _busy || x.inUse > 0
-                                  ? null
-                                  : () async {
-                                      final ok = await confirmAction(
-                                        context,
-                                        title: t.delete,
-                                        message: t.confirmDeleteNamed(x.name),
-                                        confirmLabel: t.delete,
-                                      );
-                                      if (!ok) return;
-                                      await _run(
-                                        () => widget.catalog
-                                            .deleteEmployeeTitle(x.id),
-                                      );
-                                    },
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  key: Key('title_edit_${x.id}'),
+                                  tooltip: t.renameTitle,
+                                  icon: const Icon(Icons.edit_outlined),
+                                  onPressed: _busy ? null : () => _rename(x),
+                                ),
+                                IconButton(
+                                  key: Key('title_delete_${x.id}'),
+                                  tooltip: x.inUse > 0
+                                      ? t.titleInUseHint
+                                      : t.delete,
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: _busy || x.inUse > 0
+                                      ? null
+                                      : () async {
+                                          final ok = await confirmAction(
+                                            context,
+                                            title: t.delete,
+                                            message: t.confirmDeleteNamed(
+                                              x.name,
+                                            ),
+                                            confirmLabel: t.delete,
+                                          );
+                                          if (!ok) return;
+                                          await _run(
+                                            () => widget.catalog
+                                                .deleteEmployeeTitle(x.id),
+                                          );
+                                        },
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -808,6 +831,56 @@ class _TitleListDialogState extends State<TitleListDialog> {
           key: const Key('titles_done'),
           onPressed: () => Navigator.pop(context, _lastAdded),
           child: Text(t.close),
+        ),
+      ],
+    );
+  }
+}
+
+/// Asks for the new name of a title. Owns its text field, so nothing is disposed while the dialog animates out.
+class _RenameTitleDialog extends StatefulWidget {
+  const _RenameTitleDialog({required this.current});
+
+  final String current;
+
+  @override
+  State<_RenameTitleDialog> createState() => _RenameTitleDialogState();
+}
+
+class _RenameTitleDialogState extends State<_RenameTitleDialog> {
+  late final _field = TextEditingController(text: widget.current);
+
+  @override
+  void dispose() {
+    _field.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return AlertDialog(
+      title: DialogHeader(t.renameTitle),
+      content: SizedBox(
+        width: 360,
+        child: TextField(
+          key: const Key('title_rename_field'),
+          controller: _field,
+          maxLength: 100,
+          autofocus: true,
+          decoration: InputDecoration(labelText: t.titleName),
+          onSubmitted: (v) => Navigator.pop(context, v),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(t.cancel),
+        ),
+        FilledButton(
+          key: const Key('title_rename_save'),
+          onPressed: () => Navigator.pop(context, _field.text),
+          child: Text(t.save),
         ),
       ],
     );

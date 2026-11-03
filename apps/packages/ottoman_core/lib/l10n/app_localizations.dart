@@ -3277,6 +3277,18 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Obriši pretragu'**
   String get clearSearch;
+
+  /// No description provided for @renameTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Preimenuj titulu'**
+  String get renameTitle;
+
+  /// No description provided for @titleName.
+  ///
+  /// In bs, this message translates to:
+  /// **'Naziv titule'**
+  String get titleName;
 }
 
 class _AppLocalizationsDelegate

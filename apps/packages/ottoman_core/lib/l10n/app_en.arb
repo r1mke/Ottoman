@@ -622,5 +622,7 @@
   "removeFromSelection": "Remove from the selection",
   "employeeSearchHint": "Search by name or title",
   "serviceSearchHint": "Search by name or description",
-  "clearSearch": "Clear search"
+  "clearSearch": "Clear search",
+  "renameTitle": "Rename title",
+  "titleName": "Title name"
 }

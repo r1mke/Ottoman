@@ -1689,4 +1689,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearSearch => 'Clear search';
+
+  @override
+  String get renameTitle => 'Rename title';
+
+  @override
+  String get titleName => 'Title name';
 }

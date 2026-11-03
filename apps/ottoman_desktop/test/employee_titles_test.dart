@@ -49,6 +49,10 @@ class _Server implements HttpClientAdapter {
     } else if (o.method == 'DELETE') {
       titles.removeWhere((t) => o.path.endsWith('/${t['id']}'));
       status = 204;
+    } else if (o.method == 'PUT' && o.path.contains('/employee-titles/')) {
+      final row = titles.firstWhere((t) => o.path.endsWith('/${t['id']}'));
+      row['name'] = (o.data as Map)['name'];
+      body = row;
     } else if (o.method == 'PUT') {
       body = {
         'id': 'e1',
@@ -242,6 +246,29 @@ void main() {
       expect(find.text('Junior Barber'), findsNothing);
     },
   );
+
+  testWidgets('a title is renamed from the list, even one that is in use', (
+    tester,
+  ) async {
+    final server = await _open(tester);
+    await _openDropdown(tester);
+    await tester.tap(find.text('Uredi listu titula'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('title_edit_3')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('title_rename_field')),
+      '  Glavni barber ',
+    );
+    await tester.tap(find.byKey(const Key('title_rename_save')));
+    await tester.pumpAndSettle();
+
+    final put = server.sent('PUT', '/employee-titles/3').single;
+    expect((put.data as Map)['name'], 'Glavni barber');
+    expect(find.text('Glavni barber'), findsOneWidget);
+    expect(find.text('Master Barber'), findsNothing);
+  });
 }
 
 void genderTests() {

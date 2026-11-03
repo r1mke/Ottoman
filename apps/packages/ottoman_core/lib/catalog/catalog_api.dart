@@ -24,6 +24,15 @@ class CatalogApi {
         ),
       );
 
+  /// Renames a title; the barbers who have it keep it under the new name.
+  Future<EmployeeTitle> updateEmployeeTitle(int id, String name) async =>
+      EmployeeTitle.fromJson(
+        await _api.put<Map<String, dynamic>>(
+          '/api/v1/employee-titles/$id',
+          body: {'name': name},
+        ),
+      );
+
   Future<void> deleteEmployeeTitle(int id) =>
       _api.delete<dynamic>('/api/v1/employee-titles/$id');
 

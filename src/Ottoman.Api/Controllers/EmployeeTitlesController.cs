@@ -24,6 +24,10 @@ public class EmployeeTitlesController(IEmployeeTitles titles) : ControllerBase
         return result.Succeeded ? StatusCode(StatusCodes.Status201Created, result.Value) : this.ToActionResult(result);
     }
 
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<EmployeeTitleDto>> Update(int id, UpdateEmployeeTitleRequest request, CancellationToken ct) =>
+        this.ToActionResult(await titles.UpdateAsync(id, request.Name, ct));
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct) =>
         this.ToNoContent(await titles.DeleteAsync(id, ct));

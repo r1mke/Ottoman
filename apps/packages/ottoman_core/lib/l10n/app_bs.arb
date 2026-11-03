@@ -626,5 +626,7 @@
   "removeFromSelection": "Ukloni iz odabira",
   "employeeSearchHint": "Pretraži po imenu ili zvanju",
   "serviceSearchHint": "Pretraži po nazivu ili opisu",
-  "clearSearch": "Obriši pretragu"
+  "clearSearch": "Obriši pretragu",
+  "renameTitle": "Preimenuj titulu",
+  "titleName": "Naziv titule"
 }
