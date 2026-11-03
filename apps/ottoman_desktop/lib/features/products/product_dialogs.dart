@@ -608,11 +608,20 @@ class _NamesDialogState extends State<NamesDialog> {
                                   key: Key('name_delete_${item.id}'),
                                   tooltip: t.delete,
                                   icon: const Icon(Icons.delete_outline),
-                                  onPressed: () => _run(
-                                    () => widget.isBrands
-                                        ? widget.shop.deleteBrand(item.id)
-                                        : widget.shop.deleteCategory(item.id),
-                                  ),
+                                  onPressed: () async {
+                                    final ok = await confirmAction(
+                                      context,
+                                      title: t.delete,
+                                      message: t.confirmDeleteNamed(item.name),
+                                      confirmLabel: t.delete,
+                                    );
+                                    if (!ok) return;
+                                    await _run(
+                                      () => widget.isBrands
+                                          ? widget.shop.deleteBrand(item.id)
+                                          : widget.shop.deleteCategory(item.id),
+                                    );
+                                  },
                                 ),
                               ],
                             ),

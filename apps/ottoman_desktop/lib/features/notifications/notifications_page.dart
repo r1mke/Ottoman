@@ -66,6 +66,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
       setState(() => _error = t.chooseClient);
       return;
     }
+    // A message to a whole group (and its e-mails) cannot be taken back: ask first.
+    if (_audience != Audience.user) {
+      final who = audienceLabel(t, _audience);
+      final ok = await confirmAction(
+        context,
+        title: t.send,
+        message: _email
+            ? t.announceEmailQuestion(who)
+            : t.announceQuestion(who),
+        confirmLabel: t.send,
+      );
+      if (!ok || !mounted) return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     setState(() {
       _busy = true;

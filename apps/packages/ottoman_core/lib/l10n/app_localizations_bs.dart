@@ -1636,4 +1636,33 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get removePin => 'Ukloni oznaku';
+
+  @override
+  String confirmDeleteNamed(String name) {
+    return 'Obrisati „$name“? Ovo se ne može poništiti.';
+  }
+
+  @override
+  String get removePictureQuestion => 'Ukloniti ovu sliku?';
+
+  @override
+  String fulfilOrderQuestion(int id) {
+    return 'Označiti narudžbu #$id kao preuzetu? Ovo se ne može poništiti.';
+  }
+
+  @override
+  String announceQuestion(String audience) {
+    return 'Poslati ovu poruku: $audience? Primaoci je odmah vide u aplikaciji.';
+  }
+
+  @override
+  String announceEmailQuestion(String audience) {
+    return 'Poslati ovu poruku: $audience, i e-mailom? Poslani mailovi se ne mogu povući.';
+  }
+
+  @override
+  String get completeQuestion => 'Označiti termin kao završen?';
+
+  @override
+  String get noShowQuestion => 'Označiti da klijent nije došao na termin?';
 }

@@ -729,10 +729,20 @@ class _StylesDialogState extends State<StylesDialog> {
                                 icon: const Icon(Icons.delete_outline),
                                 onPressed: _busy
                                     ? null
-                                    : () => _run(
-                                        () =>
-                                            widget.gallery.deleteCategory(c.id),
-                                      ),
+                                    : () async {
+                                        final ok = await confirmAction(
+                                          context,
+                                          title: t.delete,
+                                          message: t.confirmDeleteNamed(c.name),
+                                          confirmLabel: t.delete,
+                                        );
+                                        if (!ok) return;
+                                        await _run(
+                                          () => widget.gallery.deleteCategory(
+                                            c.id,
+                                          ),
+                                        );
+                                      },
                               ),
                             ],
                           ),

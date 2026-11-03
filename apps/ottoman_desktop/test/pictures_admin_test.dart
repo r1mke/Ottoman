@@ -182,6 +182,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('remove_picture_11')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_action')));
+      await tester.pumpAndSettle();
 
       expect(server.requests.single.method, 'DELETE');
       expect(server.requests.single.path, '/api/v1/products/7/images/11');

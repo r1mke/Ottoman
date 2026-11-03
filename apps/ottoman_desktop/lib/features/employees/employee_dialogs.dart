@@ -788,11 +788,19 @@ class _TitleListDialogState extends State<TitleListDialog> {
                               icon: const Icon(Icons.delete_outline),
                               onPressed: _busy || x.inUse > 0
                                   ? null
-                                  : () => _run(
-                                      () => widget.catalog.deleteEmployeeTitle(
-                                        x.id,
-                                      ),
-                                    ),
+                                  : () async {
+                                      final ok = await confirmAction(
+                                        context,
+                                        title: t.delete,
+                                        message: t.confirmDeleteNamed(x.name),
+                                        confirmLabel: t.delete,
+                                      );
+                                      if (!ok) return;
+                                      await _run(
+                                        () => widget.catalog
+                                            .deleteEmployeeTitle(x.id),
+                                      );
+                                    },
                             ),
                           ),
                       ],

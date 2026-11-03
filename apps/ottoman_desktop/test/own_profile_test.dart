@@ -242,6 +242,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('remove_picture_photo')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_action')));
+      await tester.pumpAndSettle();
       expect(server.sent('DELETE', '/me/photo'), hasLength(1));
       expect(find.byKey(const Key('remove_picture_photo')), findsNothing);
     },

@@ -71,7 +71,12 @@ class _Api implements HttpClientAdapter {
     Object? body;
     var status = 200;
     final p = o.path;
-    if (p.endsWith('/salon')) {
+    if (o.method == 'POST' &&
+        (p.endsWith('/complete') || p.endsWith('/no-show'))) {
+      body = reservation(
+        status: p.endsWith('/complete') ? 'Completed' : 'NoShow',
+      );
+    } else if (p.endsWith('/salon')) {
       body = {
         'name': 'Ottoman',
         'description': 'Opis salona',
@@ -437,6 +442,35 @@ void main() {
         api.last('GET', '/reservations')!.queryParameters['toDate'],
         tomorrow,
       ); // a single day
+    },
+  );
+
+  testWidgets(
+    'completing or marking a no-show asks first; saying no sends nothing',
+    (tester) async {
+      final past = DateTime.now().toUtc().subtract(const Duration(hours: 1));
+      final api = _Api(role: 'Employee')
+        ..reservations = [_Api.reservation(id: 1, startUtc: past)];
+      await _start(tester, api);
+
+      await tester.tap(find.byKey(const Key('complete_1')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('confirm_action_text')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('confirm_action_cancel')));
+      await tester.pumpAndSettle();
+      expect(api.count('POST', '/complete'), 0);
+
+      await tester.tap(find.byKey(const Key('noshow_1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_action_cancel')));
+      await tester.pumpAndSettle();
+      expect(api.count('POST', '/no-show'), 0);
+
+      await tester.tap(find.byKey(const Key('complete_1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_action')));
+      await tester.pumpAndSettle();
+      expect(api.count('POST', '/complete'), 1);
     },
   );
 

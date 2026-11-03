@@ -608,5 +608,16 @@
   "addressNotFound": "Adresa nije pronađena. Kliknite na mapu da postavite oznaku.",
   "noPinYet": "Oznaka još nije postavljena.",
   "pinSet": "Oznaka je postavljena.",
-  "removePin": "Ukloni oznaku"
+  "removePin": "Ukloni oznaku",
+  "confirmDeleteNamed": "Obrisati „{name}“? Ovo se ne može poništiti.",
+  "@confirmDeleteNamed": {"placeholders": {"name": {"type": "String"}}},
+  "removePictureQuestion": "Ukloniti ovu sliku?",
+  "fulfilOrderQuestion": "Označiti narudžbu #{id} kao preuzetu? Ovo se ne može poništiti.",
+  "@fulfilOrderQuestion": {"placeholders": {"id": {"type": "int"}}},
+  "announceQuestion": "Poslati ovu poruku: {audience}? Primaoci je odmah vide u aplikaciji.",
+  "@announceQuestion": {"placeholders": {"audience": {"type": "String"}}},
+  "announceEmailQuestion": "Poslati ovu poruku: {audience}, i e-mailom? Poslani mailovi se ne mogu povući.",
+  "@announceEmailQuestion": {"placeholders": {"audience": {"type": "String"}}},
+  "completeQuestion": "Označiti termin kao završen?",
+  "noShowQuestion": "Označiti da klijent nije došao na termin?"
 }

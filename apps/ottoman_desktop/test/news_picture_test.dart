@@ -138,6 +138,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('msg_send')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
+    await tester.pumpAndSettle();
 
     final form =
         api.last('POST', '/announcements/with-image')!.data as FormData;
@@ -151,6 +153,8 @@ void main() {
     await tester.enterText(find.byKey(const Key('msg_title')), 'Bez slike');
     await tester.enterText(find.byKey(const Key('msg_body')), 'Samo tekst');
     await tester.tap(find.byKey(const Key('msg_send')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
     await tester.pumpAndSettle();
     final plain = api.requests.lastWhere(
       (r) => r.method == 'POST' && r.path.endsWith('/announcements'),

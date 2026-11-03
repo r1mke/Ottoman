@@ -38,6 +38,7 @@ export 'audit/audit_api.dart';
 export 'widgets/profile_widgets.dart';
 export 'widgets/ottoman_logo.dart';
 export 'widgets/dialog_header.dart';
+export 'widgets/confirm_action.dart';
 export 'widgets/cancel_reason_dialog.dart';
 export 'validation/validators.dart';
 export 'gallery/gallery_models.dart';

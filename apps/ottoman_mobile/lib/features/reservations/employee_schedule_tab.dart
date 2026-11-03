@@ -42,6 +42,21 @@ class _EmployeeScheduleTabState extends State<EmployeeScheduleTab> {
     _day = DateTime(_day.year, _day.month, _day.day + days);
   });
 
+  /// Completing or marking a no-show closes the appointment for good: ask first.
+  Future<void> _confirmThen({
+    required String title,
+    required String message,
+    required Future<Reservation> Function() action,
+  }) async {
+    final ok = await confirmAction(
+      context,
+      title: title,
+      message: message,
+      confirmLabel: title,
+    );
+    if (ok && mounted) await _act(action);
+  }
+
   Future<void> _act(Future<Reservation> Function() action) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -158,11 +173,17 @@ class _EmployeeScheduleTabState extends State<EmployeeScheduleTab> {
                       _Entry(
                         reservation: items[i],
                         canFinish: items[i].canFinish(now),
-                        onNoShow: () => _act(
-                          () => widget.reservations.markNoShow(items[i].id),
+                        onNoShow: () => _confirmThen(
+                          title: t.markNoShow,
+                          message: t.noShowQuestion,
+                          action: () =>
+                              widget.reservations.markNoShow(items[i].id),
                         ),
-                        onComplete: () => _act(
-                          () => widget.reservations.complete(items[i].id),
+                        onComplete: () => _confirmThen(
+                          title: t.complete,
+                          message: t.completeQuestion,
+                          action: () =>
+                              widget.reservations.complete(items[i].id),
                         ),
                         t: t,
                       ),

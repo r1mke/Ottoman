@@ -3193,6 +3193,48 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Ukloni oznaku'**
   String get removePin;
+
+  /// No description provided for @confirmDeleteNamed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obrisati „{name}“? Ovo se ne može poništiti.'**
+  String confirmDeleteNamed(String name);
+
+  /// No description provided for @removePictureQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloniti ovu sliku?'**
+  String get removePictureQuestion;
+
+  /// No description provided for @fulfilOrderQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Označiti narudžbu #{id} kao preuzetu? Ovo se ne može poništiti.'**
+  String fulfilOrderQuestion(int id);
+
+  /// No description provided for @announceQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Poslati ovu poruku: {audience}? Primaoci je odmah vide u aplikaciji.'**
+  String announceQuestion(String audience);
+
+  /// No description provided for @announceEmailQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Poslati ovu poruku: {audience}, i e-mailom? Poslani mailovi se ne mogu povući.'**
+  String announceEmailQuestion(String audience);
+
+  /// No description provided for @completeQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Označiti termin kao završen?'**
+  String get completeQuestion;
+
+  /// No description provided for @noShowQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Označiti da klijent nije došao na termin?'**
+  String get noShowQuestion;
 }
 
 class _AppLocalizationsDelegate

@@ -293,6 +293,18 @@ void main() {
     },
   );
 
+  testWidgets('handing over an order asks first; saying no sends nothing', (
+    tester,
+  ) async {
+    final api = await _open(tester, 'Narudžbe');
+    await tester.tap(find.byKey(const Key('fulfil_11')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('confirm_action_text')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('confirm_action_cancel')));
+    await tester.pumpAndSettle();
+    expect(api.where('POST', '/orders/11/fulfil'), isEmpty);
+  });
+
   testWidgets(
     'orders: admin sees all, can hand over a paid order and cancel one',
     (tester) async {
@@ -310,6 +322,8 @@ void main() {
       expect(find.byKey(const Key('cancel_13')), findsNothing);
 
       await tester.tap(find.byKey(const Key('fulfil_11')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_action')));
       await tester.pumpAndSettle();
       expect(api.where('POST', '/orders/11/fulfil'), hasLength(1));
 

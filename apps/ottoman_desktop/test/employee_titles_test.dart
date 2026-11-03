@@ -236,6 +236,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('title_delete_2')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_action')));
+      await tester.pumpAndSettle();
       expect(server.sent('DELETE', '/employee-titles/2'), hasLength(1));
       expect(find.text('Junior Barber'), findsNothing);
     },

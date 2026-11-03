@@ -153,6 +153,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('msg_send')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
+    await tester.pumpAndSettle();
 
     final sent = api.where('POST', '/announcements').single.data as Map;
     expect(sent['title'], 'Nova akcija');
@@ -170,6 +172,26 @@ void main() {
     // history was reloaded
     expect(api.where('GET', '/announcements').length, greaterThanOrEqualTo(2));
   });
+
+  testWidgets(
+    'a message to a whole group asks first; saying no sends nothing',
+    (tester) async {
+      final api = await _open(tester);
+      await tester.enterText(find.byKey(const Key('msg_title')), 'Nova akcija');
+      await tester.enterText(find.byKey(const Key('msg_body')), 'Svi -10%');
+      await tester.tap(find.byKey(const Key('msg_send')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Klijenti'), findsWidgets);
+      await tester.tap(find.byKey(const Key('confirm_action_cancel')));
+      await tester.pumpAndSettle();
+      expect(api.where('POST', '/announcements'), isEmpty);
+      expect(
+        find.text('Nova akcija'),
+        findsOneWidget,
+        reason: 'the text is kept',
+      );
+    },
+  );
 
   testWidgets('empty title or message is caught before any request', (
     tester,
@@ -222,6 +244,8 @@ void main() {
     await tester.enterText(find.byKey(const Key('msg_title')), 'T');
     await tester.enterText(find.byKey(const Key('msg_body')), 'B');
     await tester.tap(find.byKey(const Key('msg_send')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
     await tester.pumpAndSettle();
 
     expect(find.text('Odabrani korisnik ne postoji.'), findsOneWidget);

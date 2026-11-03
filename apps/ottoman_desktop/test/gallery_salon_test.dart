@@ -353,6 +353,8 @@ void main() {
         ..errorBody = {'detail': 'Kategorija se koristi u galeriji.'};
       await tester.tap(find.byKey(const Key('delete_style_1')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_action')));
+      await tester.pumpAndSettle();
       expect(find.textContaining('koristi u galeriji'), findsOneWidget);
     },
   );

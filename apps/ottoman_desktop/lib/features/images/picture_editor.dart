@@ -69,6 +69,17 @@ class _PictureEditorState extends State<PictureEditor> {
   bool _busy = false;
   String? _error;
 
+  Future<void> _remove(EditablePicture picture) async {
+    final t = AppLocalizations.of(context);
+    final ok = await confirmAction(
+      context,
+      title: t.removePicture,
+      message: t.removePictureQuestion,
+      confirmLabel: t.removePictureShort,
+    );
+    if (ok && mounted) await _run(() => widget.onRemove(picture));
+  }
+
   Future<void> _run(Future<List<EditablePicture>> Function() action) async {
     setState(() {
       _busy = true;
@@ -146,9 +157,7 @@ class _PictureEditorState extends State<PictureEditor> {
                   fallbackIcon: widget.fallbackIcon,
                   removeTooltip: t.removePicture,
                   removeKey: Key('remove_picture_${_pictures[i].id}'),
-                  onRemove: _busy
-                      ? null
-                      : () => _run(() => widget.onRemove(_pictures[i])),
+                  onRemove: _busy ? null : () => _remove(_pictures[i]),
                 ),
               if (canAdd && !replaceInPlace)
                 _AddTile(

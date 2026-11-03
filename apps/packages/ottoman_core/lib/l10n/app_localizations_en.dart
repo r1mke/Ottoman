@@ -1638,4 +1638,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removePin => 'Remove pin';
+
+  @override
+  String confirmDeleteNamed(String name) {
+    return 'Delete “$name”? This cannot be undone.';
+  }
+
+  @override
+  String get removePictureQuestion => 'Remove this picture?';
+
+  @override
+  String fulfilOrderQuestion(int id) {
+    return 'Mark order #$id as handed over? This cannot be undone.';
+  }
+
+  @override
+  String announceQuestion(String audience) {
+    return 'Send this message to: $audience? Recipients see it in the app right away.';
+  }
+
+  @override
+  String announceEmailQuestion(String audience) {
+    return 'Send this message to: $audience, also by e-mail? Sent e-mails cannot be recalled.';
+  }
+
+  @override
+  String get completeQuestion => 'Mark the appointment as completed?';
+
+  @override
+  String get noShowQuestion => 'Mark that the client did not come?';
 }

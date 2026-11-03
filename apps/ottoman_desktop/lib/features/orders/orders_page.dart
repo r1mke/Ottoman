@@ -22,6 +22,14 @@ class _OrdersPageState extends State<OrdersPage> {
           .showSnackBar(SnackBar(content: Text(message)));
 
   Future<void> _fulfil(ShopOrder o) async {
+    final t = AppLocalizations.of(context);
+    final ok = await confirmAction(
+      context,
+      title: t.markFulfilled,
+      message: t.fulfilOrderQuestion(o.id),
+      confirmLabel: t.markFulfilled,
+    );
+    if (!ok || !mounted) return;
     try {
       await widget.shop.fulfilOrder(o.id);
     } on AppException catch (e) {
