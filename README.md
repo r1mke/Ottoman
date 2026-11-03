@@ -21,6 +21,8 @@ docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 | RabbitMQ management | http://localhost:15672 |
 | Mailpit (razvojni inbox za mailove) | http://localhost:8025 |
 
+Bez `ASPNETCORE_ENVIRONMENT` u `deploy/.env` compose pokreće API u **Production** okruženju bez demo podataka (`SEED_DEMO_DATA` je podrazumijevano `false`); `.env.example` zato za lokalni demo postavlja `ASPNETCORE_ENVIRONMENT=Development` i `SEED_DEMO_DATA=true`. SQL Server, RabbitMQ (i management) i Mailpit slušaju samo na `127.0.0.1`; API (port 5080) je dostupan i drugim uređajima u mreži (telefon).
+
 Demo korisnici (samo kad je `SEED_DEMO_DATA=true`): `kerim@ottoman.local`, `tarik@ottoman.local` (zaposlenici), `klijent@ottoman.local` (klijent); lozinka `SEED_DEMO_PASSWORD`. Admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
 
 ### Pristupni podaci za testiranje

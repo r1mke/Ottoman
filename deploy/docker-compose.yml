@@ -9,7 +9,8 @@ services:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in deploy/.env}
       MSSQL_PID: Developer
     ports:
-      - "${SQL_PORT:-14330}:1433"
+      # Loopback only: the database is reached by the api/worker over the compose network, not from outside.
+      - "127.0.0.1:${SQL_PORT:-14330}:1433"
     volumes:
       - sqldata:/var/opt/mssql
     healthcheck:
@@ -26,8 +27,9 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?set RABBITMQ_USER in deploy/.env}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD in deploy/.env}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      # Loopback only (AMQP and the management UI are not for other machines).
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -40,8 +42,8 @@ services:
     image: axllent/mailpit:v1.31
     restart: unless-stopped
     ports:
-      - "8025:8025"
-      - "1025:1025"
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
 
   api:
     build:
@@ -54,13 +56,15 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      # Safe by default: Production unless deploy/.env says Development (local demo). StartupGuards then refuse
+      # placeholder secrets and demo accounts.
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ConnectionStrings__Default: Server=sql;Database=220048;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in deploy/.env (min 32 chars)}
       Jwt__Issuer: ${JWT_ISSUER:-ottoman}
       Jwt__Audience: ${JWT_AUDIENCE:-ottoman-clients}
       Database__MigrateOnStartup: "true"
-      Seed__DemoData: ${SEED_DEMO_DATA:-true}
+      Seed__DemoData: ${SEED_DEMO_DATA:-false}
       Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-}
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-}
       Seed__DemoPassword: ${SEED_DEMO_PASSWORD:-Test123!}
@@ -100,7 +104,7 @@ services:
       api:
         condition: service_healthy
     environment:
-      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ConnectionStrings__Default: Server=sql;Database=220048;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in deploy/.env (min 32 chars)}
       Payments__SecretKey: ${STRIPE_SECRET_KEY:-}
