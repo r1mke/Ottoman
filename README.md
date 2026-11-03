@@ -56,7 +56,6 @@ dotnet format Ottoman.slnx --verify-no-changes
 
 Flutter: `cd apps/<app> && flutter pub get && flutter analyze && flutter test`.
 
-Svaka faza je radila na vlastitoj grani spojenoj u `main`; 
 
 ## Produkcija — šta provjeriti
 
