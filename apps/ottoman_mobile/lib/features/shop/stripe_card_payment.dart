@@ -44,9 +44,16 @@ class StripeCardPayment extends CardPaymentLauncher {
       );
       await Stripe.instance.presentPaymentSheet();
       return CardPaymentResult.paid;
-    } on StripeException {
-      // Cancelled or declined: the order stays unpaid and can be paid later from "Moje narudžbe".
-      return CardPaymentResult.cancelled;
+    } on StripeException catch (e) {
+      return cardResultFor(e.error.code);
     }
   }
 }
+
+/// Only an explicit cancel by the customer means for sure that nothing was charged. Every other failure (declined,
+/// timeout, unknown) is reported as [CardPaymentResult.failed], so the caller asks the server for the order before
+/// withdrawing it: a card that was charged must never lose its order.
+CardPaymentResult cardResultFor(FailureCode code) =>
+    code == FailureCode.Canceled
+    ? CardPaymentResult.cancelled
+    : CardPaymentResult.failed;

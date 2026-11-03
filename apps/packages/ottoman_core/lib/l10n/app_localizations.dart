@@ -1160,6 +1160,12 @@ abstract class AppLocalizations {
   /// **'Povrat u obradi'**
   String get paymentStatusRefundPending;
 
+  /// No description provided for @paymentNotConfirmed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Plaćanje nije potvrđeno. Narudžba čeka uplatu u „Moje narudžbe“; ako ostane neplaćena, sama se zatvara.'**
+  String get paymentNotConfirmed;
+
   /// No description provided for @none.
   ///
   /// In bs, this message translates to:

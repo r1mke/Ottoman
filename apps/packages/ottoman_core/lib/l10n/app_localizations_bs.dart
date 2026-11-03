@@ -567,6 +567,10 @@ class AppLocalizationsBs extends AppLocalizations {
   String get paymentStatusRefundPending => 'Povrat u obradi';
 
   @override
+  String get paymentNotConfirmed =>
+      'Plaćanje nije potvrđeno. Narudžba čeka uplatu u „Moje narudžbe“; ako ostane neplaćena, sama se zatvara.';
+
+  @override
   String get none => 'Bez';
 
   @override

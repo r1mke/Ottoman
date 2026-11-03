@@ -86,9 +86,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
       if (order.awaitsPayment) {
-        // The card sheet needs a payment tied to an order, so the order exists while it is open. If it is closed
-        // or declined nothing was paid: withdraw the order (stock goes back) and keep the basket as it was.
-        final result = await widget.cardPayment.pay(order);
+        // The card sheet needs a payment tied to an order, so the order exists while it is open. If the customer
+        // closed it nothing was paid: withdraw the order (stock goes back) and keep the basket as it was.
+        var result = await widget.cardPayment.pay(order);
+        if (result == CardPaymentResult.failed) {
+          // Not a plain cancel: the card may have been charged. Only the server knows; never withdraw such an
+          // order here. Unpaid, it waits in "My orders" and closes on its own when it expires.
+          if (await _isPaid(order)) {
+            result = CardPaymentResult.paid;
+          } else {
+            messenger.showSnackBar(
+              SnackBar(
+                key: const Key('payment_not_confirmed'),
+                content: Text(t.paymentNotConfirmed),
+              ),
+            );
+            return;
+          }
+        }
         if (result != CardPaymentResult.paid) {
           await _withdraw(order);
           messenger.showSnackBar(
@@ -110,6 +125,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
       if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Asks the server whether the order was paid after all (the payment is recorded by the server, not the app).
+  Future<bool> _isPaid(ShopOrder order) async {
+    try {
+      final fresh = await widget.shop.order(order.id);
+      return fresh.status == OrderStatus.placed;
+    } on AppException {
+      return false;
     }
   }
 

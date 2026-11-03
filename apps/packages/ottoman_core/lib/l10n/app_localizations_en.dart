@@ -567,6 +567,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentStatusRefundPending => 'Refund pending';
 
   @override
+  String get paymentNotConfirmed =>
+      'The payment was not confirmed. The order waits for payment in \"My orders\"; if it stays unpaid, it closes on its own.';
+
+  @override
   String get none => 'None';
 
   @override

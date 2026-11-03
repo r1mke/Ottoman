@@ -1,6 +1,18 @@
 import 'shop_models.dart';
 
-enum CardPaymentResult { paid, cancelled, unavailable }
+enum CardPaymentResult {
+  paid,
+
+  /// The customer closed the sheet: nothing was charged.
+  cancelled,
+
+  /// The sheet could not be opened (no keys, no payment on the order): nothing was charged.
+  unavailable,
+
+  /// The sheet ended with an error that is not a plain cancel (declined, timeout, unknown). The card may or may
+  /// not have been charged: ask the server before touching the order.
+  failed,
+}
 
 /// Seam for the card payment sheet, so the shop screens stay testable without a native SDK.
 /// The default implementation reports that card payment is not available.

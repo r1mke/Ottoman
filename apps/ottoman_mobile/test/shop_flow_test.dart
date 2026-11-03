@@ -5,7 +5,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ottoman_core/ottoman_core.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' show FailureCode;
 import 'package:ottoman_mobile/app.dart';
+import 'package:ottoman_mobile/features/shop/stripe_card_payment.dart';
 
 Map<String, dynamic> _product(int id, String name, double price, int stock) => {
   'id': id,
@@ -56,6 +58,9 @@ class _Api implements HttpClientAdapter {
   int createStatus = 201;
   Map<String, dynamic>? createError;
   List<Map<String, dynamic>> orders = [];
+
+  /// What GET /orders/{id} returns; by default an unpaid card order.
+  Map<String, dynamic>? orderDetail;
   List<Map<String, dynamic>> sections = [];
   int onSaleCount = 0;
   bool showCategoryBlock = true;
@@ -160,10 +165,12 @@ class _Api implements HttpClientAdapter {
     } else if (path.endsWith('/sections')) {
       body = sections;
     } else if (RegExp(r'/orders/\d+$').hasMatch(path) && o.method == 'GET') {
-      body = {
-        ..._order(status: 'PendingPayment', method: 'Card'),
-        'paymentClientSecret': 'pi_2_secret_y',
-      };
+      body =
+          orderDetail ??
+          {
+            ..._order(status: 'PendingPayment', method: 'Card'),
+            'paymentClientSecret': 'pi_2_secret_y',
+          };
     } else if (path.endsWith('/categories')) {
       body = [
         {'id': 1, 'name': 'Voskovi', 'description': null},
@@ -446,6 +453,64 @@ void main() {
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('go_checkout')), findsOneWidget);
+    },
+  );
+
+  test('only an explicit cancel of the Stripe sheet counts as cancelled', () {
+    expect(cardResultFor(FailureCode.Canceled), CardPaymentResult.cancelled);
+    for (final code in [
+      FailureCode.Failed,
+      FailureCode.Timeout,
+      FailureCode.Unknown,
+    ]) {
+      expect(cardResultFor(code), CardPaymentResult.failed, reason: '$code');
+    }
+  });
+
+  testWidgets(
+    'a sheet error that is not a cancel asks the server: a paid order is kept '
+    'and the basket emptied',
+    (tester) async {
+      final card = _FakeCard(CardPaymentResult.failed);
+      final api = await _openShop(tester, cardPayment: card);
+      api.orderDetail = _order(status: 'Placed', method: 'Card');
+      api.createError = {
+        ..._order(status: 'PendingPayment', method: 'Card'),
+        'paymentClientSecret': 'pi_1_secret_x',
+      };
+      await tester.tap(find.byKey(const Key('add_1')));
+      await tester.tap(find.byKey(const Key('open_cart')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('go_checkout')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('place_order')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm_order')));
+      await tester.pumpAndSettle();
+
+      expect(api.last('GET', '/orders/7'), isNotNull);
+      expect(api.last('POST', '/cancel'), isNull);
+      expect(find.text('Narudžba je zaprimljena.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a sheet error on an order the server has not seen paid never withdraws it',
+    (tester) async {
+      final card = _FakeCard(CardPaymentResult.failed);
+      final api = await checkoutWithCard(
+        tester,
+        CardPaymentResult.failed,
+        card,
+      );
+
+      expect(
+        api.last('POST', '/cancel'),
+        isNull,
+        reason: 'the card may have been charged',
+      );
+      expect(find.byKey(const Key('payment_not_confirmed')), findsOneWidget);
+      expect(find.byKey(const Key('place_order')), findsOneWidget);
     },
   );
 
