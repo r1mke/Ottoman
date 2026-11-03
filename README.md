@@ -45,8 +45,18 @@ U `deploy/.env` postavite `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` i `STRIP
 cd apps/ottoman_desktop && flutter run -d windows
 cd apps/ottoman_mobile  && flutter run                 # emulator: API na http://10.0.2.2:5080
 cd apps/ottoman_mobile  && flutter run --dart-define=API_BASE_URL=http://<IP računara>:5080   # pravi telefon
-cd apps/ottoman_mobile  && flutter build apk --debug   # apps/ottoman_mobile/build/app/outputs/flutter-apk/app-debug.apk
+cd apps/ottoman_mobile  && flutter build apk --release --dart-define=API_BASE_URL=http://<IP računara>:5080
+#   -> apps/ottoman_mobile/build/app/outputs/flutter-apk/app-release.apk (bez API_BASE_URL: emulator, http://10.0.2.2:5080)
+cd apps/ottoman_desktop && flutter build windows --release   # -> build/windows/x64/runner/Release/
 ```
+
+### Slike (Cloudinary)
+
+Slike (proizvodi, usluge, frizeri, galerija, logo, novosti) čuvaju se na Cloudinaryju. U `deploy/.env` postavite `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` i `CLOUDINARY_API_SECRET`. Bez njih API provjerava upload (vrsta i veličina), ali sliku nigdje ne sprema, pa demo podaci i nove stavke ostaju bez slika (aplikacije tada prikazuju ikonu ili inicijale). S ključevima demo podaci pri startu dobiju generisane zamjenske slike.
+
+### Push obavijesti (Firebase, opcionalno)
+
+Push je dodatak: obavijesti u aplikaciji i mailovi rade i bez njega. Za push trebaju dvije stvari: `apps/ottoman_mobile/android/app/google-services.json` (Firebase konfiguracija aplikacije; bez nje se aplikacija normalno builda i radi, samo bez pusha) i `FIREBASE_SERVICE_ACCOUNT_JSON` u `deploy/.env` za worker (bez njega se push ne šalje, samo se zabilježi u memoriji). Obje datoteke su izvan gita.
 
 ## Razvoj
 
