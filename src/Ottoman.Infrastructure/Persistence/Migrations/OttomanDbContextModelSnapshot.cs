@@ -1227,6 +1227,23 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ottoman.Domain.Entities.SentEmail", b =>
+                {
+                    b.Property<long>("OutboxMessageId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RecipientKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("SentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("OutboxMessageId", "RecipientKey");
+
+                    b.ToTable("SentEmails");
+                });
+
             modelBuilder.Entity("Ottoman.Domain.Entities.Service", b =>
                 {
                     b.Property<int>("Id")

@@ -38,6 +38,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
+    public DbSet<SentEmail> SentEmails => Set<SentEmail>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -343,6 +344,12 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
         {
             e.HasKey(x => x.OutboxMessageId);
             e.Property(x => x.OutboxMessageId).ValueGeneratedNever();
+        });
+
+        b.Entity<SentEmail>(e =>
+        {
+            e.HasKey(x => new { x.OutboxMessageId, x.RecipientKey });
+            e.Property(x => x.RecipientKey).HasMaxLength(64);
         });
 
         b.Entity<RefreshToken>(e =>

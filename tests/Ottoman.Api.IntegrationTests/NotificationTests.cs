@@ -26,11 +26,20 @@ public sealed class FakeEmailSender : IEmailSender
     private readonly ConcurrentQueue<SentMail> _sent = new();
     public volatile bool Fail;
 
+    /// <summary>When set to n >= 0: n more mails go out, then one send fails (and the counter switches off).</summary>
+    public int FailAfter = -1;
+
     public IReadOnlyList<SentMail> Sent => [.. _sent];
 
     public Task SendAsync(string toEmail, string toName, string subject, string htmlBody, string textBody, CancellationToken ct)
     {
         if (Fail) throw new InvalidOperationException("SMTP is down (test)");
+        if (FailAfter == 0)
+        {
+            FailAfter = -1;
+            throw new InvalidOperationException("SMTP dropped the connection (test)");
+        }
+        if (FailAfter > 0) FailAfter--;
         _sent.Enqueue(new SentMail(toEmail, toName, subject, htmlBody, textBody));
         return Task.CompletedTask;
     }
@@ -203,6 +212,31 @@ public class NotificationTests(ApiFixture api)
         var mail = Mail.Sent.Single(m => m.To == email);
         mail.Subject.Should().Contain("Dobrodošli");
         mail.Html.Should().NotContain("<img src=x").And.Contain("&lt;img");
+    }
+
+    [Fact]
+    public async Task An_announcement_mail_that_fails_half_way_is_not_sent_twice_to_anyone_on_retry()
+    {
+        var (_, firstEmail, _) = await NewClient();
+        var (_, secondEmail, _) = await NewClient();
+        var admin = await Admin();
+        var title = $"Mail svima {Guid.NewGuid():N}";
+        var res = await admin.PostAsJsonAsync("/api/v1/announcements", new AnnouncementRequest(title, "Zdravo", AnnouncementAudience.Clients, SendEmail: true));
+        res.StatusCode.Should().Be(HttpStatusCode.Created);
+        var id = (await res.Content.ReadFromJsonAsync<AnnouncementDto>())!.Id;
+        var evt = await OutboxOf("AnnouncementPublished", p => p.Contains($"\"AnnouncementId\":{id}}}"));
+
+        Mail.FailAfter = 1; // one mail goes out, the next send fails
+        var first = async () => await Process(evt);
+        await first.Should().ThrowAsync<InvalidOperationException>();
+        Mail.Sent.Count(m => m.Subject == title).Should().Be(1);
+
+        await Process(evt); // the broker redelivers the event
+        await Process(evt); // ...and once more after it was handled
+
+        var mails = Mail.Sent.Where(m => m.Subject == title).ToList();
+        mails.GroupBy(m => m.To).Should().OnlyContain(g => g.Count() == 1, "nobody gets the same announcement twice");
+        mails.Select(m => m.To).Should().Contain([firstEmail, secondEmail]);
     }
 
     private static string ApiTestEmail() => $"mail{Guid.NewGuid():N}@test.local";

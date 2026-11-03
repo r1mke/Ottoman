@@ -49,6 +49,19 @@ public class ProcessedEvent
     public DateTime ProcessedAtUtc { get; set; }
 }
 
+/// <summary>
+/// One e-mail of an event that has gone out. An event that fails half-way through its mails is retried as a whole;
+/// these rows let the retry skip the people who already got theirs.
+/// </summary>
+public class SentEmail
+{
+    public long OutboxMessageId { get; set; }
+
+    /// <summary>Hash of recipient address, subject and text: the same person can get two different mails of one event.</summary>
+    public string RecipientKey { get; set; } = null!;
+    public DateTime SentAtUtc { get; set; }
+}
+
 /// <summary>A phone that can receive push messages for a user. The token is unique: a phone belongs to whoever signed in last.</summary>
 public class DeviceToken
 {

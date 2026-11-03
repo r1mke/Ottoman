@@ -17,7 +17,8 @@ namespace Ottoman.Infrastructure.Notifications;
 /// Handles one outbox event: composes the messages, e-mails the recipients and writes their in-app inbox rows.
 /// RabbitMQ delivers at least once, so an event is recorded in <c>ProcessedEvents</c> in the same transaction
 /// as its inbox rows; a redelivery then changes nothing. E-mail goes first so a send failure retries the
-/// whole event instead of losing the mail.
+/// whole event instead of losing the mail; every mail that went out is recorded (<c>SentEmails</c>), so the retry
+/// does not mail the same people again.
 /// </summary>
 public class EventProcessor(
     OttomanDbContext db,
@@ -47,10 +48,7 @@ public class EventProcessor(
 
         var resolved = await ResolveRecipientsAsync(messages, ct);
 
-        foreach (var r in resolved.Where(x => x.Message.SendEmail && !string.IsNullOrWhiteSpace(x.Email)))
-            await email.SendAsync(
-                r.Email!, r.Name ?? r.Email!, r.Message.Title,
-                EmailTemplate.Html(r.Message.Title, r.Message.Body), r.Message.Body, ct);
+        await SendMailsAsync(outboxId, resolved, ct);
 
         await MarkProcessedAsync(outboxId, resolved.Where(x => x.Message.InApp && x.UserId != null).ToList(), ct);
 
@@ -255,6 +253,53 @@ public class EventProcessor(
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             log.LogWarning(ex, "Push step failed; the event itself was handled");
+        }
+    }
+
+    // ---------------------------------------------------------------- e-mail
+
+    /// <summary>
+    /// Sends the event's mails, each recorded right after it went out. A failure part-way retries the whole event,
+    /// and the retry skips everyone who already got their mail (at most the one mail whose record failed repeats).
+    /// </summary>
+    private async Task SendMailsAsync(long outboxId, IReadOnlyList<Resolved> resolved, CancellationToken ct)
+    {
+        var mails = resolved.Where(x => x.Message.SendEmail && !string.IsNullOrWhiteSpace(x.Email)).ToList();
+        if (mails.Count == 0) return;
+
+        var done = (await db.SentEmails.AsNoTracking().Where(s => s.OutboxMessageId == outboxId)
+            .Select(s => s.RecipientKey).ToListAsync(ct)).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var r in mails)
+        {
+            var key = MailKey(r.Email!, r.Message);
+            if (!done.Add(key)) continue; // sent by an earlier attempt (or the same mail twice in one event)
+            await email.SendAsync(
+                r.Email!, r.Name ?? r.Email!, r.Message.Title,
+                EmailTemplate.Html(r.Message.Title, r.Message.Body), r.Message.Body, ct);
+            await RecordSentAsync(outboxId, key, ct);
+        }
+    }
+
+    /// <summary>Identifies one mail of an event without storing its text (a reset mail carries a code).</summary>
+    private static string MailKey(string address, Message message) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes($"{address.Trim().ToLowerInvariant()}\n{message.Kind}\n{message.Title}")));
+
+    private async Task RecordSentAsync(long outboxId, string key, CancellationToken ct)
+    {
+        db.SentEmails.Add(new SentEmail { OutboxMessageId = outboxId, RecipientKey = key, SentAtUtc = clock.GetUtcNow().UtcDateTime });
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            // A concurrent consumer recorded the same mail.
+        }
+        finally
+        {
+            db.ChangeTracker.Clear();
         }
     }
 
