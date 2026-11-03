@@ -158,6 +158,22 @@ void main() {
     },
   );
 
+  testWidgets(
+    'signing out closes the pages opened on top of the shell and shows the login',
+    (tester) async {
+      final (_, _, auth) = await _open(tester);
+      await tester.tap(find.byKey(const Key('open_notifications')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('open_notifications')), findsNothing);
+
+      await tester.runAsync(() => auth.logout());
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('login_email')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('without a push configuration the app works as before', (
     tester,
   ) async {

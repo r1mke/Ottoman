@@ -5,8 +5,10 @@ import '../network/app_exception.dart';
 import 'auth_controller.dart';
 import 'auth_models.dart';
 
-/// Chooses what to show from the session state.
-class AuthGate extends StatelessWidget {
+/// Chooses what to show from the session state. When the session ends, every page pushed on top of the signed-in
+/// home (cart, checkout, dialogs ...) is closed too: they belong to the previous session and may hold objects the
+/// signed-in home disposes.
+class AuthGate extends StatefulWidget {
   const AuthGate({
     super.key,
     required this.auth,
@@ -23,16 +25,52 @@ class AuthGate extends StatelessWidget {
   final Widget loading;
 
   @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: auth,
-      builder: (context, _) => switch (auth.status) {
-        AuthStatus.unknown => loading,
-        AuthStatus.authenticated => signedIn(context),
-        AuthStatus.unauthenticated => signedOut(context),
-      },
-    );
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  late AuthStatus _last;
+
+  @override
+  void initState() {
+    super.initState();
+    _last = widget.auth.status;
+    widget.auth.addListener(_onAuth);
   }
+
+  @override
+  void didUpdateWidget(AuthGate old) {
+    super.didUpdateWidget(old);
+    if (old.auth != widget.auth) {
+      old.auth.removeListener(_onAuth);
+      widget.auth.addListener(_onAuth);
+      _last = widget.auth.status;
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.auth.removeListener(_onAuth);
+    super.dispose();
+  }
+
+  void _onAuth() {
+    final now = widget.auth.status;
+    final signedOut =
+        _last == AuthStatus.authenticated && now != AuthStatus.authenticated;
+    _last = now;
+    if (!mounted) return;
+    // Close everything above the gate before the signed-in home is replaced.
+    if (signedOut) Navigator.maybeOf(context)?.popUntil((r) => r.isFirst);
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) => switch (widget.auth.status) {
+    AuthStatus.unknown => widget.loading,
+    AuthStatus.authenticated => widget.signedIn(context),
+    AuthStatus.unauthenticated => widget.signedOut(context),
+  };
 }
 
 /// Email + password form with validation, busy state and server error display.
