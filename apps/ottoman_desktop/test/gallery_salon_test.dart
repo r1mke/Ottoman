@@ -415,6 +415,75 @@ void main() {
     expect(sunday['closeMinutes'], 1080);
   });
 
+  testWidgets('typing a new maps link keeps the pin on screen; on save a pin '
+      'the admin did not move is left to the server to read from the link', (
+    tester,
+  ) async {
+    final server = _Server()
+      ..salon = {
+        ..._Server().salon,
+        'mapsUrl': 'https://maps.example/old',
+        'latitude': 43.85,
+        'longitude': 18.41,
+      };
+    await _pump(tester, salonPage, server);
+    expect(find.byKey(const Key('location_pin')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('salon_maps')),
+      'https://maps.example/new',
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('location_pin')), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('salon_save')));
+    await tester.tap(find.byKey(const Key('salon_save')));
+    await tester.pumpAndSettle();
+    final put = server.sent('PUT', '/salon').single.data as Map;
+    expect(put['mapsUrl'], 'https://maps.example/new');
+    expect(put['latitude'], isNull);
+    expect(put['longitude'], isNull);
+  });
+
+  testWidgets('with the link unchanged the pin is saved as it is', (
+    tester,
+  ) async {
+    final server = _Server()
+      ..salon = {
+        ..._Server().salon,
+        'mapsUrl': 'https://maps.example/old',
+        'latitude': 43.85,
+        'longitude': 18.41,
+      };
+    await _pump(tester, salonPage, server);
+    await tester.ensureVisible(find.byKey(const Key('salon_save')));
+    await tester.tap(find.byKey(const Key('salon_save')));
+    await tester.pumpAndSettle();
+    final put = server.sent('PUT', '/salon').single.data as Map;
+    expect(put['latitude'], 43.85);
+    expect(put['longitude'], 18.41);
+  });
+
+  testWidgets('an address search that fails in any way says not found', (
+    tester,
+  ) async {
+    Widget failing(ApiClient api) => SalonPage(
+      salon: SalonApi(api),
+      chooser: _Chooser(),
+      search: (_) async => throw StateError('offline'),
+    );
+    await _pump(tester, failing, _Server());
+    await tester.enterText(
+      find.byKey(const Key('location_query')),
+      'Ferhadija',
+    );
+    await tester.ensureVisible(find.byKey(const Key('location_find')));
+    await tester.tap(find.byKey(const Key('location_find')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Adresa nije pronađena'), findsOneWidget);
+  });
+
   testWidgets('a wrong phone number or link stops the save under the field', (
     tester,
   ) async {

@@ -83,6 +83,11 @@ class _SalonFormState extends State<SalonForm> {
       widget.profile.latitude == null || widget.profile.longitude == null
       ? null
       : LatLng(widget.profile.latitude!, widget.profile.longitude!);
+
+  /// The map link as the server last stored it, and whether the admin placed the pin by hand since.
+  /// A changed link with an untouched pin lets the server read the new place out of the link on save.
+  late String? _savedMaps = _blankText(widget.profile.mapsUrl);
+  bool _pinTouched = false;
   late final List<OpeningHours> _hours = [...widget.profile.hours];
   late String? _logoUrl = widget.profile.logoUrl;
   bool _busy = false;
@@ -103,6 +108,9 @@ class _SalonFormState extends State<SalonForm> {
     }
     super.dispose();
   }
+
+  static String? _blankText(String? s) =>
+      s == null || s.trim().isEmpty ? null : s.trim();
 
   List<EditablePicture> _logo() => [
     if (_logoUrl != null) EditablePicture('logo', _logoUrl!),
@@ -157,8 +165,10 @@ class _SalonFormState extends State<SalonForm> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
     try {
-      String? blank(TextEditingController c) =>
-          c.text.trim().isEmpty ? null : c.text.trim();
+      String? blank(TextEditingController c) => _blankText(c.text);
+      final linkChanged = blank(_maps) != _savedMaps;
+      // A new link with a pin the admin did not move: send no pin, so the server reads it from the link.
+      final pin = linkChanged && !_pinTouched ? null : _pin;
       final saved = await widget.salon.save(
         name: _name.text.trim(),
         description: blank(_description),
@@ -167,19 +177,22 @@ class _SalonFormState extends State<SalonForm> {
         mapsUrl: blank(_maps),
         instagramUrl: blank(_instagram),
         facebookUrl: blank(_facebook),
-        latitude: _pin?.latitude,
-        longitude: _pin?.longitude,
+        latitude: pin?.latitude,
+        longitude: pin?.longitude,
         hours: _hours,
       );
+      if (!mounted) return;
       // The server may have read the pin out of the pasted link: show what it found.
-      setState(
-        () => _pin = saved.latitude == null || saved.longitude == null
+      setState(() {
+        _pin = saved.latitude == null || saved.longitude == null
             ? null
-            : LatLng(saved.latitude!, saved.longitude!),
-      );
+            : LatLng(saved.latitude!, saved.longitude!);
+        _savedMaps = _blankText(saved.mapsUrl);
+        _pinTouched = false;
+      });
       messenger.showSnackBar(SnackBar(content: Text(t.salonSaved)));
     } on AppException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(_detail(e))));
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(_detail(e))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -257,8 +270,6 @@ class _SalonFormState extends State<SalonForm> {
                           key: const Key('salon_maps'),
                           controller: _maps,
                           keyboardType: TextInputType.url,
-                          // A new link means a new place: drop the old pin so the server reads it from the link.
-                          onChanged: (_) => setState(() => _pin = null),
                           decoration: InputDecoration(
                             labelText: t.mapsLink,
                             helperText: t.mapsLinkHint,
@@ -320,7 +331,10 @@ class _SalonFormState extends State<SalonForm> {
                           value: _pin,
                           address: _address.text,
                           search: widget.search,
-                          onChanged: (p) => setState(() => _pin = p),
+                          onChanged: (p) => setState(() {
+                            _pin = p;
+                            _pinTouched = true;
+                          }),
                         ),
                       ],
                     ),

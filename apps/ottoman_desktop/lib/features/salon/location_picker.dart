@@ -52,6 +52,28 @@ class _LocationPickerState extends State<LocationPicker> {
   bool _searching = false;
   String? _notFound;
 
+  /// The last pin this picker reported itself (tap or search); any other new value came from outside.
+  LatLng? _own;
+
+  void _report(LatLng? point) {
+    _own = point;
+    widget.onChanged(point);
+  }
+
+  @override
+  void didUpdateWidget(LocationPicker old) {
+    super.didUpdateWidget(old);
+    final pin = widget.value;
+    // The pin moved from outside (saved, or read out of the maps link by the server): bring it into view.
+    if (pin != null && pin != old.value && pin != _own) {
+      try {
+        _map.move(pin, 16);
+      } on Object {
+        // The map is not laid out yet; it starts at the pin anyway.
+      }
+    }
+  }
+
   @override
   void dispose() {
     _query.dispose();
@@ -73,10 +95,11 @@ class _LocationPickerState extends State<LocationPicker> {
       if (hit == null) {
         setState(() => _notFound = t.addressNotFound);
       } else {
-        widget.onChanged(hit);
+        _report(hit);
         _map.move(hit, 16);
       }
-    } on DioException {
+    } on Object {
+      // Offline, blocked, a bad answer: the admin can still tap the map.
       if (mounted) setState(() => _notFound = t.addressNotFound);
     } finally {
       if (mounted) setState(() => _searching = false);
@@ -131,7 +154,7 @@ class _LocationPickerState extends State<LocationPicker> {
               options: MapOptions(
                 initialCenter: pin ?? _fallback,
                 initialZoom: pin == null ? 12 : 16,
-                onTap: (_, point) => widget.onChanged(point),
+                onTap: (_, point) => _report(point),
               ),
               children: [
                 TileLayer(
@@ -172,7 +195,7 @@ class _LocationPickerState extends State<LocationPicker> {
             if (pin != null)
               TextButton(
                 key: const Key('location_clear'),
-                onPressed: () => widget.onChanged(null),
+                onPressed: () => _report(null),
                 child: Text(t.removePin),
               ),
           ],
