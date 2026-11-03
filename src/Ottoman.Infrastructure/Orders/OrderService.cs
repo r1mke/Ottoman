@@ -9,6 +9,7 @@ using Ottoman.Domain;
 using Ottoman.Domain.Entities;
 using Ottoman.Domain.Orders;
 using Ottoman.Domain.Reservations;
+using Ottoman.Infrastructure.Payments;
 using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Orders;
@@ -16,6 +17,7 @@ namespace Ottoman.Infrastructure.Orders;
 public class OrderService(
     OttomanDbContext db,
     IPaymentGateway gateway,
+    PendingRefunds refunds,
     IOutbox outbox,
     IOptions<PaymentOptions> paymentOptions,
     TimeProvider clock,
@@ -307,8 +309,13 @@ public class OrderService(
                         .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock + q), ct);
                 }
 
-                var clientId = await db.Orders.Where(o => o.Id == orderId).Select(o => o.ClientId).SingleAsync(ct);
-                outbox.Enqueue(new OrderCancelled(orderId, clientId, by));
+                var closedOrder = await db.Orders.Where(o => o.Id == orderId).Select(o => new { o.ClientId, o.PaymentId }).SingleAsync(ct);
+                // A paid order that closes owes a refund. Recording that here, with the close, means a refund call
+                // that fails afterwards is retried by the expiry job instead of being forgotten.
+                if (closedOrder.PaymentId is { } paymentId)
+                    await db.Payments.Where(p => p.Id == paymentId && p.Status == PaymentStatus.Succeeded)
+                        .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.RefundPending), ct);
+                outbox.Enqueue(new OrderCancelled(orderId, closedOrder.ClientId, by));
                 await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
                 done = true;
@@ -331,17 +338,17 @@ public class OrderService(
         var payment = await db.Payments.AsNoTracking().Where(p => p.Id == paymentId)
             .Select(p => new { p.Id, p.ProviderRef, p.Status }).SingleAsync(ct);
 
+        if (payment.Status == PaymentStatus.RefundPending)
+        {
+            // A failure leaves the payment visibly "refund pending"; RetryPendingRefundsAsync finishes it later.
+            // Stripe's idempotency key makes a repeated attempt safe.
+            await refunds.CompleteAsync(payment.Id, payment.ProviderRef, ct);
+            return;
+        }
+
         try
         {
-            if (payment.Status == PaymentStatus.Succeeded)
-            {
-                // Refund first, then record it: a failed refund leaves the payment visibly "Succeeded" on a closed order.
-                // Stripe's idempotency key makes a repeated attempt safe.
-                await gateway.RefundAsync(payment.ProviderRef, ct);
-                await db.Payments.Where(p => p.Id == payment.Id && p.Status == PaymentStatus.Succeeded)
-                    .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.Refunded), ct);
-            }
-            else if (payment.Status == PaymentStatus.Pending)
+            if (payment.Status == PaymentStatus.Pending)
             {
                 await db.Payments.Where(p => p.Id == payment.Id && p.Status == PaymentStatus.Pending)
                     .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.Failed), ct);
@@ -350,9 +357,10 @@ public class OrderService(
         }
         catch (Exception ex)
         {
-            // The order is already closed and its stock returned. A failed refund must be visible to the admin
-            // (payment status shown on the order) and fixed by hand, not silently swallowed.
+            // The order is already closed and its stock returned; an intent left open simply never completes.
             log.LogError(ex, "Payment settlement after closing order {OrderId} failed (payment {PaymentId})", orderId, payment.Id);
         }
     }
+
+    public Task<int> RetryPendingRefundsAsync(CancellationToken ct) => refunds.RetryAllAsync(ct);
 }

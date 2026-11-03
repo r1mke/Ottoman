@@ -16,7 +16,7 @@ namespace Ottoman.Infrastructure.Payments;
 /// </summary>
 public class PaymentWebhookHandler(
     OttomanDbContext db,
-    IPaymentGateway gateway,
+    PendingRefunds refunds,
     IOutbox outbox,
     IOptions<PaymentOptions> options,
     TimeProvider clock,
@@ -73,7 +73,8 @@ public class PaymentWebhookHandler(
             try
             {
                 // Claim the payment: only the first delivery of this event gets past here.
-                var claimed = await db.Payments.Where(p => p.Id == payment.Id && p.Status != PaymentStatus.Succeeded && p.Status != PaymentStatus.Refunded)
+                var claimed = await db.Payments.Where(p => p.Id == payment.Id
+                        && p.Status != PaymentStatus.Succeeded && p.Status != PaymentStatus.Refunded && p.Status != PaymentStatus.RefundPending)
                     .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.Succeeded), ct);
                 if (claimed == 0)
                 {
@@ -84,7 +85,14 @@ public class PaymentWebhookHandler(
                 var moved = await db.Orders.Where(o => o.Id == order.Id && o.Status == OrderStatus.PendingPayment)
                     .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, OrderStatus.Placed).SetProperty(o => o.PaidAtUtc, now), ct);
                 if (moved == 1) outbox.Enqueue(new OrderPaid(order.Id, order.ClientId, order.TotalPrice));
-                else refundNeeded = true; // paid after the order was cancelled/expired: give the money back
+                else
+                {
+                    // Paid after the order was cancelled/expired: the money goes back. The decision is recorded in this
+                    // transaction, so a failed refund call below is retried (Stripe's retry, the expiry job), never lost.
+                    await db.Payments.Where(p => p.Id == payment.Id)
+                        .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.RefundPending), ct);
+                    refundNeeded = true;
+                }
 
                 await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
@@ -96,12 +104,15 @@ public class PaymentWebhookHandler(
             }
         });
 
+        // A replay of an event whose refund did not go through the first time retries that refund.
+        if (!refundNeeded)
+            refundNeeded = await db.Payments.AsNoTracking().AnyAsync(p => p.Id == payment.Id && p.Status == PaymentStatus.RefundPending, ct);
+
         if (refundNeeded)
         {
             log.LogWarning("Order {OrderId} was no longer awaiting payment when {Ref} succeeded; refunding", order.Id, payment.ProviderRef);
-            await gateway.RefundAsync(payment.ProviderRef, ct);
-            await db.Payments.Where(p => p.Id == payment.Id && p.Status == PaymentStatus.Succeeded)
-                .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.Refunded), ct);
+            if (!await refunds.CompleteAsync(payment.Id, payment.ProviderRef, ct))
+                return WebhookOutcome.RetryLater; // non-2xx: Stripe delivers the event again
         }
 
         return WebhookOutcome.Processed;

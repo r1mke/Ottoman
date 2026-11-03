@@ -564,6 +564,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentStatusRefunded => 'Refunded';
 
   @override
+  String get paymentStatusRefundPending => 'Refund pending';
+
+  @override
   String get none => 'None';
 
   @override

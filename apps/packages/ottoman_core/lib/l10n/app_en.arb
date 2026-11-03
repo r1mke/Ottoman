@@ -221,6 +221,7 @@
   "paymentStatusSucceeded": "Paid",
   "paymentStatusFailed": "Failed",
   "paymentStatusRefunded": "Refunded",
+  "paymentStatusRefundPending": "Refund pending",
   "none": "None",
   "noNotifications": "No notifications",
   "markAllRead": "Mark all as read",

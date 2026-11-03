@@ -1154,6 +1154,12 @@ abstract class AppLocalizations {
   /// **'Vraćeno'**
   String get paymentStatusRefunded;
 
+  /// No description provided for @paymentStatusRefundPending.
+  ///
+  /// In bs, this message translates to:
+  /// **'Povrat u obradi'**
+  String get paymentStatusRefundPending;
+
   /// No description provided for @none.
   ///
   /// In bs, this message translates to:

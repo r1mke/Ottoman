@@ -564,6 +564,9 @@ class AppLocalizationsBs extends AppLocalizations {
   String get paymentStatusRefunded => 'Vraćeno';
 
   @override
+  String get paymentStatusRefundPending => 'Povrat u obradi';
+
+  @override
   String get none => 'Bez';
 
   @override

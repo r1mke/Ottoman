@@ -105,6 +105,7 @@ public static class DependencyInjection
         services.AddScoped<Ottoman.Application.Shop.IShopSectionService, Shop.ShopSectionService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentWebhookHandler, PaymentWebhookHandler>();
+        services.AddScoped<PendingRefunds>();
         if (string.IsNullOrWhiteSpace(config[$"{PaymentOptions.Section}:SecretKey"]))
         {
             // No processor configured: nothing is ever charged, and orders only become paid via a signed webhook.

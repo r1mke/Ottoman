@@ -86,6 +86,7 @@ public class PaymentsController(IPaymentWebhookHandler webhook, Microsoft.Extens
         {
             WebhookOutcome.Processed => Ok(),
             WebhookOutcome.Unauthorized => Unauthorized(),
+            WebhookOutcome.RetryLater => StatusCode(StatusCodes.Status503ServiceUnavailable),
             _ => BadRequest(),
         };
     }

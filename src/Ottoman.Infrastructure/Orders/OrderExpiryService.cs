@@ -6,7 +6,7 @@ using Ottoman.Application.Orders;
 namespace Ottoman.Infrastructure.Orders;
 
 /// <summary>
-/// Returns stock held by unpaid card orders. Runs inside the API process for now (a single salon, one
+/// Returns stock held by unpaid card orders and finishes refunds that failed earlier. Runs inside the API process for now (a single salon, one
 /// instance); the conditional status change in <see cref="IOrderService.ExpireUnpaidAsync"/> keeps it safe
 /// if several instances ever run it at once. It moves to the Worker with the other schedulers in Phase 5.
 /// </summary>
@@ -22,8 +22,11 @@ public class OrderExpiryService(IServiceScopeFactory scopes, ILogger<OrderExpiry
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
-                var closed = await scope.ServiceProvider.GetRequiredService<IOrderService>().ExpireUnpaidAsync(stoppingToken);
+                var orders = scope.ServiceProvider.GetRequiredService<IOrderService>();
+                var closed = await orders.ExpireUnpaidAsync(stoppingToken);
                 if (closed > 0) log.LogInformation("Expired {Count} unpaid order(s)", closed);
+                var refunded = await orders.RetryPendingRefundsAsync(stoppingToken);
+                if (refunded > 0) log.LogInformation("Completed {Count} pending refund(s)", refunded);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

@@ -624,6 +624,68 @@ public class ShopTests(ApiFixture api)
         api.Services.GetRequiredService<FakePaymentGateway>().Refunds.Should().Contain(intent);
     }
 
+    /// <summary>A processor that is down for refunds.</summary>
+    private sealed class RefundsDownGateway : IPaymentGateway
+    {
+        public Task<PaymentIntentResult> CreateIntentAsync(int orderId, long amountMinor, string currency, CancellationToken ct) =>
+            throw new NotSupportedException();
+        public Task RefundAsync(string providerRef, CancellationToken ct) => throw new HttpRequestException("Stripe returned 500");
+        public Task CancelIntentAsync(string providerRef, CancellationToken ct) => Task.CompletedTask;
+    }
+
+    private async Task<(OrderDto Order, string Intent, HttpClient Client)> ExpiredCardOrder()
+    {
+        var p = await NewProduct(price: 10m, stock: 4);
+        var (_, client) = await NewClient();
+        var o = await Dto(await Order(client, p, 1));
+        var intent = await RefOf(o.Id);
+        await using var scope = api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
+        await db.Orders.Where(x => x.Id == o.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.ExpiresUtc, DateTime.UtcNow.AddMinutes(-1)));
+        await scope.ServiceProvider.GetRequiredService<IOrderService>().ExpireUnpaidAsync(default);
+        return (o, intent, client);
+    }
+
+    /// <summary>Delivers a signed event to a handler whose refunds fail.</summary>
+    private async Task<WebhookOutcome> DeliverWhileRefundsAreDown(string body)
+    {
+        await using var scope = api.Services.CreateAsyncScope();
+        var sp = scope.ServiceProvider;
+        var refunds = ActivatorUtilities.CreateInstance<PendingRefunds>(sp, new RefundsDownGateway());
+        var handler = ActivatorUtilities.CreateInstance<PaymentWebhookHandler>(sp, refunds);
+        return await handler.HandleAsync(body, StripeWebhook.Header(body, ApiFixture.WebhookSecret, DateTimeOffset.UtcNow), default);
+    }
+
+    [Fact]
+    public async Task A_late_payment_whose_refund_fails_stays_refund_pending_and_the_webhook_retry_refunds_it()
+    {
+        var (o, intent, client) = await ExpiredCardOrder();
+        var body = Event("payment_intent.succeeded", intent, 511);
+
+        (await DeliverWhileRefundsAreDown(body)).Should().Be(WebhookOutcome.RetryLater, "Stripe must deliver the event again");
+        var pending = (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!;
+        pending.Status.Should().Be(OrderStatus.Expired);
+        pending.PaymentStatus.Should().Be(PaymentStatus.RefundPending, "the refund is owed and must not be forgotten");
+
+        // Stripe retries the same event; this time the refund goes through.
+        (await Webhook(body)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.PaymentStatus.Should().Be(PaymentStatus.Refunded);
+        api.Services.GetRequiredService<FakePaymentGateway>().Refunds.Should().Contain(intent);
+    }
+
+    [Fact]
+    public async Task A_refund_that_failed_is_finished_by_the_background_retry()
+    {
+        var (o, intent, client) = await ExpiredCardOrder();
+        (await DeliverWhileRefundsAreDown(Event("payment_intent.succeeded", intent, 511))).Should().Be(WebhookOutcome.RetryLater);
+
+        await using (var scope = api.Services.CreateAsyncScope())
+            (await scope.ServiceProvider.GetRequiredService<IOrderService>().RetryPendingRefundsAsync(default)).Should().BeGreaterThanOrEqualTo(1);
+
+        (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.PaymentStatus.Should().Be(PaymentStatus.Refunded);
+        api.Services.GetRequiredService<FakePaymentGateway>().Refunds.Should().Contain(intent);
+    }
+
     [Fact]
     public async Task A_client_cannot_hoard_stock_with_unpaid_card_orders()
     {

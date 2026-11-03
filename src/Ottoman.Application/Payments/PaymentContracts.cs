@@ -49,6 +49,8 @@ public enum WebhookOutcome
     Unauthorized,
     /// <summary>Authentic but wrong (e.g. amount differs from the order); nothing was changed.</summary>
     Rejected,
+    /// <summary>Recorded, but a follow-up (a refund) did not go through yet; answered non-2xx so the processor retries.</summary>
+    RetryLater,
 }
 
 public interface IPaymentWebhookHandler

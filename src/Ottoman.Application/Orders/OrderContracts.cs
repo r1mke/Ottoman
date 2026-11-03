@@ -68,4 +68,7 @@ public interface IOrderService
 
     /// <summary>Releases stock of card orders that were not paid in time. Returns how many were closed.</summary>
     Task<int> ExpireUnpaidAsync(CancellationToken ct);
+
+    /// <summary>Retries refunds that were decided but did not go through at the processor. Returns how many did now.</summary>
+    Task<int> RetryPendingRefundsAsync(CancellationToken ct);
 }

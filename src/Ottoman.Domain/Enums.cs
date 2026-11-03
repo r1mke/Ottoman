@@ -52,6 +52,8 @@ public enum PaymentStatus
     Succeeded = 1,
     Failed = 2,
     Refunded = 3,
+    /// <summary>The money must go back but the refund has not gone through yet; retried until it does.</summary>
+    RefundPending = 4,
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

@@ -18,6 +18,7 @@ String paymentStatusLabel(AppLocalizations t, String? status) =>
       'Succeeded' => t.paymentStatusSucceeded,
       'Failed' => t.paymentStatusFailed,
       'Refunded' => t.paymentStatusRefunded,
+      'RefundPending' => t.paymentStatusRefundPending,
       _ => '',
     };
 

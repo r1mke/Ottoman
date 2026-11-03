@@ -221,6 +221,7 @@
   "paymentStatusSucceeded": "Plaćeno",
   "paymentStatusFailed": "Neuspjelo",
   "paymentStatusRefunded": "Vraćeno",
+  "paymentStatusRefundPending": "Povrat u obradi",
   "none": "Bez",
   "noNotifications": "Nema obavijesti",
   "markAllRead": "Označi sve kao pročitano",
