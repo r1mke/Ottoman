@@ -619,5 +619,8 @@
   "sectionProductsCountError": "Pick between 1 and 30 products for this section.",
   "quantityLess": "One less",
   "quantityMore": "One more",
-  "removeFromSelection": "Remove from the selection"
+  "removeFromSelection": "Remove from the selection",
+  "employeeSearchHint": "Search by name or title",
+  "serviceSearchHint": "Search by name or description",
+  "clearSearch": "Clear search"
 }

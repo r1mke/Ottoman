@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../../widgets/list_search_field.dart';
 import 'employee_dialogs.dart';
 
 /// Admin: staff list with edit, service assignment and working-hours actions.
@@ -15,6 +16,7 @@ class EmployeesPage extends StatefulWidget {
 
 class _EmployeesPageState extends State<EmployeesPage> {
   int _version = 0;
+  String _query = '';
 
   void _refresh() => setState(() => _version++);
 
@@ -32,21 +34,31 @@ class _EmployeesPageState extends State<EmployeesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              key: const Key('add_employee'),
-              style: FilledButton.styleFrom(minimumSize: const Size(140, 44)),
-              onPressed: () => _open(EmployeeDialog(catalog: widget.catalog)),
-              icon: const Icon(Icons.add),
-              label: Text(t.add),
-            ),
+          Row(
+            children: [
+              ListSearchField(
+                fieldKey: const Key('employee_search'),
+                hint: t.employeeSearchHint,
+                onSearch: (q) => setState(() => _query = q),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                key: const Key('add_employee'),
+                style: FilledButton.styleFrom(minimumSize: const Size(140, 44)),
+                onPressed: () => _open(EmployeeDialog(catalog: widget.catalog)),
+                icon: const Icon(Icons.add),
+                label: Text(t.add),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Expanded(
             child: AsyncView<List<Employee>>(
-              key: ValueKey(_version),
-              load: () => widget.catalog.employees(includeInactive: true),
+              key: ValueKey('$_version-$_query'),
+              load: () => widget.catalog.employees(
+                includeInactive: true,
+                search: _query,
+              ),
               skeleton: const ListSkeleton(),
               isEmpty: (e) => e.isEmpty,
               builder: (context, employees, _) => ListView.separated(

@@ -3259,6 +3259,24 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Ukloni iz odabira'**
   String get removeFromSelection;
+
+  /// No description provided for @employeeSearchHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraži po imenu ili zvanju'**
+  String get employeeSearchHint;
+
+  /// No description provided for @serviceSearchHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraži po nazivu ili opisu'**
+  String get serviceSearchHint;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obriši pretragu'**
+  String get clearSearch;
 }
 
 class _AppLocalizationsDelegate

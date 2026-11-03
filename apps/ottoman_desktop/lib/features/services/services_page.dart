@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../../widgets/list_search_field.dart';
 import '../images/picture_editor.dart';
 
 /// Admin: services and prices. Deactivation is a soft delete (past bookings keep their snapshot).
@@ -15,6 +16,7 @@ class ServicesPage extends StatefulWidget {
 
 class _ServicesPageState extends State<ServicesPage> {
   int _version = 0;
+  String _query = '';
 
   void _refresh() => setState(() => _version++);
 
@@ -57,21 +59,31 @@ class _ServicesPageState extends State<ServicesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              key: const Key('add_service'),
-              style: FilledButton.styleFrom(minimumSize: const Size(140, 44)),
-              onPressed: _edit,
-              icon: const Icon(Icons.add),
-              label: Text(t.add),
-            ),
+          Row(
+            children: [
+              ListSearchField(
+                fieldKey: const Key('service_search'),
+                hint: t.serviceSearchHint,
+                onSearch: (q) => setState(() => _query = q),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                key: const Key('add_service'),
+                style: FilledButton.styleFrom(minimumSize: const Size(140, 44)),
+                onPressed: _edit,
+                icon: const Icon(Icons.add),
+                label: Text(t.add),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Expanded(
             child: AsyncView<List<Service>>(
-              key: ValueKey(_version),
-              load: () => widget.catalog.services(includeInactive: true),
+              key: ValueKey('$_version-$_query'),
+              load: () => widget.catalog.services(
+                includeInactive: true,
+                search: _query,
+              ),
               skeleton: const ListSkeleton(),
               isEmpty: (s) => s.isEmpty,
               builder: (context, services, _) => ListView.separated(

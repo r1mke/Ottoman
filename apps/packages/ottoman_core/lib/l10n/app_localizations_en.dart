@@ -1680,4 +1680,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeFromSelection => 'Remove from the selection';
+
+  @override
+  String get employeeSearchHint => 'Search by name or title';
+
+  @override
+  String get serviceSearchHint => 'Search by name or description';
+
+  @override
+  String get clearSearch => 'Clear search';
 }

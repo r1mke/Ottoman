@@ -217,6 +217,40 @@ void main() {
     expect(find.byKey(const Key('svc_save')), findsNothing); // dialog closed
   });
 
+  testWidgets('the services and employees lists search on the server', (
+    tester,
+  ) async {
+    final rec = await _adminShell(tester);
+
+    await tester.tap(find.text('Usluge').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('service_search')), ' fade ');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(
+      rec.lastWhere('GET', '/services')!.queryParameters['search'],
+      'fade',
+    );
+
+    await tester.tap(find.text('Uposlenici').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('employee_search')), 'Kerim');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(
+      rec.lastWhere('GET', '/employees')!.queryParameters['search'],
+      'Kerim',
+    );
+
+    // Clearing shows the whole list again.
+    await tester.tap(find.byTooltip('Obriši pretragu'));
+    await tester.pumpAndSettle();
+    expect(
+      rec.lastWhere('GET', '/employees')!.queryParameters.containsKey('search'),
+      isFalse,
+    );
+  });
+
   testWidgets('assigning services sends the full selected set', (tester) async {
     final rec = await _adminShell(tester);
     await tester.tap(find.text('Uposlenici').first);

@@ -1678,4 +1678,13 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get removeFromSelection => 'Ukloni iz odabira';
+
+  @override
+  String get employeeSearchHint => 'Pretraži po imenu ili zvanju';
+
+  @override
+  String get serviceSearchHint => 'Pretraži po nazivu ili opisu';
+
+  @override
+  String get clearSearch => 'Obriši pretragu';
 }

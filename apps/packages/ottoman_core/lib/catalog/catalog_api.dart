@@ -32,12 +32,14 @@ class CatalogApi {
   Future<List<Service>> services({
     String? employeeId,
     bool includeInactive = false,
+    String? search,
   }) async {
     final data = await _api.get<List<dynamic>>(
       '/api/v1/services',
       query: {
         'employeeId': ?employeeId,
         if (includeInactive) 'includeInactive': true,
+        if (search != null && search.isNotEmpty) 'search': search,
       },
     );
     return data
@@ -104,10 +106,16 @@ class CatalogApi {
 
   // ---- employees
 
-  Future<List<Employee>> employees({bool includeInactive = false}) async {
+  Future<List<Employee>> employees({
+    bool includeInactive = false,
+    String? search,
+  }) async {
     final data = await _api.get<List<dynamic>>(
       '/api/v1/employees',
-      query: {if (includeInactive) 'includeInactive': true},
+      query: {
+        if (includeInactive) 'includeInactive': true,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
     );
     return data
         .map((e) => Employee.fromJson(e as Map<String, dynamic>))
