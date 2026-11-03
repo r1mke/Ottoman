@@ -151,11 +151,12 @@ class _Chooser implements ImageChooser {
       ChosenImage('a.png', Uint8List.fromList([1, 2, 3]));
 }
 
-Future<_Api> _open(WidgetTester tester) async {
+Future<_Api> _open(WidgetTester tester) => _openWith(tester, _Api());
+
+Future<_Api> _openWith(WidgetTester tester, _Api api) async {
   tester.view.devicePixelRatio = 1.0;
   tester.view.physicalSize = const Size(1200, 1800);
   addTearDown(tester.view.reset);
-  final api = _Api();
   final shop = ShopApi(
     ApiClient(
       baseUrl: 'http://test',
@@ -192,6 +193,41 @@ void main() {
     final sent = api.last('PUT', '/sections/2')!.data as Map<String, dynamic>;
     expect(sent['isActive'], false);
     expect(sent['kind'], 'OnSale');
+  });
+
+  testWidgets('hiding a block keeps its hand-picked tiles and its style', (
+    tester,
+  ) async {
+    final api = _Api();
+    api.rules[2] = {
+      ...api.rules[2],
+      'maxItems': 3, // odd: only valid because the tiles are picked by hand
+      'entryIds': <int>[2, 1],
+      'style': {
+        'background': 'Dark',
+        'tileSize': 'Large',
+        'cardSpan': 'Full',
+        'headingAlign': 'Center',
+        'showSeeAll': true,
+      },
+    };
+    await _openWith(tester, api);
+
+    await tester.tap(find.byKey(const Key('section_visible_3')));
+    await tester.pumpAndSettle();
+
+    final sent = api.last('PUT', '/sections/3')!.data as Map<String, dynamic>;
+    expect(sent['isActive'], false);
+    expect(sent['entryIds'], [2, 1]);
+    expect(sent['maxItems'], 3);
+    expect(sent['eyebrow'], 'Asortiman');
+    expect(sent['style'], {
+      'background': 'Dark',
+      'tileSize': 'Large',
+      'cardSpan': 'Full',
+      'headingAlign': 'Center',
+      'showSeeAll': true,
+    });
   });
 
   testWidgets('adding a section sends its title and what it shows', (

@@ -59,6 +59,8 @@ class _ShopSectionsPageState extends State<ShopSectionsPage> {
     if (saved == true && mounted) _refresh();
   }
 
+  /// Changes only the visibility: every other setting is sent back exactly as loaded (the server replaces the
+  /// whole section on save, so a missing field would wipe hand-picked tiles or the style).
   Future<void> _toggle(ShopSectionRule r, bool visible) async {
     try {
       await widget.shop.saveSection(
@@ -73,6 +75,8 @@ class _ShopSectionsPageState extends State<ShopSectionsPage> {
         showAsCard: r.showAsCard,
         layout: r.layout,
         eyebrow: r.eyebrow,
+        entryIds: r.entryIds,
+        style: r.style,
       );
     } on AppException catch (e) {
       if (mounted) _toast(_detail(e));
