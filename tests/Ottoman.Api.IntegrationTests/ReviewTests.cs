@@ -85,6 +85,19 @@ public class ReviewTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task A_product_cannot_be_reviewed_twice_under_another_spelling_of_its_id()
+    {
+        var (_, client) = await NewClient();
+        var product = await CollectedProduct(client);
+        var id = product.Id.ToString();
+
+        (await Review(client, ReviewTargetType.Product, id, 5)).StatusCode.Should().Be(HttpStatusCode.Created);
+        foreach (var other in new[] { "0" + id, " " + id, "+" + id })
+            (await Review(client, ReviewTargetType.Product, other, 1)).StatusCode.Should().Be(HttpStatusCode.BadRequest, other);
+        (await Review(client, ReviewTargetType.Product, id, 1)).StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task After_a_completed_visit_the_client_can_review_the_barber_and_the_service_once()
     {
         var (clientId, client) = await NewClient();

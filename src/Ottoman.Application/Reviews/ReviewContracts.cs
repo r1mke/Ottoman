@@ -12,12 +12,42 @@ public record ReplyRequest(string Text);
 
 public record HideRequest(bool Hidden);
 
+/// <summary>
+/// The one spelling of a review target. Services and products are keyed by their number exactly as the server
+/// writes it ("5", never "05", " 5" or "+5"), so one client cannot review the same thing twice under different
+/// spellings; employees by their account id as is.
+/// </summary>
+public static class ReviewTargetKey
+{
+    /// <summary>The canonical key, or null when <paramref name="key"/> is not one.</summary>
+    public static string? Canonical(ReviewTargetType type, string? key)
+    {
+        if (string.IsNullOrEmpty(key)) return null;
+        switch (type)
+        {
+            case ReviewTargetType.Service:
+            case ReviewTargetType.Product:
+                return int.TryParse(key, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id)
+                       && id > 0 && id.ToString(System.Globalization.CultureInfo.InvariantCulture) == key
+                    ? key
+                    : null;
+            case ReviewTargetType.Employee:
+                return key.Trim() == key ? key : null;
+            default:
+                return null;
+        }
+    }
+}
+
 public class CreateReviewRequestValidator : AbstractValidator<CreateReviewRequest>
 {
     public CreateReviewRequestValidator()
     {
         RuleFor(x => x.TargetType).IsInEnum();
         RuleFor(x => x.TargetKey).NotEmpty().MaximumLength(450);
+        RuleFor(x => x.TargetKey).Must((r, key) => ReviewTargetKey.Canonical(r.TargetType, key) is not null)
+            .When(x => !string.IsNullOrEmpty(x.TargetKey))
+            .WithMessage("Neispravna oznaka stavke.").WithName("Stavka");
         RuleFor(x => x.Rating).InclusiveBetween(1, 5).WithName("Ocjena");
         RuleFor(x => x.Comment).MaximumLength(1000).WithName("Komentar");
     }

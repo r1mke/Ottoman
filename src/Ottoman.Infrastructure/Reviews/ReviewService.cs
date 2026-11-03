@@ -62,6 +62,8 @@ public class ReviewService(OttomanDbContext db, TimeProvider clock) : IReviewSer
     public async Task<EligibilityDto> EligibilityAsync(Actor client, ReviewTargetType type, string key, CancellationToken ct)
     {
         if (!client.IsClient) return new EligibilityDto(false, "Recenzije pišu samo klijenti.", null);
+        // Only the canonical spelling exists: "05" or " 5" would otherwise be a second, separate target.
+        if (ReviewTargetKey.Canonical(type, key) is null) return new EligibilityDto(false, "Stavka nije pronađena.", null);
 
         var existing = await db.Reviews.AsNoTracking()
             .Where(r => r.ClientId == client.UserId && r.TargetType == type && r.TargetKey == key)
