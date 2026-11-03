@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 
@@ -10,6 +11,10 @@ const _apiUrl = String.fromEnvironment(
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // The sidebar, tables and dialogs need room: below this size the layout would overflow.
+  await windowManager.ensureInitialized();
+  await windowManager.setMinimumSize(const Size(1024, 680));
 
   // The desktop app is for staff only; clients use the mobile app.
   final auth = AuthController(

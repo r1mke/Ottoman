@@ -532,6 +532,17 @@ void main() {
     },
   );
 
+  testWidgets('the quantity buttons in the cart say what they do', (
+    tester,
+  ) async {
+    await _openShop(tester);
+    await tester.tap(find.byKey(const Key('add_1')));
+    await tester.tap(find.byKey(const Key('open_cart')));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Jedan komad manje'), findsOneWidget);
+    expect(find.byTooltip('Jedan komad više'), findsOneWidget);
+  });
+
   testWidgets('checkout cannot be left while the order is being paid', (
     tester,
   ) async {

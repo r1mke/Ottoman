@@ -3241,6 +3241,24 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Odaberite od 1 do 30 proizvoda za ovu sekciju.'**
   String get sectionProductsCountError;
+
+  /// No description provided for @quantityLess.
+  ///
+  /// In bs, this message translates to:
+  /// **'Jedan komad manje'**
+  String get quantityLess;
+
+  /// No description provided for @quantityMore.
+  ///
+  /// In bs, this message translates to:
+  /// **'Jedan komad više'**
+  String get quantityMore;
+
+  /// No description provided for @removeFromSelection.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloni iz odabira'**
+  String get removeFromSelection;
 }
 
 class _AppLocalizationsDelegate

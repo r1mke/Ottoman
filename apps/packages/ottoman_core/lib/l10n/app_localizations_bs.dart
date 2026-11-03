@@ -1669,4 +1669,13 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get sectionProductsCountError =>
       'Odaberite od 1 do 30 proizvoda za ovu sekciju.';
+
+  @override
+  String get quantityLess => 'Jedan komad manje';
+
+  @override
+  String get quantityMore => 'Jedan komad više';
+
+  @override
+  String get removeFromSelection => 'Ukloni iz odabira';
 }

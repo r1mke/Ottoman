@@ -616,5 +616,8 @@
   "announceEmailQuestion": "Send this message to: {audience}, also by e-mail? Sent e-mails cannot be recalled.",
   "completeQuestion": "Mark the appointment as completed?",
   "noShowQuestion": "Mark that the client did not come?",
-  "sectionProductsCountError": "Pick between 1 and 30 products for this section."
+  "sectionProductsCountError": "Pick between 1 and 30 products for this section.",
+  "quantityLess": "One less",
+  "quantityMore": "One more",
+  "removeFromSelection": "Remove from the selection"
 }

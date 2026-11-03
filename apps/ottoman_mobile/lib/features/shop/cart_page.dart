@@ -61,6 +61,7 @@ class CartPage extends StatelessWidget {
                             ),
                             IconButton(
                               key: Key('dec_${p.id}'),
+                              tooltip: t.quantityLess,
                               icon: const Icon(Icons.remove_circle_outline),
                               onPressed: () =>
                                   cart.setQuantity(p, line.quantity - 1),
@@ -73,6 +74,7 @@ class CartPage extends StatelessWidget {
                             ),
                             IconButton(
                               key: Key('inc_${p.id}'),
+                              tooltip: t.quantityMore,
                               icon: const Icon(Icons.add_circle_outline),
                               onPressed: line.quantity < cart.limitFor(p)
                                   ? () => cart.add(p)

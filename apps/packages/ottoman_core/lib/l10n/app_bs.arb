@@ -620,5 +620,8 @@
   "@announceEmailQuestion": {"placeholders": {"audience": {"type": "String"}}},
   "completeQuestion": "Označiti termin kao završen?",
   "noShowQuestion": "Označiti da klijent nije došao na termin?",
-  "sectionProductsCountError": "Odaberite od 1 do 30 proizvoda za ovu sekciju."
+  "sectionProductsCountError": "Odaberite od 1 do 30 proizvoda za ovu sekciju.",
+  "quantityLess": "Jedan komad manje",
+  "quantityMore": "Jedan komad više",
+  "removeFromSelection": "Ukloni iz odabira"
 }

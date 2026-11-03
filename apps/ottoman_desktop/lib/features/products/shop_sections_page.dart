@@ -696,6 +696,7 @@ class _SectionDialogState extends State<SectionDialog> {
                           title: Text(tile(id)?.name ?? '#$id'),
                           trailing: IconButton(
                             key: Key('unpick_$id'),
+                            tooltip: t.removeFromSelection,
                             icon: const Icon(Icons.close, size: 18),
                             onPressed: () =>
                                 setState(() => _entryIds.remove(id)),

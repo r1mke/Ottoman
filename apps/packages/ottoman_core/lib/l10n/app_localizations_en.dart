@@ -1671,4 +1671,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sectionProductsCountError =>
       'Pick between 1 and 30 products for this section.';
+
+  @override
+  String get quantityLess => 'One less';
+
+  @override
+  String get quantityMore => 'One more';
+
+  @override
+  String get removeFromSelection => 'Remove from the selection';
 }
