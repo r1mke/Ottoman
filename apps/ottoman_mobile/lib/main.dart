@@ -26,8 +26,9 @@ Future<void> main() async {
     devices: DevicesApi(auth.api),
     client: await _pushClient(),
   );
-  // Forget this phone while the session is still valid, so the next person on it gets no messages of ours.
-  auth.beforeLogout = push.stop;
+  // Forget this phone while the session is still valid, so the next person on it gets no messages of ours;
+  // any other end of the session (password change, rejected refresh) resets it so the next sign-in registers again.
+  push.attach(auth);
 
   runApp(
     OttomanMobileApp(

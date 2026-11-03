@@ -190,6 +190,7 @@ public class AuthService(
 
         await users.ResetAccessFailedCountAsync(user);
         await RevokeAllAsync(user.Id, ct);
+        await ForgetDevicesAsync(user.Id, ct);
         return AuthResult<bool>.Ok(true);
     }
 
@@ -204,6 +205,7 @@ public class AuthService(
             return AuthResult<bool>.Fail(AuthFailure.ValidationFailed, result.Errors.Select(e => e.Description).ToArray());
 
         await RevokeAllAsync(user.Id, ct);
+        await ForgetDevicesAsync(user.Id, ct);
         return AuthResult<bool>.Ok(true);
     }
 
@@ -256,6 +258,13 @@ public class AuthService(
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedUtc, now), ct);
         gate.Invalidate(userId);
     }
+
+    /// <summary>
+    /// A new password ends every session, so no phone may keep receiving this account's pushes either: whoever signs
+    /// in next on a phone registers it again.
+    /// </summary>
+    private Task ForgetDevicesAsync(string userId, CancellationToken ct) =>
+        db.DeviceTokens.Where(d => d.UserId == userId).ExecuteDeleteAsync(ct);
 
     private async Task<UserDto> ToDtoAsync(AppUser user)
     {

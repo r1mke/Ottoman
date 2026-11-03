@@ -71,6 +71,22 @@ public class PushTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task Changing_the_password_forgets_every_phone_of_that_account_only()
+    {
+        var (id, _, client) = await NewClient();
+        var (otherId, _, other) = await NewClient();
+        (await Register(client, NewToken())).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await Register(other, NewToken())).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        (await client.PostAsJsonAsync("/api/v1/me/change-password",
+            new Ottoman.Application.Auth.ChangePasswordRequest(TestClient.StrongPassword, "Changed_Pass1!")))
+            .StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        (await Rows(d => d.UserId == id)).Should().BeEmpty("a new password ends every session, push included");
+        (await Rows(d => d.UserId == otherId)).Should().HaveCount(1);
+    }
+
+    [Fact]
     public async Task A_phone_is_remembered_once_and_moves_to_whoever_signed_in_last()
     {
         var (aId, _, a) = await NewClient();

@@ -96,7 +96,7 @@ Future<(_Api, _Phone, AuthController)> _open(WidgetTester tester) async {
     ),
   );
   final push = PushRegistration(devices: DevicesApi(auth.api), client: phone);
-  auth.beforeLogout = push.stop;
+  push.attach(auth);
   await auth.restore();
   await tester.pumpWidget(OttomanMobileApp(auth: auth, push: push));
   await tester.pumpAndSettle();

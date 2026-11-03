@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../auth/auth_controller.dart';
 import '../network/api_client.dart';
 
 /// A push message that arrived while the app was open.
@@ -101,6 +102,32 @@ class PushRegistration {
       _registered = token;
     } on Object {
       // Retried at the next start or token refresh.
+    }
+  }
+
+  /// Wires this to the session: [stop] runs before a normal sign-out (while the session is still valid), and
+  /// [reset] runs on every other way the session can end (password changed, refresh rejected), so the next
+  /// sign-in on this phone always registers again.
+  void attach(AuthController auth) {
+    auth.beforeLogout = stop;
+    auth.addListener(() {
+      if (auth.status == AuthStatus.unauthenticated) reset();
+    });
+  }
+
+  /// The session ended without [stop] (it can no longer call the server). Forgets the local state so the next
+  /// sign-in registers this phone again, and drops the token so messages for the previous user stop arriving
+  /// (the server forgets tokens the push service reports as dead, and on a password change).
+  Future<void> reset() async {
+    if (!_started) return;
+    _started = false;
+    _registered = null;
+    await _refresh?.cancel();
+    _refresh = null;
+    try {
+      await client.deleteToken();
+    } on Object {
+      // Best effort.
     }
   }
 
