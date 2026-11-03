@@ -16,6 +16,9 @@ public class SmtpOptions
     public string Password { get; set; } = "";
     public string From { get; set; } = "noreply@ottoman.local";
     public string FromName { get; set; } = "Ottoman";
+
+    /// <summary>Optional: StartTls, SslOnConnect or StartTlsWhenAvailable. Empty = chosen from port and credentials.</summary>
+    public string? Security { get; set; }
 }
 
 public class MailKitEmailSender(IOptions<SmtpOptions> options) : IEmailSender
@@ -40,9 +43,16 @@ public class MailKitEmailSender(IOptions<SmtpOptions> options) : IEmailSender
         message.Body = body.ToMessageBody();
 
         using var client = new SmtpClient();
-        // Local Mailpit speaks plain SMTP; real providers upgrade with STARTTLS when offered.
-        await client.ConnectAsync(o.Host, o.Port, SecureSocketOptions.StartTlsWhenAvailable, ct);
-        if (!string.IsNullOrEmpty(o.User)) await client.AuthenticateAsync(o.User, o.Password, ct);
+        // Local Mailpit speaks plain SMTP; as soon as there is a password, TLS is required (never sent in clear).
+        var hasCredentials = !string.IsNullOrEmpty(o.User);
+        var security = SmtpSecurity.Choose(o.Port, hasCredentials, o.Security) switch
+        {
+            SmtpSecurityMode.SslOnConnect => SecureSocketOptions.SslOnConnect,
+            SmtpSecurityMode.StartTls => SecureSocketOptions.StartTls,
+            _ => SecureSocketOptions.StartTlsWhenAvailable,
+        };
+        await client.ConnectAsync(o.Host, o.Port, security, ct);
+        if (hasCredentials) await client.AuthenticateAsync(o.User, o.Password, ct);
         await client.SendAsync(message, ct);
         await client.DisconnectAsync(true, ct);
     }
