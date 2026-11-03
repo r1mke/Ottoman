@@ -66,6 +66,8 @@ public class EventProcessor(
                 return MessageComposer.Welcome(Read<UserRegistered>(json));
             case nameof(RegistrationAttemptedForExistingAccount):
                 return MessageComposer.ExistingAccountAttempt(Read<RegistrationAttemptedForExistingAccount>(json));
+            case nameof(PasswordResetIgnored):
+                return []; // timing cover for an unknown address: nothing to send
             case nameof(PasswordResetRequested):
                 {
                     var e = Read<PasswordResetRequested>(json);

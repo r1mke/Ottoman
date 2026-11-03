@@ -14,6 +14,12 @@ public record RegistrationAttemptedForExistingAccount(string Email, string FullN
 /// <summary>The reset code travels sealed (see IResetTokenVault): it is never stored in the outbox as plain text.</summary>
 public record PasswordResetRequested(string UserId, string Email, string FullName, string SealedToken);
 
+/// <summary>
+/// A reset was asked for an address with no (active) account. Carries nothing and sends nothing: it exists so that
+/// request does the same work (a sealed code and an outbox write) as a real one and cannot be told apart by timing.
+/// </summary>
+public record PasswordResetIgnored;
+
 public record ReservationCreated(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, DateTime EndUtc, decimal TotalPrice);
 
 /// <param name="CancelledBy">"Client", "Employee" or "Admin".</param>

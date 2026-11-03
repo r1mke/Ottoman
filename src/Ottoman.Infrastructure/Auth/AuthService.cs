@@ -39,6 +39,8 @@ public class AuthService(
         var existing = await users.FindByEmailAsync(email);
         if (existing is not null)
         {
+            // The new-account path hashes the password; do the same so the time taken does not reveal the account.
+            users.PasswordHasher.HashPassword(existing, request.Password);
             outbox.Enqueue(new RegistrationAttemptedForExistingAccount(existing.Email!, existing.FullName));
             await db.SaveChangesAsync(ct);
             return AuthResult<bool>.Ok(true); // indistinguishable from a fresh registration
@@ -93,7 +95,11 @@ public class AuthService(
         }
 
         if (user.IsBlocked || await users.IsLockedOutAsync(user))
+        {
+            // Same work as a password check, so a blocked or locked account answers in the same time as any other.
+            users.PasswordHasher.HashPassword(user, request.Password);
             return AuthResult<AuthResponse>.Fail(AuthFailure.InvalidCredentials, GenericLoginError);
+        }
 
         if (!await users.CheckPasswordAsync(user, request.Password))
         {
@@ -170,7 +176,15 @@ public class AuthService(
     public async Task ForgotPasswordAsync(string email, CancellationToken ct)
     {
         var user = await users.FindByEmailAsync(email.Trim());
-        if (user is null || user.IsBlocked) return;
+        if (user is null || user.IsBlocked)
+        {
+            // Equal work for an address without an (active) account: seal a throwaway code and write an outbox row
+            // that sends nothing, so the response time does not tell whether the account exists.
+            vault.Seal(Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)));
+            outbox.Enqueue(new PasswordResetIgnored());
+            await db.SaveChangesAsync(ct);
+            return;
+        }
 
         var token = await users.GeneratePasswordResetTokenAsync(user);
         outbox.Enqueue(new PasswordResetRequested(user.Id, user.Email!, user.FullName, vault.Seal(token)));

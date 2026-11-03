@@ -230,6 +230,30 @@ public class AuthTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task Forgot_password_for_an_unknown_address_does_the_same_work_but_sends_nothing()
+    {
+        var nobody = TestClient.UniqueEmail("nobody");
+        long before;
+        await using (var scope = api.Services.CreateAsyncScope())
+            before = await scope.ServiceProvider.GetRequiredService<OttomanDbContext>().OutboxMessages.LongCountAsync(m => m.Type == nameof(PasswordResetIgnored));
+
+        (await Anon().PostAsJsonAsync("/api/v1/auth/forgot-password", new ForgotPasswordRequest(nobody)))
+            .StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        await using (var scope = api.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
+            var rows = await db.OutboxMessages.AsNoTracking().Where(m => m.Type == nameof(PasswordResetIgnored))
+                .OrderByDescending(m => m.Id).ToListAsync();
+            rows.LongCount().Should().Be(before + 1, "an outbox row is written just like for a real account");
+            rows[0].PayloadJson.Should().NotContain(nobody, "the address of a non-user is not kept");
+            await scope.ServiceProvider.GetRequiredService<Ottoman.Infrastructure.Notifications.EventProcessor>()
+                .ProcessAsync(rows[0].Id, rows[0].Type, rows[0].PayloadJson, default);
+        }
+        api.Services.GetRequiredService<FakeEmailSender>().Sent.Should().NotContain(m => m.To == nobody);
+    }
+
+    [Fact]
     public async Task Password_reset_token_works_once_and_ends_existing_sessions()
     {
         var c = Anon();
