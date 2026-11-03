@@ -15,7 +15,6 @@ public static class Policies
 {
     public const string AdminOnly = nameof(AdminOnly);
     public const string Staff = nameof(Staff);          // Admin or Employee
-    public const string ClientOnly = nameof(ClientOnly);
 
     public const string LoginLimit = "login";
     public const string RegisterLimit = "register";
@@ -100,8 +99,7 @@ public static class AuthSetup
             .AddPolicy(Policies.Staff, p => p.RequireRole(Roles.Admin, Roles.Employee))
             // Deny by default: an endpoint nobody remembered to protect still demands a signed-in user.
             // Public ones must say so with [AllowAnonymous].
-            .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
-            .AddPolicy(Policies.ClientOnly, p => p.RequireRole(Roles.Client));
+            .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
         services.Configure<RateLimitOptions>(config.GetSection(RateLimitOptions.Section));
         services.AddRateLimiter(limiter =>

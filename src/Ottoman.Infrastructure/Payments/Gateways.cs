@@ -62,7 +62,7 @@ public class StripeGateway(HttpClient http, IOptions<PaymentOptions> options) : 
 /// Used when no Stripe key is configured (local development, tests). It never moves money and never
 /// reports a payment on its own: an order only becomes paid through a correctly signed webhook.
 /// </summary>
-public class FakePaymentGateway : IPaymentGateway
+public class OfflinePaymentGateway : IPaymentGateway
 {
     public ConcurrentQueue<string> Refunds { get; } = new();
     public ConcurrentQueue<string> Cancelled { get; } = new();

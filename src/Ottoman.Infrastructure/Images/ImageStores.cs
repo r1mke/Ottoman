@@ -60,7 +60,7 @@ public sealed class CloudinaryImageStore(HttpClient http, IOptions<ImageOptions>
 }
 
 /// <summary>Used when no Cloudinary account is configured: nothing leaves the machine, uploads just get a key.</summary>
-public sealed class FakeImageStore : IImageStore
+public sealed class OfflineImageStore : IImageStore
 {
     public List<string> Uploaded { get; } = [];
     public List<string> Deleted { get; } = [];

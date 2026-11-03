@@ -28,7 +28,8 @@ try
         throw new InvalidOperationException(
             "Unsafe configuration:" + Environment.NewLine + " - " + string.Join(Environment.NewLine + " - ", problems));
 
-    // No endpoint takes a large body (no uploads yet); a small cap blunts cheap memory abuse.
+    // A small default cap blunts cheap memory abuse; the picture upload endpoints raise it for themselves
+    // ([RequestSizeLimit] + [RejectOversizedUpload]).
     builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 1_000_000);
 
     // Behind a reverse proxy every request would otherwise look like it comes from the proxy, which would make

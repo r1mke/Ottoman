@@ -14,7 +14,6 @@ public class Reservation
     public decimal TotalPrice { get; set; }
     public int TotalDurationMinutes { get; set; }
 
-    public int? PaymentId { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? CancelledAtUtc { get; set; }
     public string? CancelledBy { get; set; }

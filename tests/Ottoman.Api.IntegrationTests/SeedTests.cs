@@ -199,7 +199,7 @@ public class SeedTests(ApiFixture api)
     [Fact]
     public async Task Pictures_are_seeded_once_for_everything_that_has_none_when_an_account_is_configured()
     {
-        var store = new Ottoman.Infrastructure.Images.FakeImageStore();
+        var store = new Ottoman.Infrastructure.Images.OfflineImageStore();
         var configured = Microsoft.Extensions.Options.Options.Create(new Ottoman.Application.Images.ImageOptions { CloudName = "c", ApiKey = "k", ApiSecret = "s" });
         await using var scope = api.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
@@ -223,7 +223,7 @@ public class SeedTests(ApiFixture api)
         await using var scope = api.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
         var unconfigured = Microsoft.Extensions.Options.Options.Create(new Ottoman.Application.Images.ImageOptions());
-        var store = new Ottoman.Infrastructure.Images.FakeImageStore();
+        var store = new Ottoman.Infrastructure.Images.OfflineImageStore();
 
         await new DemoImageSeeder(db, store, unconfigured, Microsoft.Extensions.Logging.Abstractions.NullLogger<DemoImageSeeder>.Instance).SeedAsync();
         store.Uploaded.Should().BeEmpty();

@@ -188,7 +188,6 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.RowVersion).IsRowVersion();
             e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<EmployeeProfile>().WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);
-            e.HasOne<Payment>().WithMany().HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Restrict);
             e.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.ReservationId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(x => x.Slots).WithOne().HasForeignKey(x => x.ReservationId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(x => new { x.EmployeeId, x.StartUtc });

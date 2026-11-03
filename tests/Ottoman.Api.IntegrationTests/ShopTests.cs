@@ -240,7 +240,7 @@ public class ShopTests(ApiFixture api)
         o.ExpiresUtc.Should().BeAfter(DateTime.UtcNow);
         (await StockOf(p)).Should().Be(3);
 
-        var gateway = api.Services.GetRequiredService<FakePaymentGateway>();
+        var gateway = api.Services.GetRequiredService<OfflinePaymentGateway>();
         gateway.Created.Should().Contain(c => c.OrderId == o.Id && c.Currency == "eur" && c.AmountMinor == 2000); // 39.12 BAM
     }
 
@@ -458,7 +458,7 @@ public class ShopTests(ApiFixture api)
         var res = await admin.PostAsync($"/api/v1/orders/{o.Id}/cancel", null);
         res.StatusCode.Should().Be(HttpStatusCode.OK);
         (await Dto(res)).PaymentStatus.Should().Be(PaymentStatus.Refunded);
-        api.Services.GetRequiredService<FakePaymentGateway>().Refunds.Should().Contain(intent);
+        api.Services.GetRequiredService<OfflinePaymentGateway>().Refunds.Should().Contain(intent);
         (await StockOf(p)).Should().Be(5);
     }
 
@@ -621,7 +621,7 @@ public class ShopTests(ApiFixture api)
         var after = (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!;
         after.Status.Should().Be(OrderStatus.Expired, "the stock was already released; the order must not come back to life");
         after.PaymentStatus.Should().Be(PaymentStatus.Refunded);
-        api.Services.GetRequiredService<FakePaymentGateway>().Refunds.Should().Contain(intent);
+        api.Services.GetRequiredService<OfflinePaymentGateway>().Refunds.Should().Contain(intent);
     }
 
     /// <summary>A processor that is down for refunds.</summary>
@@ -670,7 +670,7 @@ public class ShopTests(ApiFixture api)
         // Stripe retries the same event; this time the refund goes through.
         (await Webhook(body)).StatusCode.Should().Be(HttpStatusCode.OK);
         (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.PaymentStatus.Should().Be(PaymentStatus.Refunded);
-        api.Services.GetRequiredService<FakePaymentGateway>().Refunds.Should().Contain(intent);
+        api.Services.GetRequiredService<OfflinePaymentGateway>().Refunds.Should().Contain(intent);
     }
 
     [Fact]
@@ -683,7 +683,7 @@ public class ShopTests(ApiFixture api)
             (await scope.ServiceProvider.GetRequiredService<IOrderService>().RetryPendingRefundsAsync(default)).Should().BeGreaterThanOrEqualTo(1);
 
         (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.PaymentStatus.Should().Be(PaymentStatus.Refunded);
-        api.Services.GetRequiredService<FakePaymentGateway>().Refunds.Should().Contain(intent);
+        api.Services.GetRequiredService<OfflinePaymentGateway>().Refunds.Should().Contain(intent);
     }
 
     [Fact]

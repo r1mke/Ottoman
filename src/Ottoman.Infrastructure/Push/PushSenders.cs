@@ -164,11 +164,11 @@ public sealed class FcmPushSender : IPushSender, IDisposable
 }
 
 /// <summary>Used when no Firebase key is configured: pushes are recorded, nothing leaves the machine.</summary>
-public sealed class FakePushSender : IPushSender
+public sealed class OfflinePushSender : IPushSender
 {
     private readonly List<(string Token, PushMessage Message)> _sent = [];
 
-    /// <summary>Tokens the fake treats as dead, to exercise the cleanup path.</summary>
+    /// <summary>Tokens this sender treats as dead (tests use it to exercise the cleanup path).</summary>
     public HashSet<string> DeadTokens { get; } = [];
 
     public IReadOnlyList<(string Token, PushMessage Message)> Sent

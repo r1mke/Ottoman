@@ -17,7 +17,7 @@ namespace Ottoman.Api.IntegrationTests;
 [Collection("api")]
 public class PushTests(ApiFixture api)
 {
-    private FakePushSender Push => api.Services.GetRequiredService<FakePushSender>();
+    private OfflinePushSender Push => api.Services.GetRequiredService<OfflinePushSender>();
 
     private async Task<HttpClient> Admin() =>
         api.CreateClient().As(await api.CreateClient().LoginOk(ApiFixture.AdminEmail, ApiFixture.AdminPassword));

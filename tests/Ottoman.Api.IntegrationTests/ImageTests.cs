@@ -17,7 +17,7 @@ public class ImageTests(ApiFixture api)
 
     private static readonly byte[] PngHead = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
-    private FakeImageStore Store => api.Services.GetRequiredService<FakeImageStore>();
+    private OfflineImageStore Store => api.Services.GetRequiredService<OfflineImageStore>();
 
     private async Task<HttpClient> Admin() =>
         api.CreateClient().As(await api.CreateClient().LoginOk(ApiFixture.AdminEmail, ApiFixture.AdminPassword));

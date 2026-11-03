@@ -109,8 +109,8 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(config[$"{PaymentOptions.Section}:SecretKey"]))
         {
             // No processor configured: nothing is ever charged, and orders only become paid via a signed webhook.
-            services.AddSingleton<FakePaymentGateway>();
-            services.AddSingleton<IPaymentGateway>(sp => sp.GetRequiredService<FakePaymentGateway>());
+            services.AddSingleton<OfflinePaymentGateway>();
+            services.AddSingleton<IPaymentGateway>(sp => sp.GetRequiredService<OfflinePaymentGateway>());
         }
         else
         {
@@ -130,8 +130,8 @@ public static class DependencyInjection
         else
         {
             // No Cloudinary account: pictures are accepted and validated but go nowhere.
-            services.AddSingleton<FakeImageStore>();
-            services.AddSingleton<IImageStore>(sp => sp.GetRequiredService<FakeImageStore>());
+            services.AddSingleton<OfflineImageStore>();
+            services.AddSingleton<IImageStore>(sp => sp.GetRequiredService<OfflineImageStore>());
         }
         services.Configure<PushOptions>(config.GetSection(PushOptions.Section));
         services.AddScoped<IDeviceRegistry, DeviceRegistry>();
@@ -146,8 +146,8 @@ public static class DependencyInjection
         else
         {
             // No Firebase key: pushes are recorded in memory, nothing leaves the machine.
-            services.AddSingleton<FakePushSender>();
-            services.AddSingleton<IPushSender>(sp => sp.GetRequiredService<FakePushSender>());
+            services.AddSingleton<OfflinePushSender>();
+            services.AddSingleton<IPushSender>(sp => sp.GetRequiredService<OfflinePushSender>());
         }
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReviewService, ReviewService>();
