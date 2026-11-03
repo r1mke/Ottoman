@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
-String _message(AppException e) {
-  final detail = e.errors.values.expand((x) => x).join('\n');
-  return detail.isEmpty ? e.message : detail;
-}
-
 /// Admin edit: move an open reservation to another free time. The reservation itself is treated as free.
 class RescheduleDialog extends StatefulWidget {
   const RescheduleDialog({
@@ -46,7 +41,7 @@ class _RescheduleDialogState extends State<RescheduleDialog> {
       if (!mounted) return;
       if (e.isConflict) await _controller.reload();
       if (!mounted) return;
-      setState(() => _error = _message(e));
+      setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -199,7 +194,7 @@ class _NewAppointmentDialogState extends State<NewAppointmentDialog> {
       if (!mounted) return;
       if (e.isConflict) await _controller.reload();
       if (!mounted) return;
-      setState(() => _error = _message(e));
+      setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

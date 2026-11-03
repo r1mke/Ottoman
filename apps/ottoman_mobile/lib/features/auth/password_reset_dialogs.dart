@@ -98,7 +98,7 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
       // The server says what is wrong with the password; a bad code gets one generic message.
-      final detail = e.errors.values.expand((x) => x).join('\n');
+      final detail = e.fieldErrors;
       if (mounted) {
         setState(() {
           _busy = false;

@@ -102,8 +102,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       messenger.showSnackBar(SnackBar(content: Text(t.announcementSent)));
       if (mounted) setState(() => _version++);
     } on AppException catch (e) {
-      final detail = e.errors.values.expand((x) => x).join('\n');
-      if (mounted) setState(() => _error = detail.isEmpty ? e.message : detail);
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

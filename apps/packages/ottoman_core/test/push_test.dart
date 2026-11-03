@@ -172,47 +172,44 @@ void main() {
     expect(seen.single.kind, 'Reminder');
   });
 
-  test(
-    'a session that ends by a password change resets push, so the next sign-in registers again',
-    () async {
-      final server = _Server();
-      final phone = _Phone();
-      final api = ApiClient(
-        baseUrl: 'http://test',
-        dio: Dio()..httpClientAdapter = server,
-        readToken: () async => 't',
-      );
-      final auth = AuthController(
-        baseUrl: 'http://test',
-        storage: _MemoryStorage(),
-        api: api,
-      );
-      final push = PushRegistration(devices: DevicesApi(api), client: phone);
-      push.attach(auth);
-      await push.start();
+  test('a session that ends by a password change resets push, so the next sign-in registers again', () async {
+    final server = _Server();
+    final phone = _Phone();
+    final api = ApiClient(
+      baseUrl: 'http://test',
+      dio: Dio()..httpClientAdapter = server,
+      readToken: () async => 't',
+    );
+    final auth = AuthController(
+      baseUrl: 'http://test',
+      storage: _MemoryStorage(),
+      api: api,
+    );
+    final push = PushRegistration(devices: DevicesApi(api), client: phone);
+    push.attach(auth);
+    await push.start();
 
-      await auth.changePassword('old', 'new');
-      await pumpEventQueue();
+    await auth.changePassword('old', 'new');
+    await pumpEventQueue();
 
-      expect(auth.status, AuthStatus.unauthenticated);
-      expect(phone.deleted, isTrue, reason: 'the old token must stop working');
-      phone.refresh.add('tok-late');
-      await pumpEventQueue();
-      expect(
-        server.calls.where((c) => c.path == '/api/v1/devices'),
-        hasLength(1),
-        reason: 'no registration while signed out',
-      );
+    expect(auth.status, AuthStatus.unauthenticated);
+    expect(phone.deleted, isTrue, reason: 'the old token must stop working');
+    phone.refresh.add('tok-late');
+    await pumpEventQueue();
+    expect(
+      server.calls.where((c) => c.path == '/api/v1/devices'),
+      hasLength(1),
+      reason: 'no registration while signed out',
+    );
 
-      phone.current = 'tok2';
-      await push.start(); // the next sign-in
-      final registrations = server.calls
-          .where((c) => c.path == '/api/v1/devices')
-          .toList();
-      expect(registrations, hasLength(2));
-      expect(_body(registrations.last)['token'], 'tok2');
-    },
-  );
+    phone.current = 'tok2';
+    await push.start(); // the next sign-in
+    final registrations = server.calls
+        .where((c) => c.path == '/api/v1/devices')
+        .toList();
+    expect(registrations, hasLength(2));
+    expect(_body(registrations.last)['token'], 'tok2');
+  });
 
   test('reset before start does nothing', () async {
     final (push, server, phone) = _make();

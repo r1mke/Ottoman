@@ -3,11 +3,6 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../images/picture_editor.dart';
 
-String _message(AppException e) {
-  final detail = e.errors.values.expand((x) => x).join('\n');
-  return detail.isEmpty ? e.message : detail;
-}
-
 /// Create (no [employee]) or edit an employee.
 class EmployeeDialog extends StatefulWidget {
   const EmployeeDialog({
@@ -92,7 +87,7 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
       }
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _message(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -292,7 +287,7 @@ class _AssignServicesDialogState extends State<AssignServicesDialog> {
       );
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _message(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -447,7 +442,7 @@ class _WorkingHoursDialogState extends State<WorkingHoursDialog> {
       ]);
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _message(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -702,8 +697,7 @@ class _TitleListDialogState extends State<TitleListDialog> {
       await action();
       await _reload();
     } on AppException catch (e) {
-      final detail = e.errors.values.expand((x) => x).join('\n');
-      if (mounted) setState(() => _error = detail.isEmpty ? e.message : detail);
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

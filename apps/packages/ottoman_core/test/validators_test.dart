@@ -180,4 +180,18 @@ void main() {
     expect(Validators.required(t, null), t.requiredField);
     expect(Validators.required(t, 'x'), isNull);
   });
+
+  group('url', () {
+    test('empty is fine, a full http(s) link is fine', () {
+      expect(Validators.url(t, ''), isNull);
+      expect(Validators.url(t, null), isNull);
+      expect(Validators.url(t, 'https://maps.google.com/x'), isNull);
+      expect(Validators.url(t, ' http://ottoman.ba '), isNull);
+    });
+    test('anything else is refused', () {
+      expect(Validators.url(t, 'nije link'), isNotNull);
+      expect(Validators.url(t, 'ftp://x.ba'), isNotNull);
+      expect(Validators.url(t, 'www.ottoman.ba'), isNotNull);
+    });
+  });
 }

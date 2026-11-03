@@ -3,11 +3,6 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../images/picture_editor.dart';
 
-String _detail(AppException e) {
-  final detail = e.errors.values.expand((x) => x).join('\n');
-  return detail.isEmpty ? e.message : detail;
-}
-
 String _kindLabel(AppLocalizations t, String kind) => switch (kind) {
   ShopSectionKind.newArrivals => t.kindNewArrivals,
   ShopSectionKind.onSale => t.kindOnSale,
@@ -79,7 +74,7 @@ class _ShopSectionsPageState extends State<ShopSectionsPage> {
         style: r.style,
       );
     } on AppException catch (e) {
-      if (mounted) _toast(_detail(e));
+      if (mounted) _toast(e.detail);
     }
     if (mounted) _refresh();
   }
@@ -108,7 +103,7 @@ class _ShopSectionsPageState extends State<ShopSectionsPage> {
     try {
       await widget.shop.deleteSection(r.id);
     } on AppException catch (e) {
-      if (mounted) _toast(_detail(e));
+      if (mounted) _toast(e.detail);
     }
     if (mounted) _refresh();
   }
@@ -119,7 +114,7 @@ class _ShopSectionsPageState extends State<ShopSectionsPage> {
     try {
       await widget.shop.reorderSections(ids);
     } on AppException catch (e) {
-      if (mounted) _toast(_detail(e));
+      if (mounted) _toast(e.detail);
     }
     if (mounted) _refresh();
   }
@@ -386,7 +381,7 @@ class _SectionDialogState extends State<SectionDialog> {
       );
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _detail(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -407,7 +402,7 @@ class _SectionDialogState extends State<SectionDialog> {
         });
       }
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _detail(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _pictureBusy = false);
     }

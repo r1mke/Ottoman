@@ -17,6 +17,12 @@ class AppException implements Exception {
   final Map<String, List<String>> errors;
   final bool isNetwork;
 
+  /// The server's field messages, one per line ('' when there are none).
+  String get fieldErrors => errors.values.expand((x) => x).join('\n');
+
+  /// What to show the user: the field messages when the server sent some, otherwise the general message.
+  String get detail => fieldErrors.isEmpty ? message : fieldErrors;
+
   bool get isUnauthorized => statusCode == 401;
   bool get isForbidden => statusCode == 403;
   bool get isConflict => statusCode == 409;

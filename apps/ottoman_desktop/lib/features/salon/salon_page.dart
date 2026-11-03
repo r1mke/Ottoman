@@ -6,11 +6,6 @@ import 'package:latlong2/latlong.dart';
 import '../images/picture_editor.dart';
 import 'location_picker.dart';
 
-String _detail(AppException e) {
-  final detail = e.errors.values.expand((x) => x).join('\n');
-  return detail.isEmpty ? e.message : detail;
-}
-
 String _hhmm(int minutes) =>
     '${(minutes ~/ 60).toString().padLeft(2, '0')}:${(minutes % 60).toString().padLeft(2, '0')}';
 
@@ -192,7 +187,7 @@ class _SalonFormState extends State<SalonForm> {
       });
       messenger.showSnackBar(SnackBar(content: Text(t.salonSaved)));
     } on AppException catch (e) {
-      if (mounted) messenger.showSnackBar(SnackBar(content: Text(_detail(e))));
+      if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.detail)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -274,17 +269,7 @@ class _SalonFormState extends State<SalonForm> {
                             labelText: t.mapsLink,
                             helperText: t.mapsLinkHint,
                           ),
-                          validator: (v) {
-                            final s = (v ?? '').trim();
-                            if (s.isEmpty) return null;
-                            final uri = Uri.tryParse(s);
-                            return uri != null &&
-                                    uri.hasAuthority &&
-                                    (uri.scheme == 'http' ||
-                                        uri.scheme == 'https')
-                                ? null
-                                : t.invalidUrl;
-                          },
+                          validator: (v) => Validators.url(t, v),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -294,17 +279,7 @@ class _SalonFormState extends State<SalonForm> {
                           decoration: InputDecoration(
                             labelText: t.instagramLink,
                           ),
-                          validator: (v) {
-                            final s = (v ?? '').trim();
-                            if (s.isEmpty) return null;
-                            final uri = Uri.tryParse(s);
-                            return uri != null &&
-                                    uri.hasAuthority &&
-                                    (uri.scheme == 'http' ||
-                                        uri.scheme == 'https')
-                                ? null
-                                : t.invalidUrl;
-                          },
+                          validator: (v) => Validators.url(t, v),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -314,17 +289,7 @@ class _SalonFormState extends State<SalonForm> {
                           decoration: InputDecoration(
                             labelText: t.facebookLink,
                           ),
-                          validator: (v) {
-                            final s = (v ?? '').trim();
-                            if (s.isEmpty) return null;
-                            final uri = Uri.tryParse(s);
-                            return uri != null &&
-                                    uri.hasAuthority &&
-                                    (uri.scheme == 'http' ||
-                                        uri.scheme == 'https')
-                                ? null
-                                : t.invalidUrl;
-                          },
+                          validator: (v) => Validators.url(t, v),
                         ),
                         const SizedBox(height: 16),
                         LocationPicker(

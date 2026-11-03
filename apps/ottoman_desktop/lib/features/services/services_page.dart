@@ -195,8 +195,7 @@ class _ServiceDialogState extends State<ServiceDialog> {
       );
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
-      final detail = e.errors.values.expand((x) => x).join('\n');
-      if (mounted) setState(() => _error = detail.isEmpty ? e.message : detail);
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

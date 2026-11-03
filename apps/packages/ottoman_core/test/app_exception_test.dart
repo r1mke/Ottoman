@@ -54,4 +54,18 @@ void main() {
     await tester.tap(find.text('Pokušaj ponovo'));
     expect(tapped, isTrue);
   });
+
+  test('detail prefers the field messages and falls back to the message', () {
+    expect(AppException('Greška').detail, 'Greška');
+    final e = AppException(
+      'Greška',
+      errors: {
+        'Naziv': ['Obavezno.'],
+        'Cijena': ['Mora biti pozitivna.'],
+      },
+    );
+    expect(e.detail, 'Obavezno.\nMora biti pozitivna.');
+    expect(e.fieldErrors, e.detail);
+    expect(AppException('x').fieldErrors, '');
+  });
 }

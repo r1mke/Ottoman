@@ -67,6 +67,18 @@ abstract final class Validators {
         : t.invalidWholeNumber(min, max);
   }
 
+  /// An optional web address: empty is fine, otherwise a full http(s) link with a host.
+  static String? url(AppLocalizations t, String? v) {
+    final s = (v ?? '').trim();
+    if (s.isEmpty) return null;
+    final uri = Uri.tryParse(s);
+    return uri != null &&
+            uri.hasAuthority &&
+            (uri.scheme == 'http' || uri.scheme == 'https')
+        ? null
+        : t.invalidUrl;
+  }
+
   /// The password policy of the server: 8+ characters with an upper and a lower case letter, a digit and a symbol.
   static String? newPassword(AppLocalizations t, String? v) {
     final s = v ?? '';

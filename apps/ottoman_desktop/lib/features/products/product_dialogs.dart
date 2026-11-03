@@ -3,11 +3,6 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../images/picture_editor.dart';
 
-String _detail(AppException e) {
-  final detail = e.errors.values.expand((x) => x).join('\n');
-  return detail.isEmpty ? e.message : detail;
-}
-
 /// Create or edit a product. Stock is entered only for a new product; afterwards it changes through
 /// [StockDialog] (atomic on the server) so it can never overwrite what a concurrent order just took.
 class ProductDialog extends StatefulWidget {
@@ -93,7 +88,7 @@ class _ProductDialogState extends State<ProductDialog> {
       );
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _detail(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -338,7 +333,7 @@ class _StockDialogState extends State<StockDialog> {
       await widget.shop.adjustStock(widget.product.id, delta);
       if (mounted) Navigator.pop(context, true);
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _detail(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -452,7 +447,7 @@ class _NamesDialogState extends State<NamesDialog> {
       _changed = true;
       await _load();
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _detail(e));
+      if (mounted) setState(() => _error = e.detail);
     }
   }
 

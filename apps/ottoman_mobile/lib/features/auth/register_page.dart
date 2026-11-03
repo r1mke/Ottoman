@@ -49,8 +49,7 @@ class _RegisterPageState extends State<RegisterPage> {
       navigator.pop();
     } on AppException catch (e) {
       // Server validation errors (e.g. password policy) arrive per field.
-      final detail = e.errors.values.expand((x) => x).join('\n');
-      if (mounted) setState(() => _error = detail.isEmpty ? e.message : detail);
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

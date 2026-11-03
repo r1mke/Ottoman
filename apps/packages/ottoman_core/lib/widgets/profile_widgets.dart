@@ -6,11 +6,6 @@ import '../network/app_exception.dart';
 import '../validation/validators.dart';
 import 'dialog_header.dart';
 
-String _detail(AppException e) {
-  final detail = e.errors.values.expand((x) => x).join('\n');
-  return detail.isEmpty ? e.message : detail;
-}
-
 /// The signed-in person's own details (name, phone) and the way to change the password.
 /// Shared by the mobile and the desktop app; the e-mail is shown but cannot be changed here.
 class ProfileForm extends StatefulWidget {
@@ -79,7 +74,7 @@ class _ProfileFormState extends State<ProfileForm> {
       await widget.auth.reloadUser();
       messenger.showSnackBar(SnackBar(content: Text(t.profileSaved)));
     } on AppException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(_detail(e))));
+      messenger.showSnackBar(SnackBar(content: Text(e.detail)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -236,7 +231,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
       navigator.pop();
       messenger.showSnackBar(SnackBar(content: Text(t.passwordChanged)));
     } on AppException catch (e) {
-      if (mounted) setState(() => _error = _detail(e));
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

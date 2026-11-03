@@ -3,11 +3,6 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../images/picture_editor.dart';
 
-String _detail(AppException e) {
-  final detail = e.errors.values.expand((x) => x).join('\n');
-  return detail.isEmpty ? e.message : detail;
-}
-
 /// Admin: the work gallery. Pictures of finished haircuts with their style and the barber who did them; the ones
 /// marked "on home" make up "Our work" in the mobile app.
 class GalleryPage extends StatefulWidget {
@@ -85,7 +80,7 @@ class _GalleryPageState extends State<GalleryPage> {
       await widget.gallery.delete(item.id);
       if (mounted) _refresh();
     } on AppException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(_detail(e))));
+      messenger.showSnackBar(SnackBar(content: Text(e.detail)));
     }
   }
 
@@ -389,9 +384,7 @@ class _WorkDialogState extends State<WorkDialog> {
       // The refusal (wrong type, too big, the same picture again) is a toast with what is accepted.
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            _isNew ? '${_detail(e)}\n${t.pictureHint}' : _detail(e),
-          ),
+          content: Text(_isNew ? '${e.detail}\n${t.pictureHint}' : e.detail),
         ),
       );
     } finally {
@@ -412,7 +405,7 @@ class _WorkDialogState extends State<WorkDialog> {
             if (snapshot.hasError) {
               return Text(
                 snapshot.error is AppException
-                    ? _detail(snapshot.error! as AppException)
+                    ? (snapshot.error! as AppException).detail
                     : '${snapshot.error}',
               );
             }
@@ -622,7 +615,7 @@ class _StylesDialogState extends State<StylesDialog> {
         });
       }
     } on AppException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(_detail(e))));
+      messenger.showSnackBar(SnackBar(content: Text(e.detail)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

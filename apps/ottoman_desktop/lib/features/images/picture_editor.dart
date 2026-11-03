@@ -89,8 +89,7 @@ class _PictureEditorState extends State<PictureEditor> {
       final next = await action();
       if (mounted) setState(() => _pictures = next);
     } on AppException catch (e) {
-      final detail = e.errors.values.expand((x) => x).join('\n');
-      if (mounted) setState(() => _error = detail.isEmpty ? e.message : detail);
+      if (mounted) setState(() => _error = e.detail);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
