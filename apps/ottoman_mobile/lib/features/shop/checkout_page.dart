@@ -152,85 +152,92 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.checkout)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.storefront_outlined),
-            title: Text(t.pickup),
-          ),
-          const Divider(),
-          Text(t.payment, style: _heading(context)),
-          RadioGroup<String>(
-            groupValue: _payment,
-            onChanged: (v) => setState(() {
-              _payment = v!;
-              _attempt = newIdempotencyKey();
-            }),
-            child: Column(
+    // While the order (and its payment) is in flight, leaving would lose track of it: back is blocked.
+    return PopScope(
+      canPop: !_busy,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(t.checkout),
+          automaticallyImplyLeading: !_busy,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.storefront_outlined),
+              title: Text(t.pickup),
+            ),
+            const Divider(),
+            Text(t.payment, style: _heading(context)),
+            RadioGroup<String>(
+              groupValue: _payment,
+              onChanged: (v) => setState(() {
+                _payment = v!;
+                _attempt = newIdempotencyKey();
+              }),
+              child: Column(
+                children: [
+                  RadioListTile<String>(
+                    key: const Key('pay_card'),
+                    value: PaymentMethod.card,
+                    enabled: _cardAvailable,
+                    title: Text(t.payByCard),
+                    subtitle: _cardAvailable ? null : Text(t.cardUnavailable),
+                  ),
+                  RadioListTile<String>(
+                    key: const Key('pay_receipt'),
+                    value: PaymentMethod.onReceipt,
+                    title: Text(t.payOnReceipt),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _note,
+              maxLines: 2,
+              maxLength: 500,
+              decoration: InputDecoration(labelText: t.note),
+            ),
+            const SizedBox(height: 8),
+            Row(
               children: [
-                RadioListTile<String>(
-                  key: const Key('pay_card'),
-                  value: PaymentMethod.card,
-                  enabled: _cardAvailable,
-                  title: Text(t.payByCard),
-                  subtitle: _cardAvailable ? null : Text(t.cardUnavailable),
-                ),
-                RadioListTile<String>(
-                  key: const Key('pay_receipt'),
-                  value: PaymentMethod.onReceipt,
-                  title: Text(t.payOnReceipt),
+                Text(t.total, style: Theme.of(context).textTheme.titleMedium),
+                const Spacer(),
+                Text(
+                  money(t, widget.cart.total),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _note,
-            maxLines: 2,
-            maxLength: 500,
-            decoration: InputDecoration(labelText: t.note),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(t.total, style: Theme.of(context).textTheme.titleMedium),
-              const Spacer(),
-              Text(
-                money(t, widget.cart.total),
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w800),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  _error!,
+                  key: const Key('checkout_error'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ),
-            ],
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                _error!,
-                key: const Key('checkout_error'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+            const SizedBox(height: 16),
+            FilledButton(
+              key: const Key('place_order'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
               ),
+              onPressed: _busy ? null : _confirmAndSubmit,
+              child: _busy
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(t.placeOrder),
             ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('place_order'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-            ),
-            onPressed: _busy ? null : _confirmAndSubmit,
-            child: _busy
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(t.placeOrder),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

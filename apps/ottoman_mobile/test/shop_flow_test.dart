@@ -532,6 +532,40 @@ void main() {
     },
   );
 
+  testWidgets('checkout cannot be left while the order is being paid', (
+    tester,
+  ) async {
+    final card = _SlowCard();
+    final api = await _openShop(tester, cardPayment: card);
+    api.createError = {
+      ..._order(status: 'PendingPayment', method: 'Card'),
+      'paymentClientSecret': 'pi_1_secret_x',
+    };
+    await tester.tap(find.byKey(const Key('add_1')));
+    await tester.tap(find.byKey(const Key('open_cart')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('go_checkout')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('place_order')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_order')));
+    // The busy spinner never settles: pump a little instead.
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(card.opened, hasLength(1));
+
+    // The system back gesture is refused and there is no back arrow.
+    await tester.binding.handlePopRoute();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const Key('place_order')), findsOneWidget);
+    expect(find.byType(BackButton), findsNothing);
+
+    card.done.complete(CardPaymentResult.cancelled);
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('place_order')), findsNothing);
+  });
+
   testWidgets(
     'after a closed sheet the next try is a new order, not the old one',
     (tester) async {
