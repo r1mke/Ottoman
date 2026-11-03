@@ -334,9 +334,29 @@ class _SectionDialogState extends State<SectionDialog> {
     _results = widget.shop.products(search: _search.text, pageSize: 30);
   });
 
+  /// What "how many to show" really is for the chosen kind, never a parse error:
+  /// - a hand-picked section shows all its picks (the hidden count field must not cut them off);
+  /// - automatic category tiles sit in two columns, so the count is even (as the dropdown shows it);
+  /// - otherwise the typed number, or the default if the field is hidden and holds something else.
+  int _maxItems() {
+    if (_kind == ShopSectionKind.manual) return _picked.length.clamp(1, 30);
+    final categories = _kind == ShopSectionKind.categoryTiles;
+    final typed = int.tryParse(_max.text.trim());
+    var n = typed == null || typed < 1 || typed > 30
+        ? (categories ? 6 : 10)
+        : typed;
+    if (categories && !_manualTiles && n.isOdd) n = n == 30 ? 30 : n + 1;
+    return n;
+  }
+
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     final t = AppLocalizations.of(context);
+    if (_kind == ShopSectionKind.manual &&
+        (_picked.isEmpty || _picked.length > 30)) {
+      setState(() => _error = t.sectionProductsCountError);
+      return;
+    }
     // Hand-picked categories sit in two columns: an odd number would leave the last row half empty.
     if (_kind == ShopSectionKind.categoryTiles &&
         _manualTiles &&
@@ -355,7 +375,7 @@ class _SectionDialogState extends State<SectionDialog> {
         kind: _kind,
         categoryId: _kind == ShopSectionKind.category ? _categoryId : null,
         brandId: _kind == ShopSectionKind.category ? _brandId : null,
-        maxItems: int.parse(_max.text),
+        maxItems: _maxItems(),
         isActive: _active,
         productIds: _kind == ShopSectionKind.manual ? _picked.toList() : [],
         showAsCard: _showAsCard,

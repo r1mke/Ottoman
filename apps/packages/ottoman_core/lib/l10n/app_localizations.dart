@@ -3235,6 +3235,12 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Označiti da klijent nije došao na termin?'**
   String get noShowQuestion;
+
+  /// No description provided for @sectionProductsCountError.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberite od 1 do 30 proizvoda za ovu sekciju.'**
+  String get sectionProductsCountError;
 }
 
 class _AppLocalizationsDelegate

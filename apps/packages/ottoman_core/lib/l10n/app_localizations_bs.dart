@@ -1665,4 +1665,8 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get noShowQuestion => 'Označiti da klijent nije došao na termin?';
+
+  @override
+  String get sectionProductsCountError =>
+      'Odaberite od 1 do 30 proizvoda za ovu sekciju.';
 }

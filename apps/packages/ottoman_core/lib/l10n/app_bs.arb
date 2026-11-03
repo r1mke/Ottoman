@@ -619,5 +619,6 @@
   "announceEmailQuestion": "Poslati ovu poruku: {audience}, i e-mailom? Poslani mailovi se ne mogu povući.",
   "@announceEmailQuestion": {"placeholders": {"audience": {"type": "String"}}},
   "completeQuestion": "Označiti termin kao završen?",
-  "noShowQuestion": "Označiti da klijent nije došao na termin?"
+  "noShowQuestion": "Označiti da klijent nije došao na termin?",
+  "sectionProductsCountError": "Odaberite od 1 do 30 proizvoda za ovu sekciju."
 }

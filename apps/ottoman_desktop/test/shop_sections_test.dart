@@ -594,6 +594,65 @@ void main() {
     expect(sent['kind'], 'CategoryTiles');
   });
 
+  testWidgets('an odd automatic category count is saved as the even number '
+      'the dropdown shows', (tester) async {
+    final api = _Api();
+    api.rules[2] = {...api.rules[2], 'maxItems': 5};
+    await _openWith(tester, api);
+
+    await tester.tap(find.byKey(const Key('section_edit_3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('section_save')));
+    await tester.pumpAndSettle();
+
+    final sent = api.last('PUT', '/sections/3')!.data as Map<String, dynamic>;
+    expect(sent['maxItems'], 6);
+  });
+
+  Map<String, dynamic> manual(List<int> productIds) => {
+    'id': 4,
+    'title': 'Izbor',
+    'kind': 'Manual',
+    'categoryId': null,
+    'categoryName': null,
+    'maxItems': 10,
+    'sortOrder': 3,
+    'isActive': true,
+    'productIds': productIds,
+    'productCount': productIds.length,
+  };
+
+  testWidgets('a hand-picked section needs at least one product and shows '
+      'all of its picks', (tester) async {
+    final api = _Api();
+    api.rules.add(manual(const []));
+    await _openWith(tester, api);
+
+    await tester.tap(find.byKey(const Key('section_edit_4')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('section_save')));
+    await tester.tap(find.byKey(const Key('section_save')));
+    await tester.pumpAndSettle();
+    expect(api.last('PUT', '/sections/4'), isNull);
+    expect(find.textContaining('od 1 do 30 proizvoda'), findsOneWidget);
+  });
+
+  testWidgets('saving a hand-picked section sends how many were picked as '
+      'its count', (tester) async {
+    final api = _Api();
+    api.rules.add(manual(List.generate(12, (i) => 100 + i)));
+    await _openWith(tester, api);
+
+    await tester.tap(find.byKey(const Key('section_edit_4')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('section_save')));
+    await tester.tap(find.byKey(const Key('section_save')));
+    await tester.pumpAndSettle();
+    final sent = api.last('PUT', '/sections/4')!.data as Map<String, dynamic>;
+    expect(sent['maxItems'], 12);
+    expect((sent['productIds'] as List).length, 12);
+  });
+
   testWidgets('a built-in block that exists is not offered again when '
       'adding a section, one that does not is', (tester) async {
     await _open(tester);

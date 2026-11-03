@@ -1667,4 +1667,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noShowQuestion => 'Mark that the client did not come?';
+
+  @override
+  String get sectionProductsCountError =>
+      'Pick between 1 and 30 products for this section.';
 }
