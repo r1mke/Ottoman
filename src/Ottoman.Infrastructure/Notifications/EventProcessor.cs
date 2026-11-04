@@ -84,13 +84,21 @@ public class EventProcessor(
                 {
                     var e = Read<ReservationCreated>(json);
                     var f = await ReservationFactsAsync(e.ReservationId, e.ClientId, e.EmployeeId, e.StartUtc, e.TotalPrice, ct);
-                    return MessageComposer.ReservationCreated(f);
+                    return MessageComposer.ReservationCreated(f, e.Confirmed);
+                }
+            case nameof(ReservationConfirmed):
+                {
+                    var e = Read<ReservationConfirmed>(json);
+                    var f = await ReservationFactsAsync(e.ReservationId, e.ClientId, e.EmployeeId, e.StartUtc, null, ct);
+                    return MessageComposer.ReservationConfirmed(f);
                 }
             case nameof(ReservationCancelled):
                 {
                     var e = Read<ReservationCancelled>(json);
                     var f = await ReservationFactsAsync(e.ReservationId, e.ClientId, e.EmployeeId, e.StartUtc, null, ct);
-                    return MessageComposer.ReservationCancelled(f, e.CancelledBy, e.Reason);
+                    return e.Declined
+                        ? MessageComposer.ReservationDeclined(f, e.Reason)
+                        : MessageComposer.ReservationCancelled(f, e.CancelledBy, e.Reason);
                 }
             case nameof(ReservationRescheduled):
                 {

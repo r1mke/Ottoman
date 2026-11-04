@@ -486,6 +486,24 @@ void main() {
     expect(find.textContaining('Adresa nije pronađena'), findsOneWidget);
   });
 
+  testWidgets(
+    'the salon decides whether bookings are confirmed automatically',
+    (tester) async {
+      final server = _Server();
+      await _pump(tester, salonPage, server);
+      final toggle = find.byKey(const Key('salon_auto_confirm'));
+      await tester.ensureVisible(toggle);
+      expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('salon_save')));
+      await tester.tap(find.byKey(const Key('salon_save')));
+      await tester.pumpAndSettle();
+      final put = server.sent('PUT', '/salon').single.data as Map;
+      expect(put['autoConfirmReservations'], isFalse);
+    },
+  );
+
   testWidgets('a wrong phone number or link stops the save under the field', (
     tester,
   ) async {

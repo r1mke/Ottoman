@@ -6,6 +6,9 @@ public enum ActorKind
     Client,
     Employee,
     Admin,
+
+    /// <summary>The server itself, e.g. confirming a booking automatically when the salon does not review them.</summary>
+    System,
 }
 
 public readonly record struct Transition(bool Allowed, string? Reason = null)
@@ -15,11 +18,28 @@ public readonly record struct Transition(bool Allowed, string? Reason = null)
 }
 
 /// <summary>
-/// Pure reservation lifecycle rules. Ownership ("is this the client's own reservation?") is checked
-/// by the caller; this class only decides whether the status change itself is allowed.
+/// Pure reservation lifecycle rules: Pending -> Confirmed -> Completed / NoShow, and Cancelled from any open state
+/// (from Pending by the salon it is a decline, which needs a reason). Ownership ("is this the client's own
+/// reservation?") is checked by the caller; this class only decides whether the status change itself is allowed.
 /// </summary>
 public static class ReservationStateMachine
 {
+    /// <summary>
+    /// The status a new booking starts in, and whether the system confirms it at once. Every booking is created
+    /// Pending (its time is held); when the salon auto-confirms, the system moves it to Confirmed straight away.
+    /// </summary>
+    public static (ReservationStatus Initial, bool SystemConfirms) OnCreate(bool autoConfirm) =>
+        (ReservationStatus.Pending, autoConfirm);
+
+    /// <summary>The salon turns down a booking it has not confirmed yet. The reason is checked by <see cref="CancellationRules"/>.</summary>
+    public static Transition CanDecline(ReservationStatus from, ActorKind actor)
+    {
+        if (actor is not (ActorKind.Employee or ActorKind.Admin)) return Transition.Deny("Samo osoblje može odbiti rezervaciju.");
+        return from == ReservationStatus.Pending
+            ? Transition.Ok
+            : Transition.Deny("Odbiti se može samo rezervacija koja čeka potvrdu.");
+    }
+
     public static Transition Can(
         ReservationStatus from,
         ReservationStatus to,
@@ -68,6 +88,7 @@ public static class ReservationStateMachine
         return now >= start ? Transition.Ok : Transition.Deny("Termin još nije počeo.");
     }
 
+    /// <summary>Staff, and the system acting for the salon, may confirm; a client never.</summary>
     private static Transition Staff(ActorKind actor, string reason) =>
         actor == ActorKind.Client ? Transition.Deny(reason) : Transition.Ok;
 

@@ -268,7 +268,6 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
@@ -929,8 +928,25 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CompletedBy")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("ConfirmedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ConfirmedBy")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("Declined")
+                        .HasColumnType("bit");
 
                     b.Property<string>("EmployeeId")
                         .IsRequired()
@@ -1154,6 +1170,9 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Address")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("AutoConfirmReservations")
+                        .HasColumnType("bit");
 
                     b.Property<int>("CancelWindowMinutes")
                         .HasColumnType("int");
@@ -1661,8 +1680,7 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Ottoman.Domain.Entities.DeviceToken", b =>

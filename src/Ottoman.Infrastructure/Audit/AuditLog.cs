@@ -18,13 +18,16 @@ public sealed class AuditLog(IServiceScopeFactory scopes, TimeProvider clock, IL
             await using var scope = scopes.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
 
-            var name = await db.Users.AsNoTracking().Where(u => u.Id == record.UserId)
-                .Select(u => (u.FirstName + " " + u.LastName).Trim()).FirstOrDefaultAsync(CancellationToken.None);
+            var system = record.Role == IAuditLog.SystemRole;
+            var name = system
+                ? "Sistem"
+                : await db.Users.AsNoTracking().Where(u => u.Id == record.UserId)
+                    .Select(u => (u.FirstName + " " + u.LastName).Trim()).FirstOrDefaultAsync(CancellationToken.None);
 
             db.AuditEntries.Add(new AuditEntry
             {
                 AtUtc = clock.GetUtcNow().UtcDateTime,
-                UserId = record.UserId,
+                UserId = system ? null : record.UserId,
                 UserName = name ?? "(obrisan nalog)",
                 Role = record.Role,
                 Method = record.Method,
@@ -63,7 +66,7 @@ public class AuditQueries(OttomanDbContext db) : IAuditQueries
         var items = await query.OrderByDescending(e => e.AtUtc).ThenByDescending(e => e.Id)
             .Skip(page.Skip).Take(page.SafePageSize)
             .Select(e => new AuditEntryDto(
-                e.Id, e.AtUtc, e.UserId, e.UserName, e.Role, e.Method, e.Action, e.Route, e.Target, e.StatusCode, e.Ip))
+                e.Id, e.AtUtc, e.UserId ?? "", e.UserName, e.Role, e.Method, e.Action, e.Route, e.Target, e.StatusCode, e.Ip))
             .ToListAsync(ct);
         return new PagedResult<AuditEntryDto>(items, total);
     }

@@ -4,6 +4,7 @@ import '../catalog/catalog_api.dart';
 import '../catalog/catalog_models.dart';
 import '../l10n/app_localizations.dart';
 import '../network/app_exception.dart';
+import '../reservations/reservation_models.dart';
 import 'availability_calendar.dart';
 import 'states.dart';
 
@@ -350,6 +351,10 @@ class _BlockTitle extends StatelessWidget {
 }
 
 /// Localised label for an API reservation status.
+/// The label of a reservation, telling a declined booking from a cancelled one.
+String reservationLabel(AppLocalizations t, Reservation r) =>
+    r.declined ? t.statusDeclined : reservationStatusLabel(t, r.status);
+
 String reservationStatusLabel(AppLocalizations t, String status) =>
     switch (status) {
       'Pending' => t.statusPending,

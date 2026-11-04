@@ -78,7 +78,9 @@ public class AuditEntry
 {
     public long Id { get; set; }
     public DateTime AtUtc { get; set; }
-    public string UserId { get; set; } = null!;
+
+    /// <summary>Null when the system itself acted (e.g. a booking confirmed automatically).</summary>
+    public string? UserId { get; set; }
     public string UserName { get; set; } = null!;
     public string Role { get; set; } = null!;
     public string Method { get; set; } = null!;

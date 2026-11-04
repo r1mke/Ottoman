@@ -74,6 +74,39 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     if (mounted) _refresh();
   }
 
+  Future<void> _confirmBooking(Reservation r) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.reservations.confirm(r.id);
+      messenger.showSnackBar(SnackBar(content: Text(t.bookingConfirmedByStaff)));
+    } on AppException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+    if (mounted) _refresh();
+  }
+
+  /// Turning a waiting booking down needs a reason: the client is told why.
+  Future<void> _decline(Reservation r) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final reason = await showCancelReasonDialog(
+      context,
+      summary: '${r.clientName} · ${r.localDate} ${r.localTime}',
+      reasonRequired: true,
+      title: t.declineBookingTitle,
+      question: t.declineBookingQuestion,
+    );
+    if (reason == null) return;
+    try {
+      await widget.reservations.decline(r.id, reason: reason);
+      messenger.showSnackBar(SnackBar(content: Text(t.bookingDeclined)));
+    } on AppException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+    if (mounted) _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -238,9 +271,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                 DataCell(Text(r.employeeName)),
                                 DataCell(
                                   Chip(
-                                    label: Text(
-                                      reservationStatusLabel(t, r.status),
-                                    ),
+                                    key: Key('status_${r.id}'),
+                                    label: Text(reservationLabel(t, r)),
                                     visualDensity: VisualDensity.compact,
                                   ),
                                 ),
@@ -249,6 +281,35 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
                                       ? Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
+                                            if (r.canConfirm) ...[
+                                              FilledButton(
+                                                key: Key('confirm_${r.id}'),
+                                                style: FilledButton.styleFrom(
+                                                  minimumSize: const Size(
+                                                    72,
+                                                    36,
+                                                  ),
+                                                ),
+                                                onPressed: () =>
+                                                    _confirmBooking(r),
+                                                child: Text(t.confirmBooking),
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
+                                            if (r.canDecline) ...[
+                                              OutlinedButton(
+                                                key: Key('decline_${r.id}'),
+                                                style: OutlinedButton.styleFrom(
+                                                  minimumSize: const Size(
+                                                    72,
+                                                    36,
+                                                  ),
+                                                ),
+                                                onPressed: () => _decline(r),
+                                                child: Text(t.declineBooking),
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
                                             if (widget.isAdmin) ...[
                                               OutlinedButton(
                                                 key: Key('edit_${r.id}'),

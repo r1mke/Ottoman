@@ -171,7 +171,7 @@ class ReservationCard extends StatelessWidget {
                   ),
                 ),
                 Chip(
-                  label: Text(reservationStatusLabel(t, r.status)),
+                  label: Text(reservationLabel(t, r)),
                   backgroundColor: inactive
                       ? scheme.errorContainer
                       : scheme.secondaryContainer,
@@ -179,6 +179,24 @@ class ReservationCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (r.isPending)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  t.pendingBookingHint,
+                  key: Key('pending_hint_${r.id}'),
+                  style: TextStyle(color: scheme.tertiary, fontSize: 12),
+                ),
+              ),
+            if (r.declined && r.cancelReason != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  r.cancelReason!,
+                  key: Key('declined_reason_${r.id}'),
+                  style: TextStyle(color: scheme.error, fontSize: 12),
+                ),
+              ),
             const SizedBox(height: 4),
             Text(r.serviceNames),
             Text(

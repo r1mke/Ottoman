@@ -115,7 +115,7 @@
   "cancelBookingQuestion": "Are you sure you want to cancel this appointment?",
   "no": "No",
   "yes": "Yes",
-  "statusPending": "Pending",
+  "statusPending": "Awaiting confirmation",
   "statusConfirmed": "Confirmed",
   "statusCompleted": "Completed",
   "statusCancelled": "Cancelled",
@@ -624,5 +624,15 @@
   "serviceSearchHint": "Search by name or description",
   "clearSearch": "Clear search",
   "renameTitle": "Rename title",
-  "titleName": "Title name"
+  "titleName": "Title name",
+  "confirmBooking": "Confirm",
+  "declineBooking": "Decline",
+  "declineBookingTitle": "Decline booking",
+  "declineBookingQuestion": "Decline this booking? The time is freed and the client is told the reason.",
+  "statusDeclined": "Declined",
+  "bookingConfirmedByStaff": "The appointment is confirmed.",
+  "bookingDeclined": "The booking was declined.",
+  "autoConfirmReservations": "Confirm bookings automatically",
+  "autoConfirmReservationsHint": "On: a booking is confirmed as soon as the client makes it. Off: it waits (the time is held) until a barber or the admin confirms it or declines it with a reason.",
+  "pendingBookingHint": "The salon has not confirmed this appointment yet. The time is held for you."
 }

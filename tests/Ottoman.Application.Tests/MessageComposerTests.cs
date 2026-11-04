@@ -22,6 +22,25 @@ public class MessageComposerTests
     }
 
     [Fact]
+    public void A_booking_that_waits_for_the_salon_says_so_to_both()
+    {
+        var m = MessageComposer.ReservationCreated(Res, confirmed: false);
+        m.Single(x => x.UserId == "c1").Title.Should().Be("Zahtjev za termin primljen");
+        m.Single(x => x.UserId == "c1").Body.Should().Contain("čeka potvrdu");
+        m.Single(x => x.UserId == "e1").Body.Should().Contain("Potvrdite");
+    }
+
+    [Fact]
+    public void A_confirmation_and_a_decline_go_to_the_client_with_the_reason()
+    {
+        MessageComposer.ReservationConfirmed(Res).Single().UserId.Should().Be("c1");
+        var declined = MessageComposer.ReservationDeclined(Res, "frizer je na godišnjem").Single();
+        declined.UserId.Should().Be("c1");
+        declined.Title.Should().Be("Termin nije prihvaćen");
+        declined.Body.Should().Contain("frizer je na godišnjem");
+    }
+
+    [Fact]
     public void When_the_client_cancels_the_barber_is_told_and_the_client_gets_no_email()
     {
         var m = MessageComposer.ReservationCancelled(Res, "Client", null);

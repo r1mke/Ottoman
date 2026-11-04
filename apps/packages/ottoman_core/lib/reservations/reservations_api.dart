@@ -83,6 +83,20 @@ class ReservationsApi {
         ),
       );
 
+  /// Staff: confirms a booking that waits for the salon.
+  Future<Reservation> confirm(int id) async => Reservation.fromJson(
+    await _api.post<Map<String, dynamic>>('/api/v1/reservations/$id/confirm'),
+  );
+
+  /// Staff: turns a waiting booking down. The reason is required; the client gets it.
+  Future<Reservation> decline(int id, {required String reason}) async =>
+      Reservation.fromJson(
+        await _api.post<Map<String, dynamic>>(
+          '/api/v1/reservations/$id/decline',
+          body: {'reason': reason},
+        ),
+      );
+
   Future<Reservation> complete(int id) async => Reservation.fromJson(
     await _api.post<Map<String, dynamic>>('/api/v1/reservations/$id/complete'),
   );

@@ -56,14 +56,38 @@ public static class MessageComposer
 
     // ---------------------------------------------------------------- reservations
 
-    public static IReadOnlyList<Message> ReservationCreated(ReservationFacts f) =>
+    public static IReadOnlyList<Message> ReservationCreated(ReservationFacts f, bool confirmed = true) => confirmed
+        ?
+        [
+            new("Termin potvrđen",
+                $"Vaš termin je potvrđen: {f.LocalStart}, {f.Employee.Name} ({f.Services}). Ukupno {Money(f.TotalPrice)}.",
+                "ReservationCreated", UserId: f.Client.UserId),
+            new("Nova rezervacija",
+                $"{f.Client.Name} je rezervisao/la termin: {f.LocalStart} ({f.Services}).",
+                "ReservationCreated", UserId: f.Employee.UserId),
+        ]
+        :
+        [
+            new("Zahtjev za termin primljen",
+                $"Vaš termin {f.LocalStart}, {f.Employee.Name} ({f.Services}) čeka potvrdu salona. Vrijeme je rezervisano za vas; javićemo vam kad bude potvrđen.",
+                "ReservationCreated", UserId: f.Client.UserId),
+            new("Nova rezervacija čeka potvrdu",
+                $"{f.Client.Name} želi termin: {f.LocalStart} ({f.Services}). Potvrdite ga ili odbijte uz razlog.",
+                "ReservationCreated", UserId: f.Employee.UserId),
+        ];
+
+    public static IReadOnlyList<Message> ReservationConfirmed(ReservationFacts f) =>
     [
         new("Termin potvrđen",
-            $"Vaš termin je potvrđen: {f.LocalStart}, {f.Employee.Name} ({f.Services}). Ukupno {Money(f.TotalPrice)}.",
-            "ReservationCreated", UserId: f.Client.UserId),
-        new("Nova rezervacija",
-            $"{f.Client.Name} je rezervisao/la termin: {f.LocalStart} ({f.Services}).",
-            "ReservationCreated", UserId: f.Employee.UserId),
+            $"Salon je potvrdio vaš termin: {f.LocalStart}, {f.Employee.Name} ({f.Services}). Ukupno {Money(f.TotalPrice)}.",
+            "ReservationConfirmed", UserId: f.Client.UserId),
+    ];
+
+    public static IReadOnlyList<Message> ReservationDeclined(ReservationFacts f, string? reason) =>
+    [
+        new("Termin nije prihvaćen",
+            $"Salon nije mogao prihvatiti vaš termin ({f.LocalStart}, {f.Employee.Name}). Razlog: {reason}. Odaberite drugi termin u aplikaciji.",
+            "ReservationCancelled", UserId: f.Client.UserId),
     ];
 
     public static IReadOnlyList<Message> ReservationCancelled(ReservationFacts f, string cancelledBy, string? reason)

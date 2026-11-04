@@ -15,6 +15,18 @@ public class Reservation
     public int TotalDurationMinutes { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
+
+    /// <summary>Who moved it from Pending to Confirmed ("System" when the salon auto-confirms) and when.</summary>
+    public DateTime? ConfirmedAtUtc { get; set; }
+    public string? ConfirmedBy { get; set; }
+
+    /// <summary>Who closed the visit (completed or no-show) and when.</summary>
+    public DateTime? CompletedAtUtc { get; set; }
+    public string? CompletedBy { get; set; }
+
+    /// <summary>The salon turned the booking down before confirming it (a cancellation with a reason).</summary>
+    public bool Declined { get; set; }
+
     public DateTime? CancelledAtUtc { get; set; }
     public string? CancelledBy { get; set; }
     public string? CancelReason { get; set; }

@@ -25,7 +25,14 @@ public record ReservationDto(
     bool CanCancel,
     DateTime CreatedAtUtc,
     DateTime? CancelledAtUtc,
-    string? CancelReason);
+    string? CancelReason,
+    bool CanConfirm = false,
+    bool CanDecline = false,
+    DateTime? ConfirmedAtUtc = null,
+    string? ConfirmedBy = null,
+    DateTime? CompletedAtUtc = null,
+    string? CompletedBy = null,
+    bool Declined = false);
 
 /// <param name="ClientId">Only honoured for admins booking on behalf of a client (walk-ins).</param>
 public record CreateReservationRequest(
@@ -36,6 +43,18 @@ public record CreateReservationRequest(
     string? ClientId = null);
 
 public record CancelReservationRequest(string? Reason);
+
+/// <summary>Declining always needs a reason: the client gets it in the notification.</summary>
+public record DeclineReservationRequest(string Reason);
+
+public class DeclineReservationRequestValidator : AbstractValidator<DeclineReservationRequest>
+{
+    public DeclineReservationRequestValidator() =>
+        RuleFor(x => x.Reason).Must(r => r is not null && r.Trim().Length >= Ottoman.Domain.Reservations.CancellationRules.MinReasonLength)
+            .WithMessage($"Unesite razlog (najmanje {Ottoman.Domain.Reservations.CancellationRules.MinReasonLength} znaka). Klijent ga dobija u obavijesti.")
+            .MaximumLength(Ottoman.Domain.Reservations.CancellationRules.MaxReasonLength)
+            .WithName("Razlog");
+}
 
 public record RescheduleReservationRequest(DateTime StartUtc, string? EmployeeId = null);
 
@@ -90,6 +109,12 @@ public interface IReservationService
 
     Task<Result<ReservationDto>> CancelAsync(Actor actor, int id, string? reason, CancellationToken ct);
     Task<Result<ReservationDto>> CompleteAsync(Actor actor, int id, CancellationToken ct);
+
+    /// <summary>Pending -> Confirmed by a barber (own bookings) or the admin.</summary>
+    Task<Result<ReservationDto>> ConfirmAsync(Actor actor, int id, CancellationToken ct);
+
+    /// <summary>Pending -> Cancelled by a barber or the admin, with a reason the client is told.</summary>
+    Task<Result<ReservationDto>> DeclineAsync(Actor actor, int id, string reason, CancellationToken ct);
     Task<Result<ReservationDto>> MarkNoShowAsync(Actor actor, int id, CancellationToken ct);
 
     /// <summary>Admin only. Keeps the original price snapshot.</summary>

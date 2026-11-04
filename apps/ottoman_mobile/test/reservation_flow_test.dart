@@ -72,9 +72,18 @@ class _Api implements HttpClientAdapter {
     var status = 200;
     final p = o.path;
     if (o.method == 'POST' &&
-        (p.endsWith('/complete') || p.endsWith('/no-show'))) {
+        (p.endsWith('/complete') ||
+            p.endsWith('/no-show') ||
+            p.endsWith('/confirm') ||
+            p.endsWith('/decline'))) {
       body = reservation(
-        status: p.endsWith('/complete') ? 'Completed' : 'NoShow',
+        status: p.endsWith('/complete')
+            ? 'Completed'
+            : p.endsWith('/no-show')
+            ? 'NoShow'
+            : p.endsWith('/confirm')
+            ? 'Confirmed'
+            : 'Cancelled',
       );
     } else if (p.endsWith('/salon')) {
       body = {
@@ -473,6 +482,61 @@ void main() {
       expect(api.count('POST', '/complete'), 1);
     },
   );
+
+  testWidgets(
+    'a booking waiting for the salon can be confirmed, or declined with a reason',
+    (tester) async {
+      final future = DateTime.now().toUtc().add(const Duration(hours: 5));
+      final api = _Api(role: 'Employee')
+        ..reservations = [
+          {
+            ..._Api.reservation(id: 1, status: 'Pending', startUtc: future),
+            'canConfirm': true,
+            'canDecline': true,
+          },
+          {
+            ..._Api.reservation(id: 2, status: 'Pending', startUtc: future),
+            'canConfirm': true,
+            'canDecline': true,
+          },
+        ];
+      await _start(tester, api);
+
+      expect(find.byKey(const Key('complete_1')), findsNothing);
+      await tester.tap(find.byKey(const Key('confirm_1')));
+      await tester.pumpAndSettle();
+      expect(api.count('POST', '/reservations/1/confirm'), 1);
+
+      await tester.tap(find.byKey(const Key('decline_2')));
+      await tester.pumpAndSettle();
+      // A reason is required.
+      await tester.tap(find.byKey(const Key('confirm_cancel')));
+      await tester.pumpAndSettle();
+      expect(api.count('POST', '/decline'), 0);
+      await tester.enterText(
+        find.byKey(const Key('cancel_reason')),
+        'Frizer je bolestan',
+      );
+      await tester.tap(find.byKey(const Key('confirm_cancel')));
+      await tester.pumpAndSettle();
+      final sent = api.last('POST', '/reservations/2/decline')!;
+      expect((sent.data as Map)['reason'], 'Frizer je bolestan');
+    },
+  );
+
+  testWidgets('a client sees that a booking still waits for the salon', (
+    tester,
+  ) async {
+    final api = _Api()
+      ..reservations = [_Api.reservation(id: 1, status: 'Pending')];
+    await _start(tester, api);
+    await tester.tap(find.text('Termini').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('pending_hint_1')), findsOneWidget);
+    expect(find.text('Čeka potvrdu'), findsOneWidget);
+    expect(find.byKey(const Key('confirm_1')), findsNothing);
+  });
 
   testWidgets(
     'the employee can switch to a whole week, grouped by day, and page by weeks',

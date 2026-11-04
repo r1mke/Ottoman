@@ -295,7 +295,7 @@ class AppLocalizationsBs extends AppLocalizations {
   String get yes => 'Da';
 
   @override
-  String get statusPending => 'Na čekanju';
+  String get statusPending => 'Čeka potvrdu';
 
   @override
   String get statusConfirmed => 'Potvrđen';
@@ -1693,4 +1693,37 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get titleName => 'Naziv titule';
+
+  @override
+  String get confirmBooking => 'Potvrdi';
+
+  @override
+  String get declineBooking => 'Odbij';
+
+  @override
+  String get declineBookingTitle => 'Odbij rezervaciju';
+
+  @override
+  String get declineBookingQuestion =>
+      'Odbiti ovu rezervaciju? Vrijeme se oslobađa, a klijent u obavijesti dobija razlog.';
+
+  @override
+  String get statusDeclined => 'Odbijen';
+
+  @override
+  String get bookingConfirmedByStaff => 'Termin je potvrđen.';
+
+  @override
+  String get bookingDeclined => 'Rezervacija je odbijena.';
+
+  @override
+  String get autoConfirmReservations => 'Automatski potvrđuj rezervacije';
+
+  @override
+  String get autoConfirmReservationsHint =>
+      'Uključeno: termin je potvrđen čim ga klijent rezerviše. Isključeno: termin čeka (vrijeme je zauzeto) dok ga frizer ili administrator ne potvrdi ili odbije uz razlog.';
+
+  @override
+  String get pendingBookingHint =>
+      'Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas.';
 }

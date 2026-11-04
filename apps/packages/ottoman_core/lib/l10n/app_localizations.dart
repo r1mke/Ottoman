@@ -647,7 +647,7 @@ abstract class AppLocalizations {
   /// No description provided for @statusPending.
   ///
   /// In bs, this message translates to:
-  /// **'Na čekanju'**
+  /// **'Čeka potvrdu'**
   String get statusPending;
 
   /// No description provided for @statusConfirmed.
@@ -3289,6 +3289,66 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Naziv titule'**
   String get titleName;
+
+  /// No description provided for @confirmBooking.
+  ///
+  /// In bs, this message translates to:
+  /// **'Potvrdi'**
+  String get confirmBooking;
+
+  /// No description provided for @declineBooking.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odbij'**
+  String get declineBooking;
+
+  /// No description provided for @declineBookingTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odbij rezervaciju'**
+  String get declineBookingTitle;
+
+  /// No description provided for @declineBookingQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odbiti ovu rezervaciju? Vrijeme se oslobađa, a klijent u obavijesti dobija razlog.'**
+  String get declineBookingQuestion;
+
+  /// No description provided for @statusDeclined.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odbijen'**
+  String get statusDeclined;
+
+  /// No description provided for @bookingConfirmedByStaff.
+  ///
+  /// In bs, this message translates to:
+  /// **'Termin je potvrđen.'**
+  String get bookingConfirmedByStaff;
+
+  /// No description provided for @bookingDeclined.
+  ///
+  /// In bs, this message translates to:
+  /// **'Rezervacija je odbijena.'**
+  String get bookingDeclined;
+
+  /// No description provided for @autoConfirmReservations.
+  ///
+  /// In bs, this message translates to:
+  /// **'Automatski potvrđuj rezervacije'**
+  String get autoConfirmReservations;
+
+  /// No description provided for @autoConfirmReservationsHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uključeno: termin je potvrđen čim ga klijent rezerviše. Isključeno: termin čeka (vrijeme je zauzeto) dok ga frizer ili administrator ne potvrdi ili odbije uz razlog.'**
+  String get autoConfirmReservationsHint;
+
+  /// No description provided for @pendingBookingHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas.'**
+  String get pendingBookingHint;
 }
 
 class _AppLocalizationsDelegate

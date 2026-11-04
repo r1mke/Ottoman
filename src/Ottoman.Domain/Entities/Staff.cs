@@ -72,6 +72,12 @@ public class SalonSettings
     public int OfferGridMinutes { get; set; } = 15;
     public int MinLeadMinutes { get; set; } = 30;
     public int CancelWindowMinutes { get; set; } = 120;
+
+    /// <summary>
+    /// On (default): a new booking is confirmed by the system at once. Off: it waits as Pending (its time held)
+    /// until a barber or the admin confirms or declines it.
+    /// </summary>
+    public bool AutoConfirmReservations { get; set; } = true;
     public int LowStockDefault { get; set; } = 5;
 
     /// <summary>A few words about the salon, shown on the home screen.</summary>

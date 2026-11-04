@@ -48,6 +48,7 @@ class SalonProfile {
     required this.hours,
     this.instagramUrl,
     this.facebookUrl,
+    this.autoConfirmReservations = true,
   });
 
   final String name;
@@ -60,6 +61,9 @@ class SalonProfile {
   final double? longitude;
   final String? instagramUrl;
   final String? facebookUrl;
+
+  /// Off: a client's booking waits for a barber or the admin to confirm or decline it.
+  final bool autoConfirmReservations;
 
   bool get hasLocation => latitude != null && longitude != null;
 
@@ -80,6 +84,7 @@ class SalonProfile {
         .toList(),
     instagramUrl: j['instagramUrl'] as String?,
     facebookUrl: j['facebookUrl'] as String?,
+    autoConfirmReservations: (j['autoConfirmReservations'] as bool?) ?? true,
   );
 }
 
@@ -103,6 +108,7 @@ class SalonApi {
     required List<OpeningHours> hours,
     String? instagramUrl,
     String? facebookUrl,
+    bool? autoConfirmReservations,
   }) async => SalonProfile.fromJson(
     await _api.put<Map<String, dynamic>>(
       '/api/v1/salon',
@@ -116,6 +122,7 @@ class SalonApi {
         'longitude': longitude,
         'instagramUrl': instagramUrl,
         'facebookUrl': facebookUrl,
+        'autoConfirmReservations': ?autoConfirmReservations,
         'hours': hours.map((h) => h.toJson()).toList(),
       },
     ),

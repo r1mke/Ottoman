@@ -20,10 +20,15 @@ public record PasswordResetRequested(string UserId, string Email, string FullNam
 /// </summary>
 public record PasswordResetIgnored;
 
-public record ReservationCreated(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, DateTime EndUtc, decimal TotalPrice);
+/// <param name="Confirmed">False when the salon reviews bookings by hand: the booking waits for a barber to confirm it.</param>
+public record ReservationCreated(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, DateTime EndUtc, decimal TotalPrice, bool Confirmed = true);
+
+/// <summary>A barber or the admin confirmed a booking that was waiting (only when the salon reviews bookings by hand).</summary>
+public record ReservationConfirmed(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, string ConfirmedBy);
 
 /// <param name="CancelledBy">"Client", "Employee" or "Admin".</param>
-public record ReservationCancelled(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, string CancelledBy, string? Reason);
+/// <param name="Declined">The salon turned down a booking it had not confirmed (the reason is always given).</param>
+public record ReservationCancelled(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, string CancelledBy, string? Reason, bool Declined = false);
 
 public record ReservationRescheduled(int ReservationId, string ClientId, string EmployeeId, DateTime OldStartUtc, DateTime NewStartUtc);
 

@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Ottoman.Application.Audit;
 using Ottoman.Application.Common;
 using Ottoman.Application.Reservations;
 using Ottoman.Contracts;
@@ -16,6 +17,7 @@ public class ReservationService(
     OttomanDbContext db,
     AvailabilityLoader loader,
     IOutbox outbox,
+    IAuditLog audit,
     TimeProvider clock) : IReservationService
 {
     private const string TakenMessage = "Termin je upravo zauzet. Osvježite termine i odaberite drugi.";
@@ -68,13 +70,17 @@ public class ReservationService(
         if (await ClientBusyAsync(clientId, r.StartUtc, r.StartUtc.AddMinutes(duration), excludeReservationId: null, zone, ct) is { } busy)
             return Result<ReservationDto>.Conflict(ClientBusyMessage(actor, busy));
 
+        // Every booking starts Pending. Staff booking a walk-in confirm it themselves; a client's booking is confirmed
+        // by the system right away when the salon auto-confirms, otherwise it waits for a barber or the admin.
+        var (initial, systemConfirms) = ReservationStateMachine.OnCreate(settings.AutoConfirmReservations);
+        var confirmer = !actor.IsClient ? actor.Kind : systemConfirms ? ActorKind.System : (ActorKind?)null;
         var reservation = new Reservation
         {
             ClientId = clientId,
             EmployeeId = r.EmployeeId,
             StartUtc = r.StartUtc,
             EndUtc = r.StartUtc.AddMinutes(duration),
-            Status = ReservationStatus.Confirmed, // no approval step: a free slot is booked immediately
+            Status = initial, // Pending: the time is held from this moment
             Note = string.IsNullOrWhiteSpace(r.Note) ? null : r.Note.Trim(),
             TotalPrice = chosen.Sum(s => s.Price),
             TotalDurationMinutes = duration,
@@ -89,6 +95,14 @@ public class ReservationService(
             Slots = SlotGrid.Occupied(r.StartUtc, duration, settings.SlotMinutes)
                 .Select(t => new ReservationSlot { EmployeeId = r.EmployeeId, ClientId = clientId, SlotStartUtc = t }).ToList(),
         };
+
+        if (confirmer is { } by && ReservationStateMachine.Can(
+                reservation.Status, ReservationStatus.Confirmed, by, now, reservation.StartUtc, settings.CancelWindowMinutes).Allowed)
+        {
+            reservation.Status = ReservationStatus.Confirmed;
+            reservation.ConfirmedAtUtc = now;
+            reservation.ConfirmedBy = by.ToString();
+        }
 
         db.Reservations.Add(reservation);
 
@@ -120,7 +134,8 @@ public class ReservationService(
 
                 await db.SaveChangesAsync(ct); // assigns the id; the unique (employee, step) index decides races
                 outbox.Enqueue(new ReservationCreated(
-                    reservation.Id, clientId, r.EmployeeId, reservation.StartUtc, reservation.EndUtc, reservation.TotalPrice));
+                    reservation.Id, clientId, r.EmployeeId, reservation.StartUtc, reservation.EndUtc, reservation.TotalPrice,
+                    Confirmed: reservation.Status == ReservationStatus.Confirmed));
                 await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
             }
@@ -138,7 +153,15 @@ public class ReservationService(
             db.Entry(reservation).State = EntityState.Detached;
             return Result<ReservationDto>.Invalid(string.Join(" ", overLimit));
         }
-        if (!taken) return await GetAsync(actor, reservation.Id, ct);
+        if (!taken)
+        {
+            // The system's own transition is audited like a staff action (staff actions are audited by the API filter).
+            if (reservation.ConfirmedBy == nameof(ActorKind.System))
+                await audit.RecordAsync(new AuditRecord(
+                    nameof(ActorKind.System), IAuditLog.SystemRole, "SYSTEM", "Reservations.AutoConfirm",
+                    "api/v1/reservations/{id}", $"id={reservation.Id}", 200, null), ct);
+            return await GetAsync(actor, reservation.Id, ct);
+        }
         return Result<ReservationDto>.Conflict(takenByClient ? ClientBusyGenericMessage(actor) : TakenMessage);
     }
 
@@ -226,6 +249,37 @@ public class ReservationService(
     public Task<Result<ReservationDto>> CompleteAsync(Actor actor, int id, CancellationToken ct) =>
         ChangeStatusAsync(actor, id, ReservationStatus.Completed, null, ct);
 
+    public Task<Result<ReservationDto>> ConfirmAsync(Actor actor, int id, CancellationToken ct) =>
+        ChangeStatusAsync(actor, id, ReservationStatus.Confirmed, null, ct);
+
+    public async Task<Result<ReservationDto>> DeclineAsync(Actor actor, int id, string reason, CancellationToken ct)
+    {
+        var res = await db.Reservations.Include(r => r.Slots).FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (res is null || !CanSee(actor, res)) return Result<ReservationDto>.NotFound("Rezervacija nije pronađena.");
+
+        if (CancellationRules.ReasonProblem(actor.Kind, reason) is { } problem) return Result<ReservationDto>.Invalid(problem);
+        var decision = ReservationStateMachine.CanDecline(res.Status, actor.Kind);
+        if (!decision.Allowed) return Result<ReservationDto>.Conflict(decision.Reason!);
+
+        res.Status = ReservationStatus.Cancelled;
+        res.Declined = true;
+        res.CancelledAtUtc = Now;
+        res.CancelledBy = actor.Kind.ToString();
+        res.CancelReason = reason.Trim();
+        db.ReservationSlots.RemoveRange(res.Slots); // the held time is free again
+        outbox.Enqueue(new ReservationCancelled(res.Id, res.ClientId, res.EmployeeId, res.StartUtc, res.CancelledBy, res.CancelReason, Declined: true));
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<ReservationDto>.Conflict("Rezervacija je u međuvremenu promijenjena. Osvježite i pokušajte ponovo.");
+        }
+        return await GetAsync(actor, id, ct);
+    }
+
     public Task<Result<ReservationDto>> MarkNoShowAsync(Actor actor, int id, CancellationToken ct) =>
         ChangeStatusAsync(actor, id, ReservationStatus.NoShow, null, ct);
 
@@ -244,6 +298,17 @@ public class ReservationService(
         if (!decision.Allowed) return Result<ReservationDto>.Conflict(decision.Reason!);
 
         res.Status = target;
+        if (target == ReservationStatus.Confirmed)
+        {
+            res.ConfirmedAtUtc = now;
+            res.ConfirmedBy = actor.Kind.ToString();
+            outbox.Enqueue(new ReservationConfirmed(res.Id, res.ClientId, res.EmployeeId, res.StartUtc, res.ConfirmedBy));
+        }
+        if (target is ReservationStatus.Completed or ReservationStatus.NoShow)
+        {
+            res.CompletedAtUtc = now;
+            res.CompletedBy = actor.Kind.ToString();
+        }
         if (target == ReservationStatus.Cancelled)
         {
             res.CancelledAtUtc = now;
@@ -412,6 +477,14 @@ public class ReservationService(
             r.Status.ToString(), r.Note, r.TotalPrice, r.TotalDurationMinutes,
             r.Items.Select(i => new ReservationItemDto(i.ServiceId, i.ServiceName, i.Price, i.DurationMinutes)).ToList(),
             CanCancel: ReservationStateMachine.Can(r.Status, ReservationStatus.Cancelled, actor.Kind, now, r.StartUtc, settings.CancelWindowMinutes).Allowed,
-            r.CreatedAtUtc, r.CancelledAtUtc, r.CancelReason)).ToList();
+            r.CreatedAtUtc, r.CancelledAtUtc, r.CancelReason,
+            CanConfirm: !actor.IsClient && ReservationStateMachine.Can(r.Status, ReservationStatus.Confirmed, actor.Kind, now, r.StartUtc, settings.CancelWindowMinutes).Allowed,
+            CanDecline: ReservationStateMachine.CanDecline(r.Status, actor.Kind).Allowed,
+            ConfirmedAtUtc: AsUtc(r.ConfirmedAtUtc), ConfirmedBy: r.ConfirmedBy,
+            CompletedAtUtc: AsUtc(r.CompletedAtUtc), CompletedBy: r.CompletedBy,
+            Declined: r.Declined)).ToList();
     }
+
+    private static DateTime? AsUtc(DateTime? d) => d is { } v ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : null;
+
 }

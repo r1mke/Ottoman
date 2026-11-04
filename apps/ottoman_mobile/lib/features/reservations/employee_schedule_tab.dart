@@ -42,6 +42,35 @@ class _EmployeeScheduleTabState extends State<EmployeeScheduleTab> {
     _day = DateTime(_day.year, _day.month, _day.day + days);
   });
 
+  Future<void> _confirmBooking(Reservation r) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    await _act(() async {
+      final done = await widget.reservations.confirm(r.id);
+      messenger.showSnackBar(SnackBar(content: Text(t.bookingConfirmedByStaff)));
+      return done;
+    });
+  }
+
+  /// Declining needs a reason: the client is told why.
+  Future<void> _decline(Reservation r) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final reason = await showCancelReasonDialog(
+      context,
+      summary: '${r.clientName} · ${r.localStart}',
+      reasonRequired: true,
+      title: t.declineBookingTitle,
+      question: t.declineBookingQuestion,
+    );
+    if (reason == null || !mounted) return;
+    await _act(() async {
+      final done = await widget.reservations.decline(r.id, reason: reason);
+      messenger.showSnackBar(SnackBar(content: Text(t.bookingDeclined)));
+      return done;
+    });
+  }
+
   /// Completing or marking a no-show closes the appointment for good: ask first.
   Future<void> _confirmThen({
     required String title,
@@ -185,6 +214,8 @@ class _EmployeeScheduleTabState extends State<EmployeeScheduleTab> {
                           action: () =>
                               widget.reservations.complete(items[i].id),
                         ),
+                        onConfirm: () => _confirmBooking(items[i]),
+                        onDecline: () => _decline(items[i]),
                         t: t,
                       ),
                       const SizedBox(height: 12),
@@ -214,6 +245,8 @@ class _Entry extends StatelessWidget {
     required this.canFinish,
     required this.onNoShow,
     required this.onComplete,
+    required this.onConfirm,
+    required this.onDecline,
     required this.t,
   });
 
@@ -221,6 +254,8 @@ class _Entry extends StatelessWidget {
   final bool canFinish;
   final VoidCallback onNoShow;
   final VoidCallback onComplete;
+  final VoidCallback onConfirm;
+  final VoidCallback onDecline;
   final AppLocalizations t;
 
   @override
@@ -230,6 +265,28 @@ class _Entry extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ReservationCard(reservation: r),
+        // A booking that waits for the salon (auto-confirm is off): confirm it or decline it with a reason.
+        if (r.canConfirm || r.canDecline)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (r.canDecline)
+                TextButton(
+                  key: Key('decline_${r.id}'),
+                  onPressed: onDecline,
+                  child: Text(t.declineBooking),
+                ),
+              if (r.canConfirm)
+                FilledButton(
+                  key: Key('confirm_${r.id}'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(120, 40),
+                  ),
+                  onPressed: onConfirm,
+                  child: Text(t.confirmBooking),
+                ),
+            ],
+          ),
         if (canFinish)
           Row(
             mainAxisAlignment: MainAxisAlignment.end,

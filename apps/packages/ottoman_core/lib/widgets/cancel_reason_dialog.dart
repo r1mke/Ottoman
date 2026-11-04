@@ -10,10 +10,16 @@ Future<String?> showCancelReasonDialog(
   BuildContext context, {
   required String summary,
   required bool reasonRequired,
+  String? title,
+  String? question,
 }) => showDialog<String>(
   context: context,
-  builder: (_) =>
-      _CancelReasonDialog(summary: summary, reasonRequired: reasonRequired),
+  builder: (_) => _CancelReasonDialog(
+    summary: summary,
+    reasonRequired: reasonRequired,
+    title: title,
+    question: question,
+  ),
 );
 
 // Owns its controller, so it is disposed only after the dialog is really gone.
@@ -21,10 +27,16 @@ class _CancelReasonDialog extends StatefulWidget {
   const _CancelReasonDialog({
     required this.summary,
     required this.reasonRequired,
+    this.title,
+    this.question,
   });
 
   final String summary;
   final bool reasonRequired;
+
+  /// Defaults to cancelling; declining a waiting booking uses its own words.
+  final String? title;
+  final String? question;
 
   @override
   State<_CancelReasonDialog> createState() => _CancelReasonDialogState();
@@ -52,7 +64,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return AlertDialog(
-      title: DialogHeader(t.cancelBooking),
+      title: DialogHeader(widget.title ?? t.cancelBooking),
       content: SizedBox(
         width: 420,
         child: Form(
@@ -65,7 +77,7 @@ class _CancelReasonDialogState extends State<_CancelReasonDialog> {
                 Text(widget.summary),
                 const SizedBox(height: 8),
               ],
-              Text(t.cancelBookingQuestion),
+              Text(widget.question ?? t.cancelBookingQuestion),
               const SizedBox(height: 16),
               TextFormField(
                 key: const Key('cancel_reason'),

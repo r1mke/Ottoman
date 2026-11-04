@@ -185,6 +185,8 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.TotalPrice).HasPrecision(18, 2);
             e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             e.Property(x => x.Note).HasMaxLength(500);
+            e.Property(x => x.ConfirmedBy).HasMaxLength(20);
+            e.Property(x => x.CompletedBy).HasMaxLength(20);
             e.Property(x => x.RowVersion).IsRowVersion();
             e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<EmployeeProfile>().WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);

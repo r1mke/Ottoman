@@ -3,6 +3,7 @@ using Ottoman.Application.Common;
 namespace Ottoman.Application.Audit;
 
 /// <summary>What one staff action looked like from the outside. Never contains request bodies or secrets.</summary>
+/// <remarks>Role <see cref="SystemRole"/> marks an action of the server itself; its UserId is not an account.</remarks>
 public record AuditRecord(
     string UserId,
     string Role,
@@ -30,6 +31,8 @@ public record AuditQuery(string? Search, string? UserId, DateTime? FromUtc, Date
 
 public interface IAuditLog
 {
+    public const string SystemRole = "System";
+
     /// <summary>
     /// Writes the entry on its own connection. The action it describes has already happened, so a failure here
     /// is logged loudly and swallowed: failing the caller's request would not undo anything.

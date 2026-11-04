@@ -18,8 +18,10 @@ public record SalonProfileDto(
     double? Longitude,
     IReadOnlyList<OpeningHoursDto> Hours,
     string? InstagramUrl = null,
-    string? FacebookUrl = null);
+    string? FacebookUrl = null,
+    bool AutoConfirmReservations = true);
 
+/// <param name="AutoConfirmReservations">Null keeps the current setting (older apps do not send it).</param>
 public record UpdateSalonProfileRequest(
     string Name,
     string? Description,
@@ -30,7 +32,8 @@ public record UpdateSalonProfileRequest(
     double? Longitude,
     IReadOnlyList<OpeningHoursDto> Hours,
     string? InstagramUrl = null,
-    string? FacebookUrl = null);
+    string? FacebookUrl = null,
+    bool? AutoConfirmReservations = null);
 
 public class UpdateSalonProfileRequestValidator : AbstractValidator<UpdateSalonProfileRequest>
 {

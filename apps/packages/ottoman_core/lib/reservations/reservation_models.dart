@@ -45,6 +45,11 @@ class Reservation {
     required this.canCancel,
     this.note,
     this.cancelReason,
+    this.canConfirm = false,
+    this.canDecline = false,
+    this.declined = false,
+    this.confirmedBy,
+    this.completedBy,
   });
 
   final int id;
@@ -65,6 +70,19 @@ class Reservation {
   final bool canCancel;
   final String? cancelReason;
 
+  /// The server says this person may confirm / decline it now (staff, booking still waiting).
+  final bool canConfirm;
+  final bool canDecline;
+
+  /// The salon turned it down before confirming it (the reason is in [cancelReason]).
+  final bool declined;
+
+  /// "System" (auto-confirmed), "Employee" or "Admin".
+  final String? confirmedBy;
+  final String? completedBy;
+
+  bool get isPending => status == ReservationStatus.pending;
+
   String get localDate => localStart.substring(0, 10);
   String get localTime => localStart.substring(11);
   String get serviceNames => items.map((i) => i.name).join(', ');
@@ -72,8 +90,9 @@ class Reservation {
       status == ReservationStatus.confirmed ||
       status == ReservationStatus.pending;
 
-  /// Staff may finish an appointment once it has started.
-  bool canFinish(DateTime nowUtc) => isOpen && !startUtc.isAfter(nowUtc);
+  /// Staff may finish an appointment once it has started and was confirmed.
+  bool canFinish(DateTime nowUtc) =>
+      status == ReservationStatus.confirmed && !startUtc.isAfter(nowUtc);
 
   factory Reservation.fromJson(Map<String, dynamic> j) => Reservation(
     id: j['id'] as int,
@@ -93,6 +112,11 @@ class Reservation {
         .toList(),
     canCancel: j['canCancel'] as bool,
     cancelReason: j['cancelReason'] as String?,
+    canConfirm: (j['canConfirm'] as bool?) ?? false,
+    canDecline: (j['canDecline'] as bool?) ?? false,
+    declined: (j['declined'] as bool?) ?? false,
+    confirmedBy: j['confirmedBy'] as String?,
+    completedBy: j['completedBy'] as String?,
   );
 }
 

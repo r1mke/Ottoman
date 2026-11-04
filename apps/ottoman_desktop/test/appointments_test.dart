@@ -13,6 +13,9 @@ class _Api implements HttpClientAdapter {
   final requests = <RequestOptions>[];
   int cancelStatus = 200;
 
+  /// The first row of the list (a confirmed booking unless a test changes it).
+  Map<String, dynamic> first = reservation();
+
   Iterable<RequestOptions> where(String method, String part) =>
       requests.where((r) => r.method == method && r.path.contains(part));
 
@@ -80,9 +83,13 @@ class _Api implements HttpClientAdapter {
       };
     } else if (o.method == 'GET' && p.endsWith('/reservations')) {
       body = {
-        'items': [reservation(), reservation(id: 2, status: 'Cancelled')],
+        'items': [first, reservation(id: 2, status: 'Cancelled')],
         'totalCount': 2,
       };
+    } else if (p.endsWith('/confirm')) {
+      body = reservation();
+    } else if (p.endsWith('/decline')) {
+      body = {...reservation(status: 'Cancelled'), 'declined': true};
     } else if (p.endsWith('/cancel')) {
       status = cancelStatus;
       body = cancelStatus == 200
@@ -124,12 +131,15 @@ class _Api implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Future<_Api> _open(WidgetTester tester, String role) async {
+Future<_Api> _open(WidgetTester tester, String role) =>
+    _openWith(tester, _Api(role));
+
+Future<_Api> _openWith(WidgetTester tester, _Api api) async {
+  final role = api.role;
   tester.view.devicePixelRatio = 1.0;
   tester.view.physicalSize = const Size(1600, 1000);
   addTearDown(tester.view.reset);
 
-  final api = _Api(role);
   late final AuthController auth;
   auth = AuthController(
     baseUrl: 'http://test',
@@ -198,6 +208,30 @@ void main() {
     expect(find.text('Elmir Mujkić'), findsNWidgets(2));
     expect(find.text('Uređivanje brade'), findsNWidgets(2));
     expect(find.text('2030-01-07 10:00'), findsNWidgets(2));
+  });
+
+  testWidgets('a waiting booking shows its state and is confirmed or '
+      'declined with a reason', (tester) async {
+    final api = _Api('Admin');
+    api.first = {
+      ..._Api.reservation(status: 'Pending'),
+      'canConfirm': true,
+      'canDecline': true,
+    };
+    await _openWith(tester, api);
+
+    expect(find.text('Čeka potvrdu'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('confirm_1')));
+    await tester.pumpAndSettle();
+    expect(api.where('POST', '/reservations/1/confirm'), hasLength(1));
+
+    await tester.tap(find.byKey(const Key('decline_1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('cancel_reason')), 'Zauzeto');
+    await tester.tap(find.byKey(const Key('confirm_cancel')));
+    await tester.pumpAndSettle();
+    final sent = api.where('POST', '/reservations/1/decline').single;
+    expect((sent.data as Map)['reason'], 'Zauzeto');
   });
 
   testWidgets('only open appointments can be edited or cancelled', (

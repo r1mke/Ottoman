@@ -64,6 +64,16 @@ public class ReservationsController(IReservationService reservations) : Controll
     public async Task<ActionResult<ReservationDto>> Cancel(int id, CancelReservationRequest? request, CancellationToken ct) =>
         this.ToActionResult(await reservations.CancelAsync(User.ToActor(), id, request?.Reason, ct));
 
+    [HttpPost("{id:int}/confirm")]
+    [Authorize(Policy = Policies.Staff)]
+    public async Task<ActionResult<ReservationDto>> Confirm(int id, CancellationToken ct) =>
+        this.ToActionResult(await reservations.ConfirmAsync(User.ToActor(), id, ct));
+
+    [HttpPost("{id:int}/decline")]
+    [Authorize(Policy = Policies.Staff)]
+    public async Task<ActionResult<ReservationDto>> Decline(int id, DeclineReservationRequest request, CancellationToken ct) =>
+        this.ToActionResult(await reservations.DeclineAsync(User.ToActor(), id, request.Reason, ct));
+
     [HttpPost("{id:int}/complete")]
     [Authorize(Policy = Policies.Staff)]
     public async Task<ActionResult<ReservationDto>> Complete(int id, CancellationToken ct) =>

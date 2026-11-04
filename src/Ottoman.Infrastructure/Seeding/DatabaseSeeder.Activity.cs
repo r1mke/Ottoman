@@ -184,6 +184,16 @@ public partial class DatabaseSeeder
                 DurationMinutes = s.DurationMinutes,
             }).ToList(),
         };
+        if (status is ReservationStatus.Confirmed or ReservationStatus.Completed or ReservationStatus.NoShow)
+        {
+            reservation.ConfirmedAtUtc = reservation.CreatedAtUtc;
+            reservation.ConfirmedBy = nameof(ActorKind.System);
+        }
+        if (status is ReservationStatus.Completed or ReservationStatus.NoShow)
+        {
+            reservation.CompletedAtUtc = reservation.EndUtc;
+            reservation.CompletedBy = nameof(ActorKind.Employee);
+        }
         if (cancelled)
         {
             reservation.CancelledAtUtc = startUtc.AddDays(-1);

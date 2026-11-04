@@ -25,6 +25,7 @@ public class SalonProfileService(OttomanDbContext db, ImageUrlBuilder images) : 
         s.MapsUrl = Blank(r.MapsUrl);
         s.InstagramUrl = Blank(r.InstagramUrl);
         s.FacebookUrl = Blank(r.FacebookUrl);
+        if (r.AutoConfirmReservations is { } auto) s.AutoConfirmReservations = auto;
         s.Latitude = r.Latitude;
         s.Longitude = r.Longitude;
         // Pasting a Google Maps link is enough: the pin comes out of the link unless coordinates were typed.
@@ -62,5 +63,5 @@ public class SalonProfileService(OttomanDbContext db, ImageUrlBuilder images) : 
             .Select(d => hours.FirstOrDefault(h => (int)h.Day == d) is { } h
                 ? new OpeningHoursDto(d, h.OpenMinutes, h.CloseMinutes)
                 : new OpeningHoursDto(d, null, null)).ToList(),
-        s.InstagramUrl, s.FacebookUrl);
+        s.InstagramUrl, s.FacebookUrl, s.AutoConfirmReservations);
 }

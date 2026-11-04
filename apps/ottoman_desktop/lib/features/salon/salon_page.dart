@@ -86,6 +86,9 @@ class _SalonFormState extends State<SalonForm> {
   late final List<OpeningHours> _hours = [...widget.profile.hours];
   late String? _logoUrl = widget.profile.logoUrl;
   bool _busy = false;
+
+  /// Off: a client's booking waits until a barber or the admin confirms or declines it.
+  late bool _autoConfirm = widget.profile.autoConfirmReservations;
   String? _hoursError;
 
   @override
@@ -172,6 +175,7 @@ class _SalonFormState extends State<SalonForm> {
         mapsUrl: blank(_maps),
         instagramUrl: blank(_instagram),
         facebookUrl: blank(_facebook),
+        autoConfirmReservations: _autoConfirm,
         latitude: pin?.latitude,
         longitude: pin?.longitude,
         hours: _hours,
@@ -341,6 +345,15 @@ class _SalonFormState extends State<SalonForm> {
                         ),
                       ),
                     ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    key: const Key('salon_auto_confirm'),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(t.autoConfirmReservations),
+                    subtitle: Text(t.autoConfirmReservationsHint),
+                    value: _autoConfirm,
+                    onChanged: (v) => setState(() => _autoConfirm = v),
+                  ),
                   const SizedBox(height: 24),
                   FilledButton(
                     key: const Key('salon_save'),

@@ -296,7 +296,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yes => 'Yes';
 
   @override
-  String get statusPending => 'Pending';
+  String get statusPending => 'Awaiting confirmation';
 
   @override
   String get statusConfirmed => 'Confirmed';
@@ -1695,4 +1695,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get titleName => 'Title name';
+
+  @override
+  String get confirmBooking => 'Confirm';
+
+  @override
+  String get declineBooking => 'Decline';
+
+  @override
+  String get declineBookingTitle => 'Decline booking';
+
+  @override
+  String get declineBookingQuestion =>
+      'Decline this booking? The time is freed and the client is told the reason.';
+
+  @override
+  String get statusDeclined => 'Declined';
+
+  @override
+  String get bookingConfirmedByStaff => 'The appointment is confirmed.';
+
+  @override
+  String get bookingDeclined => 'The booking was declined.';
+
+  @override
+  String get autoConfirmReservations => 'Confirm bookings automatically';
+
+  @override
+  String get autoConfirmReservationsHint =>
+      'On: a booking is confirmed as soon as the client makes it. Off: it waits (the time is held) until a barber or the admin confirms it or declines it with a reason.';
+
+  @override
+  String get pendingBookingHint =>
+      'The salon has not confirmed this appointment yet. The time is held for you.';
 }

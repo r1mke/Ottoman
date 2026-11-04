@@ -115,7 +115,7 @@
   "cancelBookingQuestion": "Da li sigurno želite otkazati ovaj termin?",
   "no": "Ne",
   "yes": "Da",
-  "statusPending": "Na čekanju",
+  "statusPending": "Čeka potvrdu",
   "statusConfirmed": "Potvrđen",
   "statusCompleted": "Završen",
   "statusCancelled": "Otkazan",
@@ -628,5 +628,15 @@
   "serviceSearchHint": "Pretraži po nazivu ili opisu",
   "clearSearch": "Obriši pretragu",
   "renameTitle": "Preimenuj titulu",
-  "titleName": "Naziv titule"
+  "titleName": "Naziv titule",
+  "confirmBooking": "Potvrdi",
+  "declineBooking": "Odbij",
+  "declineBookingTitle": "Odbij rezervaciju",
+  "declineBookingQuestion": "Odbiti ovu rezervaciju? Vrijeme se oslobađa, a klijent u obavijesti dobija razlog.",
+  "statusDeclined": "Odbijen",
+  "bookingConfirmedByStaff": "Termin je potvrđen.",
+  "bookingDeclined": "Rezervacija je odbijena.",
+  "autoConfirmReservations": "Automatski potvrđuj rezervacije",
+  "autoConfirmReservationsHint": "Uključeno: termin je potvrđen čim ga klijent rezerviše. Isključeno: termin čeka (vrijeme je zauzeto) dok ga frizer ili administrator ne potvrdi ili odbije uz razlog.",
+  "pendingBookingHint": "Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas."
 }
