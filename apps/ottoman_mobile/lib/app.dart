@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 import 'features/auth/login_page.dart';
+import 'features/profile/profile_photo.dart';
 import 'features/shell/mobile_shell.dart';
 
 class OttomanMobileApp extends StatelessWidget {
@@ -11,11 +12,15 @@ class OttomanMobileApp extends StatelessWidget {
     required this.auth,
     this.cardPayment = const UnavailableCardPayment(),
     this.push,
+    this.photoChooser = const GalleryPhotoChooser(),
   });
 
   final AuthController auth;
   final CardPaymentLauncher cardPayment;
   final PushRegistration? push;
+
+  /// Where the profile picture comes from (the gallery; a fake in tests).
+  final PhotoChooser photoChooser;
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +41,12 @@ class OttomanMobileApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: AuthGate(
         auth: auth,
-        signedIn: (_) =>
-            MobileShell(auth: auth, cardPayment: cardPayment, push: push),
+        signedIn: (_) => MobileShell(
+          auth: auth,
+          cardPayment: cardPayment,
+          push: push,
+          photoChooser: photoChooser,
+        ),
         signedOut: (_) => LoginPage(auth: auth),
       ),
     );

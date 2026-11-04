@@ -28,7 +28,8 @@ public class MeController(IAuthService auth, IEmployeeService employees, IImageA
         return me is null ? NotFound() : me;
     }
 
-    // ----- a barber's (or the admin's) own picture and profile. The id is the caller's; nobody can touch another barber's here.
+    // ----- own picture (every account: client, barber, admin) and a barber's own profile. The id is always the
+    // caller's; nobody can touch another account's picture here.
 
     [HttpPut("employee-profile")]
     [Authorize(Policy = Policies.Staff)]
@@ -36,7 +37,6 @@ public class MeController(IAuthService auth, IEmployeeService employees, IImageA
         await Fresh(await employees.UpdateOwnProfileAsync(User.UserId(), request, ct), ct);
 
     [HttpPut("photo")]
-    [Authorize(Policy = Policies.Staff)]
     [RejectOversizedUpload]
     [RequestSizeLimit(ImageUpload.RequestLimit)]
     [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
@@ -48,7 +48,6 @@ public class MeController(IAuthService auth, IEmployeeService employees, IImageA
     }
 
     [HttpDelete("photo")]
-    [Authorize(Policy = Policies.Staff)]
     public async Task<ActionResult<UserDto>> ClearPhoto(CancellationToken ct)
     {
         var cleared = await images.ClearEmployeePhotoAsync(User.UserId(), ct, onAccount: true);

@@ -203,12 +203,12 @@ public class ImageAttachments(
 
     private async Task<Result<bool>> ReplaceEmployeeAsync(string employeeId, Stream? content, bool onAccount, CancellationToken ct)
     {
-        // An account without a barber profile (the admin) keeps its picture on the account itself.
+        // An account without a barber profile (a client, the admin) keeps its picture on the account itself.
         if (onAccount && !await db.EmployeeProfiles.AnyAsync(p => p.UserId == employeeId, ct))
             return await ReplaceAsync(
                 async () => await db.Users.Where(u => u.Id == employeeId).Select(u => new KeyRow(u.PhotoKey)).FirstOrDefaultAsync(ct),
                 key => db.Users.Where(u => u.Id == employeeId).ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key), ct),
-                content, "ottoman/employees", ct);
+                content, "ottoman/accounts", ct);
         return await ReplaceBarberAsync(employeeId, content, ct);
     }
 

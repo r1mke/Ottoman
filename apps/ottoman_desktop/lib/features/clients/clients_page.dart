@@ -148,12 +148,24 @@ class _ClientTable extends StatelessWidget {
                         onSelectChanged: (_) => onOpen(c),
                         cells: [
                           DataCell(
-                            Text(
-                              c.fullName,
-                              key: Key('client_cell_${c.id}'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                PersonAvatar(
+                                  key: Key('client_avatar_${c.id}'),
+                                  photoUrl: c.photoUrl,
+                                  seed: c.id,
+                                  radius: 14,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  c.fullName,
+                                  key: Key('client_cell_${c.id}'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           DataCell(Text(c.email)),

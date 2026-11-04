@@ -159,6 +159,7 @@ class ClientItem {
     this.phone,
     this.registeredAtUtc,
     this.isBlocked = false,
+    this.photoUrl,
   });
 
   final String id;
@@ -167,6 +168,7 @@ class ClientItem {
   final String? phone;
   final DateTime? registeredAtUtc;
   final bool isBlocked;
+  final String? photoUrl;
 
   factory ClientItem.fromJson(Map<String, dynamic> j) => ClientItem(
     id: j['id'] as String,
@@ -177,5 +179,6 @@ class ClientItem {
         ? null
         : DateTime.parse(j['registeredAtUtc'] as String),
     isBlocked: (j['isBlocked'] as bool?) ?? false,
+    photoUrl: j['photoUrl'] as String?,
   );
 }

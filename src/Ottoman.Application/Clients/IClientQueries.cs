@@ -8,7 +8,8 @@ public record ClientListItem(
     string Email,
     string? Phone,
     DateTime RegisteredAtUtc,
-    bool IsBlocked);
+    bool IsBlocked,
+    string? PhotoUrl = null);
 
 /// <summary>What the salon has done with this client, counted from reservations and orders (not self-reported).</summary>
 public record ClientStats(

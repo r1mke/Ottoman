@@ -1728,4 +1728,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pendingBookingHint =>
       'The salon has not confirmed this appointment yet. The time is held for you.';
+
+  @override
+  String get changePhoto => 'Change picture';
 }

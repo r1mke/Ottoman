@@ -8,7 +8,7 @@ using Ottoman.Infrastructure.Persistence;
 
 namespace Ottoman.Infrastructure.Identity;
 
-public class ClientQueries(OttomanDbContext db, IAccessGate gate, TimeProvider clock) : IClientQueries
+public class ClientQueries(OttomanDbContext db, IAccessGate gate, Images.ImageUrlBuilder images, TimeProvider clock) : IClientQueries
 {
     public async Task<PagedResult<ClientListItem>> ListAsync(string? search, PageQuery page, CancellationToken ct)
     {
@@ -30,11 +30,15 @@ public class ClientQueries(OttomanDbContext db, IAccessGate gate, TimeProvider c
         var items = await query
             .OrderBy(u => u.LastName).ThenBy(u => u.FirstName).ThenBy(u => u.Id)
             .Skip(page.Skip).Take(page.SafePageSize)
-            .Select(u => new ClientListItem(
-                u.Id, (u.FirstName + " " + u.LastName).Trim(), u.Email!, u.PhoneNumber, u.RegisteredAtUtc, u.IsBlocked))
+            .Select(u => new
+            {
+                Item = new ClientListItem(u.Id, (u.FirstName + " " + u.LastName).Trim(), u.Email!, u.PhoneNumber, u.RegisteredAtUtc, u.IsBlocked, null),
+                u.PhotoKey,
+            })
             .ToListAsync(ct);
 
-        return new PagedResult<ClientListItem>(items, total);
+        return new PagedResult<ClientListItem>(
+            items.Select(x => x.Item with { PhotoUrl = images.AvatarUrl(x.PhotoKey, 1.0) }).ToList(), total);
     }
 
     public async Task<Result<ClientDetail>> GetAsync(string id, CancellationToken ct)
@@ -110,9 +114,12 @@ public class ClientQueries(OttomanDbContext db, IAccessGate gate, TimeProvider c
         }
         gate.Invalidate(id);
 
-        var item = await db.Users.AsNoTracking().Where(x => x.Id == id).Select(x => new ClientListItem(
-            x.Id, (x.FirstName + " " + x.LastName).Trim(), x.Email!, x.PhoneNumber, x.RegisteredAtUtc, x.IsBlocked)).FirstAsync(ct);
-        return Result<ClientListItem>.Ok(item);
+        var row = await db.Users.AsNoTracking().Where(x => x.Id == id).Select(x => new
+        {
+            Item = new ClientListItem(x.Id, (x.FirstName + " " + x.LastName).Trim(), x.Email!, x.PhoneNumber, x.RegisteredAtUtc, x.IsBlocked, null),
+            x.PhotoKey,
+        }).FirstAsync(ct);
+        return Result<ClientListItem>.Ok(row.Item with { PhotoUrl = images.AvatarUrl(row.PhotoKey, 1.0) });
     }
 
     private async Task<bool> IsClientAsync(string id, CancellationToken ct) =>

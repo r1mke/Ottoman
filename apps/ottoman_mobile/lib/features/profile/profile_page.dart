@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
 import 'legal_pages.dart';
+import 'profile_photo.dart';
 
 /// "Račun": who is signed in, then the settings in groups (personal data, about us, sign out).
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key, required this.auth});
+  const ProfilePage({
+    super.key,
+    required this.auth,
+    this.photoChooser = const GalleryPhotoChooser(),
+  });
 
   final AuthController auth;
+  final PhotoChooser photoChooser;
 
   void _open(BuildContext context, Widget page) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
@@ -22,19 +28,7 @@ class ProfilePage extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 76,
-              height: 76,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.primaryContainer,
-              ),
-              child: Icon(
-                Icons.person_outline,
-                size: 38,
-                color: scheme.primary,
-              ),
-            ),
+            ProfilePhoto(auth: auth, chooser: photoChooser),
             const SizedBox(width: 16),
             Expanded(
               child: Column(

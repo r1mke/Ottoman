@@ -125,6 +125,21 @@ class AuthController extends ChangeNotifier {
     await _clear();
   }
 
+  /// Sets or replaces the signed-in account's own picture (client, barber or admin) and refreshes the user.
+  Future<void> setOwnPhoto(List<int> bytes, String filename) async {
+    await api.put<dynamic>(
+      '/api/v1/me/photo',
+      body: imageForm(bytes, filename),
+    );
+    await reloadUser();
+  }
+
+  /// Removes the signed-in account's own picture.
+  Future<void> clearOwnPhoto() async {
+    await api.delete<dynamic>('/api/v1/me/photo');
+    await reloadUser();
+  }
+
   Future<void> reloadUser() async {
     final data = await api.get<Map<String, dynamic>>('/api/v1/me');
     final s = _session;

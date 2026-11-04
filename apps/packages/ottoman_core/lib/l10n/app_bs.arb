@@ -638,5 +638,6 @@
   "bookingDeclined": "Rezervacija je odbijena.",
   "autoConfirmReservations": "Automatski potvrđuj rezervacije",
   "autoConfirmReservationsHint": "Uključeno: termin je potvrđen čim ga klijent rezerviše. Isključeno: termin čeka (vrijeme je zauzeto) dok ga frizer ili administrator ne potvrdi ili odbije uz razlog.",
-  "pendingBookingHint": "Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas."
+  "pendingBookingHint": "Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas.",
+  "changePhoto": "Promijeni sliku"
 }

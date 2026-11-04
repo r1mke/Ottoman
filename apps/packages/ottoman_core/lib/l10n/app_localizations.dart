@@ -3349,6 +3349,12 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas.'**
   String get pendingBookingHint;
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In bs, this message translates to:
+  /// **'Promijeni sliku'**
+  String get changePhoto;
 }
 
 class _AppLocalizationsDelegate

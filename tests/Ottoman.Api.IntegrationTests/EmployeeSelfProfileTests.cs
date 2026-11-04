@@ -163,13 +163,41 @@ public class EmployeeSelfProfileTests(ApiFixture api)
         (await admin.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest(null, "x", null)))
             .StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Clients and anonymous callers are turned away.
+        // A client has no barber profile to edit, and anonymous callers are turned away.
         var (_, auth) = await api.CreateClient().NewClient();
         var client = api.CreateClient().As(auth);
-        (await client.PutAsync("/api/v1/me/photo", Picture())).StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await client.PutAsJsonAsync("/api/v1/me/employee-profile", new UpdateOwnEmployeeProfileRequest(null, "x", null)))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await api.CreateClient().PutAsync("/api/v1/me/photo", Picture())).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task A_client_sets_replaces_and_removes_their_own_photo_and_the_admin_sees_it()
+    {
+        var (_, auth) = await api.CreateClient().NewClient();
+        var client = api.CreateClient().As(auth);
+
+        var set = await client.PutAsync("/api/v1/me/photo", Picture());
+        set.StatusCode.Should().Be(HttpStatusCode.OK);
+        var first = (await set.Content.ReadFromJsonAsync<UserDto>())!.PhotoUrl;
+        first.Should().NotBeNull();
+
+        var replaced = (await (await client.PutAsync("/api/v1/me/photo", Picture())).Content.ReadFromJsonAsync<UserDto>())!.PhotoUrl;
+        replaced.Should().NotBeNull().And.NotBe(first);
+
+        var admin = await Admin();
+        var listed = (await admin.GetFromJsonAsync<Ottoman.Application.Common.PagedResult<Ottoman.Application.Clients.ClientListItem>>(
+            $"/api/v1/clients?search={Uri.EscapeDataString(auth.User.Email)}"))!.Items.Single();
+        listed.PhotoUrl.Should().Be(replaced);
+
+        var removed = (await (await client.DeleteAsync("/api/v1/me/photo")).Content.ReadFromJsonAsync<UserDto>())!;
+        removed.PhotoUrl.Should().BeNull();
+
+        // The same checks as for staff pictures: not an image -> refused.
+        var html = new ByteArrayContent("<html>"u8.ToArray());
+        html.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        (await client.PutAsync("/api/v1/me/photo", new MultipartFormDataContent { { html, "file", "evil.png" } }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

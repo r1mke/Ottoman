@@ -5,6 +5,7 @@ import 'package:ottoman_core/ottoman_core.dart';
 
 import '../home/home_tab.dart';
 import '../notifications/notifications_page.dart';
+import '../profile/profile_photo.dart';
 import '../profile/profile_page.dart';
 import '../reservations/employee_schedule_tab.dart';
 import '../reservations/my_reservations_tab.dart';
@@ -31,6 +32,7 @@ class MobileShell extends StatefulWidget {
     this.galleryOverride,
     this.cardPayment = const UnavailableCardPayment(),
     this.push,
+    this.photoChooser = const GalleryPhotoChooser(),
   });
 
   final AuthController auth;
@@ -47,6 +49,9 @@ class MobileShell extends StatefulWidget {
 
   /// Registers this phone for push messages; null in tests and when push is unavailable.
   final PushRegistration? push;
+
+  /// Where the profile picture comes from.
+  final PhotoChooser photoChooser;
 
   @override
   State<MobileShell> createState() => _MobileShellState();
@@ -156,7 +161,8 @@ class _MobileShellState extends State<MobileShell> {
         _Tab(
           Icons.person_outline,
           (t) => t.groupAccount,
-          () => ProfilePage(auth: widget.auth),
+          () =>
+              ProfilePage(auth: widget.auth, photoChooser: widget.photoChooser),
         ),
       ];
     }
@@ -211,7 +217,7 @@ class _MobileShellState extends State<MobileShell> {
       _Tab(
         Icons.person_outline,
         (t) => t.groupAccount,
-        () => ProfilePage(auth: widget.auth),
+        () => ProfilePage(auth: widget.auth, photoChooser: widget.photoChooser),
       ),
     ];
   }

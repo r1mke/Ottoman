@@ -47,7 +47,9 @@ class _EmployeeScheduleTabState extends State<EmployeeScheduleTab> {
     final messenger = ScaffoldMessenger.of(context);
     await _act(() async {
       final done = await widget.reservations.confirm(r.id);
-      messenger.showSnackBar(SnackBar(content: Text(t.bookingConfirmedByStaff)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.bookingConfirmedByStaff)),
+      );
       return done;
     });
   }

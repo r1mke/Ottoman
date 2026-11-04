@@ -79,7 +79,9 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await widget.reservations.confirm(r.id);
-      messenger.showSnackBar(SnackBar(content: Text(t.bookingConfirmedByStaff)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.bookingConfirmedByStaff)),
+      );
     } on AppException catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
     }

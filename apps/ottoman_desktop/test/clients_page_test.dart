@@ -146,6 +146,8 @@ void main() {
     expect(find.text('Ana Anić'), findsOneWidget);
     expect(find.text('Bego Begić'), findsOneWidget);
     expect(find.byKey(const Key('blocked_c1')), findsNothing);
+    // Every client has an avatar: their own picture, or a drawn one.
+    expect(find.byKey(const Key('client_avatar_c1')), findsOneWidget);
   });
 
   testWidgets('a blocked client is flagged in the list', (tester) async {

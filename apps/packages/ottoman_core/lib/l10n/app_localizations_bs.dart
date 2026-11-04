@@ -1726,4 +1726,7 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get pendingBookingHint =>
       'Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas.';
+
+  @override
+  String get changePhoto => 'Promijeni sliku';
 }
