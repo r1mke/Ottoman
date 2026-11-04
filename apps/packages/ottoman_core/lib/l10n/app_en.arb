@@ -636,5 +636,23 @@
   "autoConfirmReservationsHint": "On: a booking is confirmed as soon as the client makes it. Off: it waits (the time is held) until a barber or the admin confirms it or declines it with a reason.",
   "pendingBookingHint": "The salon has not confirmed this appointment yet. The time is held for you.",
   "changePhoto": "Change picture",
-  "adjustPicture": "Adjust picture"
+  "adjustPicture": "Adjust picture",
+  "unlockAccount": "Unlock",
+  "lockedUntil": "Locked until {time}",
+  "@lockedUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "unlockAccountQuestion": "Unlock the account of {name}? They can sign in again right away.",
+  "@unlockAccountQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountUnlocked": "The account is unlocked."
 }

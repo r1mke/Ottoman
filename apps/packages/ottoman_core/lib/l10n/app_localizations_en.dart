@@ -1734,4 +1734,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adjustPicture => 'Adjust picture';
+
+  @override
+  String get unlockAccount => 'Unlock';
+
+  @override
+  String lockedUntil(String time) {
+    return 'Locked until $time';
+  }
+
+  @override
+  String unlockAccountQuestion(String name) {
+    return 'Unlock the account of $name? They can sign in again right away.';
+  }
+
+  @override
+  String get accountUnlocked => 'The account is unlocked.';
 }

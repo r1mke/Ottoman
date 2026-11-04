@@ -62,6 +62,7 @@ class Employee {
     this.gender,
     this.photoZoom = 1.0,
     this.titleId,
+    this.lockedUntilUtc,
   });
 
   final String id;
@@ -84,6 +85,9 @@ class Employee {
   final String? email;
   final String? phone;
 
+  /// Admin only: set while too many wrong passwords keep the barber from signing in.
+  final DateTime? lockedUntilUtc;
+
   String get fullName => '$firstName $lastName'.trim();
 
   String get initials =>
@@ -104,6 +108,9 @@ class Employee {
     gender: j['gender'] as String?,
     photoZoom: (j['photoZoom'] as num?)?.toDouble() ?? 1.0,
     titleId: j['titleId'] as int?,
+    lockedUntilUtc: j['lockedUntilUtc'] == null
+        ? null
+        : DateTime.parse(j['lockedUntilUtc'] as String),
   );
 }
 

@@ -3361,6 +3361,30 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Namjesti sliku'**
   String get adjustPicture;
+
+  /// No description provided for @unlockAccount.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otključaj'**
+  String get unlockAccount;
+
+  /// No description provided for @lockedUntil.
+  ///
+  /// In bs, this message translates to:
+  /// **'Zaključan do {time}'**
+  String lockedUntil(String time);
+
+  /// No description provided for @unlockAccountQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Otključati račun korisnika {name}? Moći će se odmah ponovo prijaviti.'**
+  String unlockAccountQuestion(String name);
+
+  /// No description provided for @accountUnlocked.
+  ///
+  /// In bs, this message translates to:
+  /// **'Račun je otključan.'**
+  String get accountUnlocked;
 }
 
 class _AppLocalizationsDelegate

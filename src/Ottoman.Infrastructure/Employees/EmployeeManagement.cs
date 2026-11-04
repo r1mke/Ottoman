@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Ottoman.Application.Accounts;
 using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
 using Ottoman.Application.Images;
@@ -51,7 +52,7 @@ public class EmployeeManagement(
             x.Profile.UserId, x.User.FirstName, x.User.LastName, x.User.FullName, x.TitleName, x.Profile.Bio,
             images.AvatarUrl(x.Profile.PhotoKey, x.Profile.PhotoZoom), x.Profile.IsActive, byEmployee[x.Profile.UserId].OrderBy(s => s).ToList(),
             includePrivate ? x.User.Email : null, includePrivate ? x.User.PhoneNumber : null,
-            x.Profile.Gender?.ToString(), x.Profile.PhotoZoom, x.Profile.TitleId)).ToList();
+            x.Profile.Gender?.ToString(), x.Profile.PhotoZoom, x.Profile.TitleId, LockedUntil(x.User, includePrivate))).ToList();
         return new PagedResult<EmployeeDto>(items, total);
     }
 
@@ -84,7 +85,12 @@ public class EmployeeManagement(
         includePrivate ? u.PhoneNumber : null,
         p.Gender?.ToString(),
         p.PhotoZoom,
-        p.TitleId);
+        p.TitleId,
+        LockedUntil(u, includePrivate));
+
+    /// <summary>Only the admin sees whether a barber is locked out of signing in.</summary>
+    private DateTime? LockedUntil(AppUser u, bool includePrivate) =>
+        includePrivate ? AccountLock.LockedUntil(u.LockoutEnabled, u.LockoutEnd, clock.GetUtcNow().UtcDateTime) : null;
 
     // ----------------------------------------------------------------- write
 

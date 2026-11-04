@@ -2,6 +2,7 @@ using Ottoman.Application.Common;
 
 namespace Ottoman.Application.Clients;
 
+/// <summary>LockedUntilUtc: set while too many wrong passwords keep the client from signing in (the admin can unlock).</summary>
 public record ClientListItem(
     string Id,
     string FullName,
@@ -10,7 +11,8 @@ public record ClientListItem(
     DateTime RegisteredAtUtc,
     bool IsBlocked,
     string? PhotoUrl = null,
-    double PhotoZoom = 1.0);
+    double PhotoZoom = 1.0,
+    DateTime? LockedUntilUtc = null);
 
 /// <summary>What the salon has done with this client, counted from reservations and orders (not self-reported).</summary>
 public record ClientStats(
@@ -38,7 +40,8 @@ public record ClientDetail(
     IReadOnlyList<ClientReservationRow> Reservations,
     IReadOnlyList<ClientOrderRow> Orders,
     string? PhotoUrl = null,
-    double PhotoZoom = 1.0);
+    double PhotoZoom = 1.0,
+    DateTime? LockedUntilUtc = null);
 
 public interface IClientQueries
 {

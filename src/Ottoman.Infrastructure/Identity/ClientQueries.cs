@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Ottoman.Application.Accounts;
 using Ottoman.Application.Auth;
 using Ottoman.Application.Clients;
 using Ottoman.Application.Common;
@@ -35,11 +36,19 @@ public class ClientQueries(OttomanDbContext db, IAccessGate gate, Images.ImageUr
                 Item = new ClientListItem(u.Id, (u.FirstName + " " + u.LastName).Trim(), u.Email!, u.PhoneNumber, u.RegisteredAtUtc, u.IsBlocked, null),
                 u.PhotoKey,
                 u.PhotoZoom,
+                u.LockoutEnabled,
+                u.LockoutEnd,
             })
             .ToListAsync(ct);
 
+        var now = clock.GetUtcNow().UtcDateTime;
         return new PagedResult<ClientListItem>(
-            items.Select(x => x.Item with { PhotoUrl = images.AvatarUrl(x.PhotoKey, x.PhotoZoom), PhotoZoom = x.PhotoZoom }).ToList(), total);
+            items.Select(x => x.Item with
+            {
+                PhotoUrl = images.AvatarUrl(x.PhotoKey, x.PhotoZoom),
+                PhotoZoom = x.PhotoZoom,
+                LockedUntilUtc = AccountLock.LockedUntil(x.LockoutEnabled, x.LockoutEnd, now),
+            }).ToList(), total);
     }
 
     public async Task<Result<ClientDetail>> GetAsync(string id, CancellationToken ct)
@@ -47,7 +56,7 @@ public class ClientQueries(OttomanDbContext db, IAccessGate gate, Images.ImageUr
         if (!await IsClientAsync(id, ct)) return Result<ClientDetail>.NotFound();
 
         var u = await db.Users.AsNoTracking().Where(x => x.Id == id)
-            .Select(x => new { x.Id, x.FirstName, x.LastName, x.Email, x.PhoneNumber, x.RegisteredAtUtc, x.IsBlocked, x.PhotoKey, x.PhotoZoom })
+            .Select(x => new { x.Id, x.FirstName, x.LastName, x.Email, x.PhoneNumber, x.RegisteredAtUtc, x.IsBlocked, x.PhotoKey, x.PhotoZoom, x.LockoutEnabled, x.LockoutEnd })
             .FirstAsync(ct);
 
         var now = clock.GetUtcNow().UtcDateTime;
@@ -99,7 +108,8 @@ public class ClientQueries(OttomanDbContext db, IAccessGate gate, Images.ImageUr
             orders.Select(o => new ClientOrderRow(
                 o.Id, o.CreatedAtUtc, o.Status.ToString(), o.TotalPrice,
                 string.Join(", ", o.Items.Select(i => $"{i.Quantity}x {i.ProductName}")))).ToList(),
-            images.AvatarUrl(u.PhotoKey, u.PhotoZoom), u.PhotoZoom));
+            images.AvatarUrl(u.PhotoKey, u.PhotoZoom), u.PhotoZoom,
+            AccountLock.LockedUntil(u.LockoutEnabled, u.LockoutEnd, now)));
     }
 
     public async Task<Result<ClientListItem>> SetBlockedAsync(string id, bool blocked, CancellationToken ct)
@@ -121,8 +131,15 @@ public class ClientQueries(OttomanDbContext db, IAccessGate gate, Images.ImageUr
             Item = new ClientListItem(x.Id, (x.FirstName + " " + x.LastName).Trim(), x.Email!, x.PhoneNumber, x.RegisteredAtUtc, x.IsBlocked, null),
             x.PhotoKey,
             x.PhotoZoom,
+            x.LockoutEnabled,
+            x.LockoutEnd,
         }).FirstAsync(ct);
-        return Result<ClientListItem>.Ok(row.Item with { PhotoUrl = images.AvatarUrl(row.PhotoKey, row.PhotoZoom), PhotoZoom = row.PhotoZoom });
+        return Result<ClientListItem>.Ok(row.Item with
+        {
+            PhotoUrl = images.AvatarUrl(row.PhotoKey, row.PhotoZoom),
+            PhotoZoom = row.PhotoZoom,
+            LockedUntilUtc = AccountLock.LockedUntil(row.LockoutEnabled, row.LockoutEnd, clock.GetUtcNow().UtcDateTime),
+        });
     }
 
     private async Task<bool> IsClientAsync(string id, CancellationToken ct) =>

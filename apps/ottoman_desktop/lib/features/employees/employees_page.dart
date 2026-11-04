@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../../widgets/account_lock.dart';
 import '../../widgets/list_search_field.dart';
 import 'employee_dialogs.dart';
 
@@ -24,6 +25,15 @@ class _EmployeesPageState extends State<EmployeesPage> {
     await showDialog<bool>(context: context, builder: (_) => dialog);
     // A picture change is saved immediately, so refresh even when the dialog was only closed.
     if (mounted) _refresh();
+  }
+
+  Future<void> _unlock(Employee e) async {
+    final unlocked = await unlockAccount(
+      context,
+      name: e.fullName,
+      unlock: () => widget.catalog.unlockEmployee(e.id),
+    );
+    if (unlocked && mounted) _refresh();
   }
 
   @override
@@ -82,6 +92,18 @@ class _EmployeesPageState extends State<EmployeesPage> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (e.lockedUntilUtc != null) ...[
+                            LockedChip(
+                              key: Key('employee_locked_${e.id}'),
+                              until: e.lockedUntilUtc!,
+                            ),
+                            const SizedBox(width: 6),
+                            UnlockButton(
+                              key: Key('employee_unlock_${e.id}'),
+                              onPressed: () => _unlock(e),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
                           Chip(label: Text(e.isActive ? t.active : t.inactive)),
                           IconButton(
                             tooltip: t.edit,

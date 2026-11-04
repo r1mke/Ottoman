@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../../widgets/account_lock.dart';
 import 'client_detail_dialog.dart';
 
 /// Admin: everyone who has an account. Search, open one to see what they have booked and bought, block abusers.
@@ -39,6 +40,15 @@ class _ClientsPageState extends State<ClientsPage> {
     );
     // Blocking happens inside the dialog, so the list may have changed even when it was only closed.
     if (mounted) _reload();
+  }
+
+  Future<void> _unlock(ClientItem client) async {
+    final unlocked = await unlockAccount(
+      context,
+      name: client.fullName,
+      unlock: () => widget.api.unlock(client.id),
+    );
+    if (unlocked && mounted) _reload();
   }
 
   @override
@@ -93,6 +103,7 @@ class _ClientsPageState extends State<ClientsPage> {
                 pageNumber: _page,
                 pageSize: _pageSize,
                 onOpen: _open,
+                onUnlock: _unlock,
                 onPage: (p) => setState(() => _page = p),
                 t: t,
               ),
@@ -110,6 +121,7 @@ class _ClientTable extends StatelessWidget {
     required this.pageNumber,
     required this.pageSize,
     required this.onOpen,
+    required this.onUnlock,
     required this.onPage,
     required this.t,
   });
@@ -118,6 +130,7 @@ class _ClientTable extends StatelessWidget {
   final int pageNumber;
   final int pageSize;
   final ValueChanged<ClientItem> onOpen;
+  final ValueChanged<ClientItem> onUnlock;
   final ValueChanged<int> onPage;
   final AppLocalizations t;
 
@@ -129,73 +142,95 @@ class _ClientTable extends StatelessWidget {
         Expanded(
           child: Card(
             clipBehavior: Clip.antiAlias,
-            child: SizedBox(
-              width: double.infinity,
-              child: SingleChildScrollView(
-                child: DataTable(
-                  showCheckboxColumn: false,
-                  columns: [
-                    DataColumn(label: Text(t.name)),
-                    DataColumn(label: Text(t.email)),
-                    DataColumn(label: Text(t.phone)),
-                    DataColumn(label: Text(t.clientRegistered)),
-                    DataColumn(label: Text(t.status)),
-                  ],
-                  rows: [
-                    for (final c in page.items)
-                      DataRow(
-                        key: ValueKey('client_row_${c.id}'),
-                        onSelectChanged: (_) => onOpen(c),
-                        cells: [
-                          DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                PersonAvatar(
-                                  key: Key('client_avatar_${c.id}'),
-                                  photoUrl: c.photoUrl,
-                                  seed: c.id,
-                                  radius: 14,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  c.fullName,
-                                  key: Key('client_cell_${c.id}'),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          DataCell(Text(c.email)),
-                          DataCell(Text(c.phone ?? '-')),
-                          DataCell(
-                            Text(
-                              c.registeredAtUtc == null
-                                  ? '-'
-                                  : formatWhen(c.registeredAtUtc!),
-                            ),
-                          ),
-                          DataCell(
-                            c.isBlocked
-                                ? Chip(
-                                    key: Key('blocked_${c.id}'),
-                                    label: Text(t.clientBlocked),
-                                    backgroundColor: WorkspaceColors.danger
-                                        .withValues(alpha: 0.12),
-                                    side: BorderSide.none,
-                                    labelStyle: const TextStyle(
-                                      color: WorkspaceColors.danger,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 12,
+            // Fills the card when there is room; scrolls sideways in a narrow window instead of squeezing the cells.
+            child: LayoutBuilder(
+              builder: (context, box) => SingleChildScrollView(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: box.maxWidth),
+                    child: DataTable(
+                      showCheckboxColumn: false,
+                      columns: [
+                        DataColumn(label: Text(t.name)),
+                        DataColumn(label: Text(t.email)),
+                        DataColumn(label: Text(t.phone)),
+                        DataColumn(label: Text(t.clientRegistered)),
+                        DataColumn(label: Text(t.status)),
+                      ],
+                      rows: [
+                        for (final c in page.items)
+                          DataRow(
+                            key: ValueKey('client_row_${c.id}'),
+                            onSelectChanged: (_) => onOpen(c),
+                            cells: [
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    PersonAvatar(
+                                      key: Key('client_avatar_${c.id}'),
+                                      photoUrl: c.photoUrl,
+                                      seed: c.id,
+                                      radius: 14,
                                     ),
-                                  )
-                                : const SizedBox.shrink(),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      c.fullName,
+                                      key: Key('client_cell_${c.id}'),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              DataCell(Text(c.email)),
+                              DataCell(Text(c.phone ?? '-')),
+                              DataCell(
+                                Text(
+                                  c.registeredAtUtc == null
+                                      ? '-'
+                                      : formatWhen(c.registeredAtUtc!),
+                                ),
+                              ),
+                              DataCell(
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (c.isBlocked)
+                                      Chip(
+                                        key: Key('blocked_${c.id}'),
+                                        label: Text(t.clientBlocked),
+                                        backgroundColor: WorkspaceColors.danger
+                                            .withValues(alpha: 0.12),
+                                        side: BorderSide.none,
+                                        labelStyle: const TextStyle(
+                                          color: WorkspaceColors.danger,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    if (c.lockedUntilUtc != null) ...[
+                                      if (c.isBlocked) const SizedBox(width: 6),
+                                      LockedChip(
+                                        key: Key('locked_${c.id}'),
+                                        until: c.lockedUntilUtc!,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      UnlockButton(
+                                        key: Key('unlock_${c.id}'),
+                                        onPressed: () => onUnlock(c),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

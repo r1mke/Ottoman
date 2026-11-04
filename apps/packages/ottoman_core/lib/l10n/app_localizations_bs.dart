@@ -1732,4 +1732,20 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get adjustPicture => 'Namjesti sliku';
+
+  @override
+  String get unlockAccount => 'Otključaj';
+
+  @override
+  String lockedUntil(String time) {
+    return 'Zaključan do $time';
+  }
+
+  @override
+  String unlockAccountQuestion(String name) {
+    return 'Otključati račun korisnika $name? Moći će se odmah ponovo prijaviti.';
+  }
+
+  @override
+  String get accountUnlocked => 'Račun je otključan.';
 }

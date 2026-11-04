@@ -8,18 +8,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 import 'package:ottoman_desktop/features/clients/clients_page.dart';
 
-Map<String, dynamic> _client(String id, String name, {bool blocked = false}) =>
-    {
-      'id': id,
-      'fullName': name,
-      'email': '$id@x.ba',
-      'phone': '061 111 222',
-      'registeredAtUtc': '2030-01-01T10:00:00Z',
-      'isBlocked': blocked,
-      // Ana chose to zoom her picture: the server sends it already cropped.
-      if (id == 'c1') 'photoUrl': _anaPhoto,
-      if (id == 'c1') 'photoZoom': 2.0,
-    };
+Map<String, dynamic> _client(
+  String id,
+  String name, {
+  bool blocked = false,
+  bool locked = false,
+}) => {
+  'id': id,
+  'fullName': name,
+  'email': '$id@x.ba',
+  'phone': '061 111 222',
+  'registeredAtUtc': '2030-01-01T10:00:00Z',
+  'isBlocked': blocked,
+  // Ana chose to zoom her picture: the server sends it already cropped.
+  if (id == 'c1') 'photoUrl': _anaPhoto,
+  if (id == 'c1') 'photoZoom': 2.0,
+  'lockedUntilUtc': locked ? '2030-01-01T10:15:00Z' : null,
+};
 
 const _anaPhoto =
     'https://res.cloudinary.com/demo/image/upload/c_thumb,g_face,w_512,h_512,z_0.5,q_auto,f_auto/ottoman/accounts/ana';
@@ -27,6 +32,7 @@ const _anaPhoto =
 class _Api implements HttpClientAdapter {
   final requests = <RequestOptions>[];
   bool blocked = false;
+  bool locked = false;
   int failBlockWith = 0;
   int total = 2;
 
@@ -43,7 +49,10 @@ class _Api implements HttpClientAdapter {
     Object? body;
     var status = 200;
     final p = o.path;
-    if (p.endsWith('/block') || p.endsWith('/unblock')) {
+    if (p == '/api/v1/users/c1/unlock') {
+      locked = false;
+      body = {'id': 'c1', 'lockedUntilUtc': null};
+    } else if (p.endsWith('/block') || p.endsWith('/unblock')) {
       if (failBlockWith != 0) {
         status = failBlockWith;
         body = {'status': status, 'title': 'Nije pronađeno.'};
@@ -53,7 +62,7 @@ class _Api implements HttpClientAdapter {
       }
     } else if (p == '/api/v1/clients/c1') {
       body = {
-        ..._client('c1', 'Ana Anić', blocked: blocked),
+        ..._client('c1', 'Ana Anić', blocked: blocked, locked: locked),
         'stats': {
           'visits': 3,
           'noShows': 1,
@@ -87,7 +96,7 @@ class _Api implements HttpClientAdapter {
     } else {
       body = {
         'items': [
-          _client('c1', 'Ana Anić', blocked: blocked),
+          _client('c1', 'Ana Anić', blocked: blocked, locked: locked),
           _client('c2', 'Bego Begić'),
         ],
         'totalCount': total,
@@ -109,13 +118,16 @@ class _Api implements HttpClientAdapter {
 Future<_Api> _open(
   WidgetTester tester, {
   bool blocked = false,
+  bool locked = false,
   int total = 2,
+  double width = 1400,
 }) async {
   tester.view.devicePixelRatio = 1.0;
-  tester.view.physicalSize = const Size(1400, 1000);
+  tester.view.physicalSize = Size(width, 1000);
   addTearDown(tester.view.reset);
   final api = _Api()
     ..blocked = blocked
+    ..locked = locked
     ..total = total;
   await tester.pumpWidget(
     MaterialApp(
@@ -313,5 +325,74 @@ void main() {
           .onPressed,
       isNull,
     );
+  });
+
+  testWidgets('a locked client is flagged with an unlock button that asks, '
+      'unlocks, says so and refreshes the list', (tester) async {
+    final api = await _open(tester, locked: true);
+    expect(find.byKey(const Key('locked_c1')), findsOneWidget);
+    expect(find.textContaining('Zaključan do'), findsOneWidget);
+    // Only the locked client has the button.
+    expect(find.byKey(const Key('unlock_c1')), findsOneWidget);
+    expect(find.byKey(const Key('unlock_c2')), findsNothing);
+    final listLoads = api.to('GET', '/api/v1/clients').length;
+
+    // Saying no changes nothing.
+    await tester.tap(find.byKey(const Key('unlock_c1')));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Otključati račun korisnika Ana Anić'),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('confirm_action_cancel')));
+    await tester.pumpAndSettle();
+    expect(api.to('POST', '/unlock'), isEmpty);
+
+    await tester.tap(find.byKey(const Key('unlock_c1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
+    await tester.pumpAndSettle();
+
+    expect(api.to('POST', '/api/v1/users/c1/unlock'), hasLength(1));
+    expect(find.text('Račun je otključan.'), findsOneWidget);
+    expect(api.to('GET', '/api/v1/clients').length, greaterThan(listLoads));
+    expect(find.byKey(const Key('locked_c1')), findsNothing);
+    expect(find.byKey(const Key('unlock_c1')), findsNothing);
+  });
+
+  testWidgets('an unlocked client has no lock and no unlock button', (
+    tester,
+  ) async {
+    await _open(tester);
+    expect(find.byKey(const Key('locked_c1')), findsNothing);
+    expect(find.byKey(const Key('unlock_c1')), findsNothing);
+  });
+
+  testWidgets('the client detail shows the lock and unlocks from there', (
+    tester,
+  ) async {
+    final api = await _open(tester, locked: true);
+    await tester.tap(find.byKey(const Key('client_cell_c1')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('client_locked_chip')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('unlock_account')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
+    await tester.pumpAndSettle();
+
+    expect(api.to('POST', '/api/v1/users/c1/unlock'), hasLength(1));
+    expect(find.text('Račun je otključan.'), findsOneWidget);
+    expect(find.byKey(const Key('client_locked_chip')), findsNothing);
+    expect(find.byKey(const Key('unlock_account')), findsNothing);
+  });
+
+  testWidgets('a locked and blocked row still fits the smallest window', (
+    tester,
+  ) async {
+    // 1024 px window minus the 248 px sidebar.
+    await _open(tester, locked: true, blocked: true, width: 776);
+    expect(find.byKey(const Key('unlock_c1')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

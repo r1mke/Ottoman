@@ -103,6 +103,7 @@ class ClientDetail {
     this.phone,
     this.photoUrl,
     this.photoZoom = 1.0,
+    this.lockedUntilUtc,
   });
 
   final String id;
@@ -118,6 +119,9 @@ class ClientDetail {
   /// The client's own picture, already cropped at [photoZoom] (1 to 2) around the face.
   final String? photoUrl;
   final double photoZoom;
+
+  /// Set while too many wrong passwords keep the client from signing in.
+  final DateTime? lockedUntilUtc;
 
   factory ClientDetail.fromJson(Map<String, dynamic> j) => ClientDetail(
     id: j['id'] as String,
@@ -135,6 +139,9 @@ class ClientDetail {
         .toList(),
     photoUrl: j['photoUrl'] as String?,
     photoZoom: (j['photoZoom'] as num?)?.toDouble() ?? 1.0,
+    lockedUntilUtc: j['lockedUntilUtc'] == null
+        ? null
+        : DateTime.parse(j['lockedUntilUtc'] as String),
   );
 }
 
@@ -168,6 +175,10 @@ class ClientsApi {
   Future<ClientDetail> detail(String id) async => ClientDetail.fromJson(
     await _api.get<Map<String, dynamic>>('/api/v1/clients/$id'),
   );
+
+  /// Ends a sign-in lock (too many wrong passwords) at once. Admin only.
+  Future<void> unlock(String id) =>
+      _api.post<dynamic>('/api/v1/users/$id/unlock');
 
   /// Blocking ends every session of the client at once.
   Future<ClientItem> setBlocked(String id, {required bool blocked}) async =>

@@ -115,6 +115,10 @@ class CatalogApi {
 
   // ---- employees
 
+  /// Ends a barber's sign-in lock (too many wrong passwords) at once. Admin only.
+  Future<void> unlockEmployee(String id) =>
+      _api.post<dynamic>('/api/v1/users/$id/unlock');
+
   Future<List<Employee>> employees({
     bool includeInactive = false,
     String? search,

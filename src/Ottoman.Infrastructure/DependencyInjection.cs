@@ -107,6 +107,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddSingleton<IAccessGate, UserAccessGate>();
         services.AddScoped<IClientQueries, ClientQueries>();
+        services.AddScoped<Ottoman.Application.Accounts.IAccountAdmin, AccountAdmin>();
         services.AddScoped<IServiceCatalog, ServiceCatalog>();
         services.AddScoped<IEmployeeService, EmployeeManagement>();
         services.AddScoped<IEmployeeTitles, Employees.EmployeeTitles>();

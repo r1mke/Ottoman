@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
+import '../../widgets/account_lock.dart';
+
 /// One client: the numbers that matter (counted by the server from real reservations and orders),
 /// the latest appointments and orders, and the block switch.
 class ClientDetailDialog extends StatefulWidget {
@@ -60,6 +62,15 @@ class _ClientDetailDialogState extends State<ClientDetailDialog> {
     }
   }
 
+  Future<void> _unlock(ClientDetail c) async {
+    final unlocked = await unlockAccount(
+      context,
+      name: c.fullName,
+      unlock: () => widget.api.unlock(c.id),
+    );
+    if (unlocked && mounted) setState(() => _version++);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -113,6 +124,13 @@ class _ClientDetailDialogState extends State<ClientDetailDialog> {
                                   ),
                                 ),
                               ],
+                              if (c.lockedUntilUtc != null) ...[
+                                const SizedBox(width: 10),
+                                LockedChip(
+                                  key: const Key('client_locked_chip'),
+                                  until: c.lockedUntilUtc!,
+                                ),
+                              ],
                             ],
                           ),
                           Text(
@@ -128,6 +146,13 @@ class _ClientDetailDialogState extends State<ClientDetailDialog> {
                         ],
                       ),
                     ),
+                    if (c.lockedUntilUtc != null) ...[
+                      UnlockButton(
+                        key: const Key('unlock_account'),
+                        onPressed: _busy ? null : () => _unlock(c),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     FilledButton(
                       key: const Key('toggle_block'),
                       style: FilledButton.styleFrom(

@@ -640,5 +640,23 @@
   "autoConfirmReservationsHint": "Uključeno: termin je potvrđen čim ga klijent rezerviše. Isključeno: termin čeka (vrijeme je zauzeto) dok ga frizer ili administrator ne potvrdi ili odbije uz razlog.",
   "pendingBookingHint": "Salon još nije potvrdio ovaj termin. Vrijeme je rezervisano za vas.",
   "changePhoto": "Promijeni sliku",
-  "adjustPicture": "Namjesti sliku"
+  "adjustPicture": "Namjesti sliku",
+  "unlockAccount": "Otključaj",
+  "lockedUntil": "Zaključan do {time}",
+  "@lockedUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "unlockAccountQuestion": "Otključati račun korisnika {name}? Moći će se odmah ponovo prijaviti.",
+  "@unlockAccountQuestion": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountUnlocked": "Račun je otključan."
 }

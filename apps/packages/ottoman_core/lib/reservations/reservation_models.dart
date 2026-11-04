@@ -161,6 +161,7 @@ class ClientItem {
     this.isBlocked = false,
     this.photoUrl,
     this.photoZoom = 1.0,
+    this.lockedUntilUtc,
   });
 
   final String id;
@@ -174,6 +175,9 @@ class ClientItem {
   final String? photoUrl;
   final double photoZoom;
 
+  /// Set while too many wrong passwords keep the client from signing in (the admin can unlock).
+  final DateTime? lockedUntilUtc;
+
   factory ClientItem.fromJson(Map<String, dynamic> j) => ClientItem(
     id: j['id'] as String,
     fullName: j['fullName'] as String,
@@ -185,5 +189,8 @@ class ClientItem {
     isBlocked: (j['isBlocked'] as bool?) ?? false,
     photoUrl: j['photoUrl'] as String?,
     photoZoom: (j['photoZoom'] as num?)?.toDouble() ?? 1.0,
+    lockedUntilUtc: j['lockedUntilUtc'] == null
+        ? null
+        : DateTime.parse(j['lockedUntilUtc'] as String),
   );
 }

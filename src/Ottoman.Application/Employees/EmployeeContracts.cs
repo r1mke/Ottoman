@@ -5,7 +5,7 @@ using Ottoman.Domain.Scheduling;
 
 namespace Ottoman.Application.Employees;
 
-/// <summary>Email and phone are only populated for admins.</summary>
+/// <summary>Email, phone and the sign-in lock (LockedUntilUtc, after too many wrong passwords) are only populated for admins.</summary>
 public record EmployeeDto(
     string Id,
     string FirstName,
@@ -20,7 +20,8 @@ public record EmployeeDto(
     string? Phone,
     string? Gender = null,
     double PhotoZoom = 1.0,
-    int TitleId = 0);
+    int TitleId = 0,
+    DateTime? LockedUntilUtc = null);
 
 public record CreateEmployeeRequest(
     string FirstName,
