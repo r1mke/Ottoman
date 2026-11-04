@@ -19,7 +19,8 @@ public record EmployeeDto(
     string? Email,
     string? Phone,
     string? Gender = null,
-    double PhotoZoom = 1.0);
+    double PhotoZoom = 1.0,
+    int TitleId = 0);
 
 public record CreateEmployeeRequest(
     string FirstName,

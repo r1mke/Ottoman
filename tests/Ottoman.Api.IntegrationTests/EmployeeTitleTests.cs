@@ -98,6 +98,8 @@ public class EmployeeTitleTests(ApiFixture api)
 
         var entry = (await List(admin)).Single(t => t.Name == title);
         entry.InUse.Should().Be(1);
+        barber.TitleId.Should().Be(entry.Id, "the barber points at the list entry");
+        barber.Title.Should().Be(title);
 
         // Changing the barber's title frees the old one for deletion.
         var other = Unique("Majstor");

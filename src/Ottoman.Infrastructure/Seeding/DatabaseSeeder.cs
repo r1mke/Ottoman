@@ -188,7 +188,11 @@ public partial class DatabaseSeeder(
 
     private void AddEmployee(AppUser user, string title, string? bio, IEnumerable<Service> assigned)
     {
-        var profile = new EmployeeProfile { UserId = user.Id, Title = title, Bio = bio, Gender = Gender.Male };
+        // Titles are a list of their own; a barber points at one (it is created here if the list does not have it yet).
+        var titleRow = db.EmployeeTitles.Local.FirstOrDefault(t => string.Equals(t.Name, title, StringComparison.OrdinalIgnoreCase))
+                       ?? db.EmployeeTitles.FirstOrDefault(t => t.Name == title)
+                       ?? new EmployeeTitle { Name = title };
+        var profile = new EmployeeProfile { UserId = user.Id, Title = titleRow, Bio = bio, Gender = Gender.Male };
         profile.Services = assigned.Select(s => new EmployeeService { EmployeeId = user.Id, ServiceId = s.Id }).ToList();
 
         // Mon-Fri 09:00-17:00 with a lunch break, Sat 09:00-14:00.

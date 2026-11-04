@@ -34,7 +34,7 @@ public class DemoImageSeeder(OttomanDbContext db, IImageStore store, IOptions<Im
             }
             foreach (var e in await db.EmployeeProfiles.Where(e => e.PhotoKey == null).ToListAsync(ct))
             {
-                e.PhotoKey = await UploadAsync(e.UserId + e.Title, "ottoman/employees", ct);
+                e.PhotoKey = await UploadAsync(e.UserId, "ottoman/employees", ct);
                 done++;
             }
 

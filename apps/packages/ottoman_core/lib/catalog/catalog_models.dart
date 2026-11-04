@@ -61,12 +61,16 @@ class Employee {
     this.phone,
     this.gender,
     this.photoZoom = 1.0,
+    this.titleId,
   });
 
   final String id;
   final String firstName;
   final String lastName;
+
+  /// The title's name, for showing; [titleId] is the entry of the shared title list it points at.
   final String title;
+  final int? titleId;
 
   /// "Male" or "Female"; picks the default avatar while there is no photo.
   final String? gender;
@@ -99,6 +103,7 @@ class Employee {
     phone: j['phone'] as String?,
     gender: j['gender'] as String?,
     photoZoom: (j['photoZoom'] as num?)?.toDouble() ?? 1.0,
+    titleId: j['titleId'] as int?,
   );
 }
 

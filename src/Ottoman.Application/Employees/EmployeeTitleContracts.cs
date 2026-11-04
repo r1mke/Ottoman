@@ -22,8 +22,8 @@ public interface IEmployeeTitles
     /// <summary>Refused while a barber still has the title, so the list never loses a title that is in use.</summary>
     Task<Result<bool>> DeleteAsync(int id, CancellationToken ct);
 
-    /// <summary>Makes sure the title is on the list (used when a barber is saved with it). Idempotent.</summary>
-    Task EnsureAsync(string name, CancellationToken ct);
+    /// <summary>The id of the title with this name, adding it to the list first if needed (a barber saved with a new title). Idempotent.</summary>
+    Task<int> EnsureAsync(string name, CancellationToken ct);
 }
 
 public class AddEmployeeTitleRequestValidator : AbstractValidator<AddEmployeeTitleRequest>

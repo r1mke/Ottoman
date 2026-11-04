@@ -71,7 +71,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
         {
             e.HasKey(x => x.UserId);
             e.HasOne<AppUser>().WithOne().HasForeignKey<EmployeeProfile>(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
-            e.Property(x => x.Title).HasMaxLength(100);
+            e.HasOne(x => x.Title).WithMany().HasForeignKey(x => x.TitleId).OnDelete(DeleteBehavior.Restrict);
             e.Property(x => x.Bio).HasMaxLength(500);
             e.HasMany(x => x.WorkingHours).WithOne().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(x => x.TimeOff).WithOne().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Cascade);

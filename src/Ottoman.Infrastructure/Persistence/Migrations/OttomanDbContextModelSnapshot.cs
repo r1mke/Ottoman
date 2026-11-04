@@ -396,12 +396,12 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasColumnType("float")
                         .HasDefaultValue(1.0);
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int>("TitleId")
+                        .HasColumnType("int");
 
                     b.HasKey("UserId");
+
+                    b.HasIndex("TitleId");
 
                     b.ToTable("EmployeeProfiles");
                 });
@@ -1694,11 +1694,19 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Ottoman.Domain.Entities.EmployeeProfile", b =>
                 {
+                    b.HasOne("Ottoman.Domain.Entities.EmployeeTitle", "Title")
+                        .WithMany()
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Ottoman.Infrastructure.Identity.AppUser", null)
                         .WithOne()
                         .HasForeignKey("Ottoman.Domain.Entities.EmployeeProfile", "UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Title");
                 });
 
             modelBuilder.Entity("Ottoman.Domain.Entities.EmployeeService", b =>

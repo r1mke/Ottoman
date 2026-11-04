@@ -4,7 +4,10 @@ namespace Ottoman.Domain.Entities;
 public class EmployeeProfile
 {
     public string UserId { get; set; } = null!;
-    public string Title { get; set; } = "";
+
+    /// <summary>The barber's title from the shared list (a real foreign key: a title in use cannot be deleted).</summary>
+    public int TitleId { get; set; }
+    public EmployeeTitle Title { get; set; } = null!;
     public string? Bio { get; set; }
     public string? PhotoKey { get; set; }
 

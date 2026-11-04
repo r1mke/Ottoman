@@ -30,11 +30,11 @@ public class EmployeeManagement(
             from p in db.EmployeeProfiles.AsNoTracking()
             join u in db.Users.AsNoTracking() on p.UserId equals u.Id
             where includeInactive || p.IsActive
-            select new { Profile = p, User = u };
+            select new { Profile = p, User = u, TitleName = p.Title.Name };
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(x => (x.User.FirstName + " " + x.User.LastName).Contains(term) || x.Profile.Title.Contains(term));
+            query = query.Where(x => (x.User.FirstName + " " + x.User.LastName).Contains(term) || x.TitleName.Contains(term));
         }
 
         var total = await query.CountAsync(ct);
@@ -48,10 +48,10 @@ public class EmployeeManagement(
         var byEmployee = services.ToLookup(s => s.EmployeeId, s => s.ServiceId);
 
         var items = rows.Select(x => new EmployeeDto(
-            x.Profile.UserId, x.User.FirstName, x.User.LastName, x.User.FullName, x.Profile.Title, x.Profile.Bio,
+            x.Profile.UserId, x.User.FirstName, x.User.LastName, x.User.FullName, x.TitleName, x.Profile.Bio,
             images.AvatarUrl(x.Profile.PhotoKey, x.Profile.PhotoZoom), x.Profile.IsActive, byEmployee[x.Profile.UserId].OrderBy(s => s).ToList(),
             includePrivate ? x.User.Email : null, includePrivate ? x.User.PhoneNumber : null,
-            x.Profile.Gender?.ToString(), x.Profile.PhotoZoom)).ToList();
+            x.Profile.Gender?.ToString(), x.Profile.PhotoZoom, x.Profile.TitleId)).ToList();
         return new PagedResult<EmployeeDto>(items, total);
     }
 
@@ -66,7 +66,8 @@ public class EmployeeManagement(
     private async Task<List<(EmployeeProfile Profile, AppUser User)>> LoadAsync(
         System.Linq.Expressions.Expression<Func<EmployeeProfile, bool>> filter, CancellationToken ct)
     {
-        var profiles = await db.EmployeeProfiles.AsNoTracking().Include(p => p.Services).Where(filter).ToListAsync(ct);
+        var profiles = await db.EmployeeProfiles.AsNoTracking().Include(p => p.Services).Include(p => p.Title)
+            .Where(filter).ToListAsync(ct);
         var ids = profiles.Select(p => p.UserId).ToList();
         var byId = await db.Users.AsNoTracking().Where(u => ids.Contains(u.Id)).ToDictionaryAsync(u => u.Id, ct);
         return profiles
@@ -77,12 +78,13 @@ public class EmployeeManagement(
     }
 
     private EmployeeDto ToDto(EmployeeProfile p, AppUser u, bool includePrivate) => new(
-        p.UserId, u.FirstName, u.LastName, u.FullName, p.Title, p.Bio, images.AvatarUrl(p.PhotoKey, p.PhotoZoom), p.IsActive,
+        p.UserId, u.FirstName, u.LastName, u.FullName, p.Title.Name, p.Bio, images.AvatarUrl(p.PhotoKey, p.PhotoZoom), p.IsActive,
         p.Services.Select(s => s.ServiceId).OrderBy(x => x).ToList(),
         includePrivate ? u.Email : null,
         includePrivate ? u.PhoneNumber : null,
         p.Gender?.ToString(),
-        p.PhotoZoom);
+        p.PhotoZoom,
+        p.TitleId);
 
     // ----------------------------------------------------------------- write
 
@@ -107,6 +109,8 @@ public class EmployeeManagement(
             RegisteredAtUtc = clock.GetUtcNow().UtcDateTime,
         };
 
+        // A title typed through the API joins the pick list; the barber points at it by id.
+        var titleId = await titles.EnsureAsync(r.Title, ct);
         string? failure = null;
         var strategy = db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
@@ -122,7 +126,7 @@ public class EmployeeManagement(
             db.EmployeeProfiles.Add(new EmployeeProfile
             {
                 UserId = user.Id,
-                Title = r.Title.Trim(),
+                TitleId = titleId,
                 Gender = GenderNames.Parse(r.Gender),
                 Bio = r.Bio?.Trim(),
                 Services = serviceIds.Select(id => new EmployeeService { EmployeeId = user.Id, ServiceId = id }).ToList(),
@@ -132,12 +136,14 @@ public class EmployeeManagement(
         });
 
         if (failure is not null) return Result<EmployeeDto>.Invalid(failure);
-        await titles.EnsureAsync(r.Title, ct); // a title typed through the API joins the pick list
         return await GetAsync(user.Id, true, ct);
     }
 
     public async Task<Result<EmployeeDto>> UpdateAsync(string id, UpdateEmployeeRequest r, CancellationToken ct)
     {
+        if (!await db.EmployeeProfiles.AnyAsync(p => p.UserId == id, ct)) return Result<EmployeeDto>.NotFound();
+        // Resolved before anything is tracked: a title typed through the API joins the pick list.
+        var titleId = await titles.EnsureAsync(r.Title, ct);
         var profile = await db.EmployeeProfiles.FirstOrDefaultAsync(p => p.UserId == id, ct);
         var user = await users.FindByIdAsync(id);
         if (profile is null || user is null) return Result<EmployeeDto>.NotFound();
@@ -145,7 +151,7 @@ public class EmployeeManagement(
         user.FirstName = r.FirstName.Trim();
         user.LastName = r.LastName.Trim();
         user.PhoneNumber = string.IsNullOrWhiteSpace(r.Phone) ? null : r.Phone.Trim();
-        profile.Title = r.Title.Trim();
+        profile.TitleId = titleId;
         if (r.Gender is not null) profile.Gender = GenderNames.Parse(r.Gender);
         if (r.PhotoZoom is { } zoom) profile.PhotoZoom = zoom;
         profile.Bio = r.Bio?.Trim();
@@ -153,7 +159,6 @@ public class EmployeeManagement(
 
         await users.UpdateAsync(user);
         await db.SaveChangesAsync(ct);
-        await titles.EnsureAsync(r.Title, ct);
         return await GetAsync(id, true, ct);
     }
 

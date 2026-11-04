@@ -175,7 +175,7 @@ public class RecommendationService(
             .Select(p => new
             {
                 p.UserId,
-                p.Title,
+                Title = p.Title.Name,
                 p.Bio,
                 Services = p.Services.Where(s => s.Service.IsActive).Select(s => s.Service.Name + " " + s.Service.Description).ToList(),
             }).ToListAsync();

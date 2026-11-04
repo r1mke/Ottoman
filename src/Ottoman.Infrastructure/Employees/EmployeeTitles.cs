@@ -16,13 +16,11 @@ public class EmployeeTitles(OttomanDbContext db) : IEmployeeTitles
         var total = await db.EmployeeTitles.CountAsync(ct);
         var titles = await db.EmployeeTitles.AsNoTracking().OrderBy(t => t.Name).ThenBy(t => t.Id)
             .Skip(page.Skip).Take(page.SafePageSize).ToListAsync(ct);
-        var used = await db.EmployeeProfiles.AsNoTracking()
-            .GroupBy(p => p.Title).Select(g => new { Title = g.Key, Count = g.Count() }).ToListAsync(ct);
-        var items = titles
-            .Select(t => new EmployeeTitleDto(
-                t.Id, t.Name,
-                used.Where(u => string.Equals(u.Title, t.Name, StringComparison.OrdinalIgnoreCase)).Sum(u => u.Count)))
-            .ToList();
+        var ids = titles.Select(t => t.Id).ToList();
+        var used = await db.EmployeeProfiles.AsNoTracking().Where(p => ids.Contains(p.TitleId))
+            .GroupBy(p => p.TitleId).Select(g => new { TitleId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.TitleId, x => x.Count, ct);
+        var items = titles.Select(t => new EmployeeTitleDto(t.Id, t.Name, used.GetValueOrDefault(t.Id))).ToList();
         return new PagedResult<EmployeeTitleDto>(items, total);
     }
 
@@ -53,34 +51,17 @@ public class EmployeeTitles(OttomanDbContext db) : IEmployeeTitles
         if (current is null) return Result<EmployeeTitleDto>.NotFound("Titula nije pronađena.");
         if (await db.EmployeeTitles.AnyAsync(t => t.Id != id && t.Name == clean, ct)) return Result<EmployeeTitleDto>.Conflict(Duplicate);
 
-        var oldName = current.Name;
-        var strategy = db.Database.CreateExecutionStrategy();
-        var duplicate = false;
-        await strategy.ExecuteAsync(async () =>
+        // Barbers point at the title by id, so they keep it under the new name without being touched.
+        try
         {
-            duplicate = false;
-            await using var tx = await db.Database.BeginTransactionAsync(ct);
-            try
-            {
-                await db.EmployeeTitles.Where(t => t.Id == id).ExecuteUpdateAsync(s => s.SetProperty(t => t.Name, clean), ct);
-                // Barbers carry the title by name: they move with the rename, in the same transaction.
-                await db.EmployeeProfiles.Where(p => p.Title == oldName).ExecuteUpdateAsync(s => s.SetProperty(p => p.Title, clean), ct);
-                await tx.CommitAsync(ct);
-            }
-            catch (DbUpdateException e) when (IsUniqueViolation(e))
-            {
-                duplicate = true;
-                await tx.RollbackAsync(ct);
-            }
-            catch (SqlException e) when (e.Number is 2601 or 2627)
-            {
-                duplicate = true;
-                await tx.RollbackAsync(ct);
-            }
-        });
-        if (duplicate) return Result<EmployeeTitleDto>.Conflict(Duplicate);
+            await db.EmployeeTitles.Where(t => t.Id == id).ExecuteUpdateAsync(s => s.SetProperty(t => t.Name, clean), ct);
+        }
+        catch (SqlException e) when (e.Number is 2601 or 2627)
+        {
+            return Result<EmployeeTitleDto>.Conflict(Duplicate);
+        }
 
-        var inUse = await db.EmployeeProfiles.CountAsync(p => p.Title == clean, ct);
+        var inUse = await db.EmployeeProfiles.CountAsync(p => p.TitleId == id, ct);
         return Result<EmployeeTitleDto>.Ok(new EmployeeTitleDto(id, clean, inUse));
     }
 
@@ -89,29 +70,46 @@ public class EmployeeTitles(OttomanDbContext db) : IEmployeeTitles
         var title = await db.EmployeeTitles.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
         if (title is null) return Result<bool>.NotFound("Titula nije pronađena.");
 
-        var inUse = await db.EmployeeProfiles.CountAsync(p => p.Title == title.Name, ct);
-        if (inUse > 0)
-            return Result<bool>.Conflict($"Titulu \"{title.Name}\" ima još {inUse} uposlenika. Promijenite im titulu pa je onda obrišite.");
+        var inUse = await db.EmployeeProfiles.CountAsync(p => p.TitleId == id, ct);
+        if (inUse > 0) return Result<bool>.Conflict(InUseMessage(title.Name, inUse));
 
-        await db.EmployeeTitles.Where(t => t.Id == id).ExecuteDeleteAsync(ct);
+        try
+        {
+            await db.EmployeeTitles.Where(t => t.Id == id).ExecuteDeleteAsync(ct);
+        }
+        catch (SqlException e) when (e.Number == 547)
+        {
+            // A barber got the title in the meantime: the foreign key refuses, and so do we.
+            return Result<bool>.Conflict(InUseMessage(title.Name, await db.EmployeeProfiles.CountAsync(p => p.TitleId == id, ct)));
+        }
         return Result<bool>.Ok(true);
     }
 
-    public async Task EnsureAsync(string name, CancellationToken ct)
+    public async Task<int> EnsureAsync(string name, CancellationToken ct)
     {
         var clean = Clean(name);
-        if (clean.Length == 0 || await db.EmployeeTitles.AnyAsync(t => t.Name == clean, ct)) return;
-        db.EmployeeTitles.Add(new EmployeeTitle { Name = clean });
+        if (clean.Length == 0) throw new ArgumentException("A title needs a name.", nameof(name));
+        // The default collation is case-insensitive, so "barber" finds "Barber".
+        var existing = await db.EmployeeTitles.Where(t => t.Name == clean).Select(t => (int?)t.Id).FirstOrDefaultAsync(ct);
+        if (existing is { } id) return id;
+
+        var title = new EmployeeTitle { Name = clean };
+        db.EmployeeTitles.Add(title);
         try
         {
             await db.SaveChangesAsync(ct);
+            return title.Id;
         }
         catch (DbUpdateException e) when (IsUniqueViolation(e))
         {
-            // Somebody added the same title a moment ago: that is the outcome we wanted.
-            db.ChangeTracker.Clear();
+            // Somebody added the same title a moment ago: use theirs.
+            db.Entry(title).State = EntityState.Detached;
+            return await db.EmployeeTitles.Where(t => t.Name == clean).Select(t => t.Id).FirstAsync(ct);
         }
     }
+
+    private static string InUseMessage(string name, int count) =>
+        $"Titulu \"{name}\" ima još {count} uposlenika. Promijenite im titulu pa je onda obrišite.";
 
     private static string Clean(string name) => string.Join(' ', name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 

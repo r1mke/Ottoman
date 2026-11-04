@@ -98,6 +98,7 @@ void main() {
           'lastName': 'Begić',
           'fullName': 'Kerim Begić',
           'title': 'Master Barber',
+          'titleId': 3,
           'bio': null,
           'photoUrl': null,
           'isActive': true,
@@ -112,6 +113,8 @@ void main() {
       expect(e.fullName, 'Kerim Begić');
       expect(e.serviceIds, [1, 2]);
       expect(e.email, isNull);
+      expect(e.title, 'Master Barber');
+      expect(e.titleId, 3);
     },
   );
 }
