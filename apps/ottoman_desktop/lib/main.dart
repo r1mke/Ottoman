@@ -14,7 +14,7 @@ Future<void> main() async {
 
   // The sidebar, tables and dialogs need room: below this size the layout would overflow.
   await windowManager.ensureInitialized();
-  await windowManager.setMinimumSize(const Size(1024, 680));
+  await windowManager.setMinimumSize(const Size(1100, 720));
 
   // The desktop app is for staff only; clients use the mobile app.
   final auth = AuthController(
