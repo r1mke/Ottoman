@@ -23,15 +23,17 @@ docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 
 Bez `ASPNETCORE_ENVIRONMENT` u `deploy/.env` compose pokreće API u **Production** okruženju bez demo podataka (`SEED_DEMO_DATA` je podrazumijevano `false`); `.env.example` zato za lokalni demo postavlja `ASPNETCORE_ENVIRONMENT=Development` i `SEED_DEMO_DATA=true`. SQL Server, RabbitMQ (i management) i Mailpit slušaju samo na `127.0.0.1`; API (port 5080) je dostupan i drugim uređajima u mreži (telefon).
 
-Demo korisnici (samo kad je `SEED_DEMO_DATA=true`): `kerim@ottoman.local`, `tarik@ottoman.local` (zaposlenici), `klijent@ottoman.local` (klijent); lozinka `SEED_DEMO_PASSWORD`. Admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`.
-
 ### Pristupni podaci za testiranje
+
+Vrijednosti iz `deploy/.env.example` (lokalni demo, `SEED_DEMO_DATA=true`). Ako `deploy/.env` postavlja druge lozinke, vrijede te.
 
 | Uloga | Aplikacija | Korisničko ime (e-mail) | Lozinka |
 |---|---|---|---|
-| Administrator | desktop | `SEED_ADMIN_EMAIL` (`admin@ottoman.local`) | `SEED_ADMIN_PASSWORD` iz `.env` |
-| Zaposlenik | mobile | `kerim@ottoman.local`, `tarik@ottoman.local` | `SEED_DEMO_PASSWORD` iz `.env` (primjer: `Test123!`) |
-| Klijent | mobile | `klijent@ottoman.local` | `SEED_DEMO_PASSWORD` iz `.env` |
+| Administrator | desktop | `admin@ottoman.local` | `ChangeMe_Admin1!` |
+| Zaposlenik (frizer) | mobile (i desktop) | `kerim@ottoman.local`, `tarik@ottoman.local`, `adin@ottoman.local` | `Test123!` |
+| Klijent | mobile | `klijent@ottoman.local` | `Test123!` |
+
+To su razvojne vrijednosti (`SEED_ADMIN_PASSWORD`, `SEED_DEMO_PASSWORD`); u produkciji API odbija start s demo podacima ili lozinkom iz primjera.
 
 Stvarne vrijednosti `.env` datoteke isporučuju se odvojeno, u arhivi `.env-tajne.zip` (lozinka arhive se šalje zasebno); u repozitoriju je samo `deploy/.env.example`. Probna kartica za Stripe sandbox: `4242 4242 4242 4242`, bilo koji budući datum i CVC.
 
