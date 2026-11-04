@@ -16,7 +16,13 @@ Map<String, dynamic> _client(String id, String name, {bool blocked = false}) =>
       'phone': '061 111 222',
       'registeredAtUtc': '2030-01-01T10:00:00Z',
       'isBlocked': blocked,
+      // Ana chose to zoom her picture: the server sends it already cropped.
+      if (id == 'c1') 'photoUrl': _anaPhoto,
+      if (id == 'c1') 'photoZoom': 2.0,
     };
+
+const _anaPhoto =
+    'https://res.cloudinary.com/demo/image/upload/c_thumb,g_face,w_512,h_512,z_0.5,q_auto,f_auto/ottoman/accounts/ana';
 
 class _Api implements HttpClientAdapter {
   final requests = <RequestOptions>[];
@@ -148,6 +154,13 @@ void main() {
     expect(find.byKey(const Key('blocked_c1')), findsNothing);
     // Every client has an avatar: their own picture, or a drawn one.
     expect(find.byKey(const Key('client_avatar_c1')), findsOneWidget);
+    // The list shows the client's own crop (zoom 2 -> z_0.5).
+    expect(
+      tester
+          .widget<PersonAvatar>(find.byKey(const Key('client_avatar_c1')))
+          .photoUrl,
+      contains('z_0.5,'),
+    );
   });
 
   testWidgets('a blocked client is flagged in the list', (tester) async {
@@ -192,6 +205,12 @@ void main() {
 
       expect(api.to('GET', '/api/v1/clients/c1'), hasLength(1));
       expect(find.byKey(const Key('client_name')), findsOneWidget);
+      expect(
+        tester
+            .widget<PersonAvatar>(find.byKey(const Key('client_detail_avatar')))
+            .photoUrl,
+        _anaPhoto,
+      );
       expect(
         tester.widget<Text>(find.byKey(const Key('stat_value_visits'))).data,
         '3',

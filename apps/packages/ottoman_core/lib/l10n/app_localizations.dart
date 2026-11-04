@@ -3355,6 +3355,12 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Promijeni sliku'**
   String get changePhoto;
+
+  /// No description provided for @adjustPicture.
+  ///
+  /// In bs, this message translates to:
+  /// **'Namjesti sliku'**
+  String get adjustPicture;
 }
 
 class _AppLocalizationsDelegate

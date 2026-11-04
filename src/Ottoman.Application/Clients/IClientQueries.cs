@@ -9,7 +9,8 @@ public record ClientListItem(
     string? Phone,
     DateTime RegisteredAtUtc,
     bool IsBlocked,
-    string? PhotoUrl = null);
+    string? PhotoUrl = null,
+    double PhotoZoom = 1.0);
 
 /// <summary>What the salon has done with this client, counted from reservations and orders (not self-reported).</summary>
 public record ClientStats(
@@ -35,7 +36,9 @@ public record ClientDetail(
     bool IsBlocked,
     ClientStats Stats,
     IReadOnlyList<ClientReservationRow> Reservations,
-    IReadOnlyList<ClientOrderRow> Orders);
+    IReadOnlyList<ClientOrderRow> Orders,
+    string? PhotoUrl = null,
+    double PhotoZoom = 1.0);
 
 public interface IClientQueries
 {

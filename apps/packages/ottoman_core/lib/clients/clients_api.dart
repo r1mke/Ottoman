@@ -101,6 +101,8 @@ class ClientDetail {
     required this.reservations,
     required this.orders,
     this.phone,
+    this.photoUrl,
+    this.photoZoom = 1.0,
   });
 
   final String id;
@@ -112,6 +114,10 @@ class ClientDetail {
   final ClientStats stats;
   final List<ClientReservation> reservations;
   final List<ClientOrder> orders;
+
+  /// The client's own picture, already cropped at [photoZoom] (1 to 2) around the face.
+  final String? photoUrl;
+  final double photoZoom;
 
   factory ClientDetail.fromJson(Map<String, dynamic> j) => ClientDetail(
     id: j['id'] as String,
@@ -127,6 +133,8 @@ class ClientDetail {
     orders: (j['orders'] as List)
         .map((e) => ClientOrder.fromJson(e as Map<String, dynamic>))
         .toList(),
+    photoUrl: j['photoUrl'] as String?,
+    photoZoom: (j['photoZoom'] as num?)?.toDouble() ?? 1.0,
   );
 }
 

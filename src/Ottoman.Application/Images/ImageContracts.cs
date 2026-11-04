@@ -52,9 +52,16 @@ public interface IImageAttachments
     Task<Result<bool>> ClearSalonLogoAsync(CancellationToken ct);
     Task<Result<bool>> SetServiceImageAsync(int serviceId, Stream content, CancellationToken ct);
     Task<Result<bool>> ClearServiceImageAsync(int serviceId, CancellationToken ct);
-    /// <param name="onAccount">The caller's own picture when they have no barber profile (the admin): kept on the account.</param>
-    Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct, bool onAccount = false);
+    /// <param name="onAccount">The caller's own picture when they have no barber profile (a client, the admin): kept on the account.</param>
+    /// <param name="zoom">How close the new picture crops around the face (1 to 2, already checked); null = the default 1.</param>
+    Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct, bool onAccount = false, double? zoom = null);
     Task<Result<bool>> ClearEmployeePhotoAsync(string employeeId, CancellationToken ct, bool onAccount = false);
+
+    /// <summary>
+    /// Changes how close the caller's current picture crops around the face (1 to 2, already checked), on the barber
+    /// profile or, without one, on the account. Conflict when there is no picture to adjust.
+    /// </summary>
+    Task<Result<bool>> SetOwnPhotoZoomAsync(string userId, double zoom, CancellationToken ct);
 }
 
 public static class ImageRules
@@ -70,6 +77,24 @@ public static class ImageRules
     public const double MaxZoom = 2.0;
 
     public static bool ValidZoom(double? zoom) => zoom is null || (zoom >= MinZoom && zoom <= MaxZoom);
+
+    public const string ZoomMessage = "Zoom mora biti između 1 i 2.";
+
+    /// <summary>
+    /// Reads the optional zoom sent as a form field next to an uploaded picture. Always the invariant format
+    /// ("1.5"), whatever the server's culture. Blank means "not given" (null, valid); anything that is not a number
+    /// from 1 to 2 is invalid.
+    /// </summary>
+    public static bool TryParseZoom(string? raw, out double? zoom)
+    {
+        zoom = null;
+        if (string.IsNullOrWhiteSpace(raw)) return true;
+        if (!double.TryParse(raw.Trim(), System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var value) || !ValidZoom(value))
+            return false;
+        zoom = value;
+        return true;
+    }
 
     /// <summary>
     /// A square avatar centred on the face Cloudinary detects. Zoom 1..2 is how close to crop (Cloudinary's

@@ -195,29 +195,46 @@ public class ImageAttachments(
 
     // --------------------------------------------------------------- employees
 
-    public Task<Result<bool>> SetEmployeePhotoAsync(string employeeId, Stream content, CancellationToken ct, bool onAccount = false) =>
-        ReplaceEmployeeAsync(employeeId, content, onAccount, ct);
+    public Task<Result<bool>> SetEmployeePhotoAsync(
+        string employeeId, Stream content, CancellationToken ct, bool onAccount = false, double? zoom = null) =>
+        ReplaceEmployeeAsync(employeeId, content, onAccount, zoom ?? ImageRules.MinZoom, ct);
 
     public Task<Result<bool>> ClearEmployeePhotoAsync(string employeeId, CancellationToken ct, bool onAccount = false) =>
-        ReplaceEmployeeAsync(employeeId, null, onAccount, ct);
+        ReplaceEmployeeAsync(employeeId, null, onAccount, ImageRules.MinZoom, ct);
 
-    private async Task<Result<bool>> ReplaceEmployeeAsync(string employeeId, Stream? content, bool onAccount, CancellationToken ct)
+    /// <summary>A new picture starts from the zoom sent with it (default 1); removing it resets the zoom to 1.</summary>
+    private async Task<Result<bool>> ReplaceEmployeeAsync(
+        string employeeId, Stream? content, bool onAccount, double zoom, CancellationToken ct)
     {
         // An account without a barber profile (a client, the admin) keeps its picture on the account itself.
         if (onAccount && !await db.EmployeeProfiles.AnyAsync(p => p.UserId == employeeId, ct))
             return await ReplaceAsync(
                 async () => await db.Users.Where(u => u.Id == employeeId).Select(u => new KeyRow(u.PhotoKey)).FirstOrDefaultAsync(ct),
-                key => db.Users.Where(u => u.Id == employeeId).ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key), ct),
+                key => db.Users.Where(u => u.Id == employeeId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key).SetProperty(x => x.PhotoZoom, zoom), ct),
                 content, "ottoman/accounts", ct);
-        return await ReplaceBarberAsync(employeeId, content, ct);
-    }
-
-    private Task<Result<bool>> ReplaceBarberAsync(string employeeId, Stream? content, CancellationToken ct) =>
-        ReplaceAsync(
+        return await ReplaceAsync(
             async () => await db.EmployeeProfiles.Where(p => p.UserId == employeeId).Select(p => new KeyRow(p.PhotoKey)).FirstOrDefaultAsync(ct),
             key => db.EmployeeProfiles.Where(p => p.UserId == employeeId)
-                .ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key).SetProperty(x => x.PhotoZoom, 1.0), ct),
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoKey, key).SetProperty(x => x.PhotoZoom, zoom), ct),
             content, "ottoman/employees", ct);
+    }
+
+    public async Task<Result<bool>> SetOwnPhotoZoomAsync(string userId, double zoom, CancellationToken ct)
+    {
+        // One conditional statement each: the zoom only lands on a picture that is still there.
+        var rows = await db.EmployeeProfiles.Where(p => p.UserId == userId && p.PhotoKey != null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoZoom, zoom), ct);
+        if (rows == 1) return Result<bool>.Ok(true);
+        if (await db.EmployeeProfiles.AnyAsync(p => p.UserId == userId, ct)) return Result<bool>.Conflict(NoPictureMessage);
+
+        rows = await db.Users.Where(u => u.Id == userId && u.PhotoKey != null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.PhotoZoom, zoom), ct);
+        if (rows == 1) return Result<bool>.Ok(true);
+        return await db.Users.AnyAsync(u => u.Id == userId, ct)
+            ? Result<bool>.Conflict(NoPictureMessage)
+            : Result<bool>.NotFound();
+    }
 
     // ----------------------------------------------------------------- helpers
 
@@ -228,6 +245,8 @@ public class ImageAttachments(
     private sealed record Prepared(MemoryStream? Buffer, string? Hash, string? Error);
 
     private const string SamePictureMessage = "Ta slika je već dodana. Odaberite drugu.";
+
+    private const string NoPictureMessage = "Prvo dodajte sliku.";
 
     /// <summary>Upload first, switch the column in one statement, then delete the old picture (a failure only leaves an orphan).</summary>
     private async Task<Result<bool>> ReplaceAsync(

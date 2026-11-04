@@ -94,3 +94,12 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
         RuleFor(x => x.Phone).BosnianPhone().WithName("Telefon");
     }
 }
+
+public class UpdatePhotoZoomRequestValidator : AbstractValidator<UpdatePhotoZoomRequest>
+{
+    public UpdatePhotoZoomRequestValidator()
+    {
+        RuleFor(x => x.PhotoZoom).NotNull().WithMessage(Ottoman.Application.Images.ImageRules.ZoomMessage)
+            .Must(Ottoman.Application.Images.ImageRules.ValidZoom).WithMessage(Ottoman.Application.Images.ImageRules.ZoomMessage);
+    }
+}

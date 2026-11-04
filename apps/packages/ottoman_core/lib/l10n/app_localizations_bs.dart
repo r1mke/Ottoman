@@ -1729,4 +1729,7 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get changePhoto => 'Promijeni sliku';
+
+  @override
+  String get adjustPicture => 'Namjesti sliku';
 }

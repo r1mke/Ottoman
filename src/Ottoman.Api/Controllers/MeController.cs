@@ -40,12 +40,19 @@ public class MeController(IAuthService auth, IEmployeeService employees, IImageA
     [RejectOversizedUpload]
     [RequestSizeLimit(ImageUpload.RequestLimit)]
     [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
-    public async Task<ActionResult<UserDto>> SetPhoto(IFormFile file, CancellationToken ct)
+    public async Task<ActionResult<UserDto>> SetPhoto(IFormFile file, [FromForm] string? zoom, CancellationToken ct)
     {
+        // The optional zoom comes as a form field next to the file, always in the invariant format ("1.5").
+        if (!ImageRules.TryParseZoom(zoom, out var photoZoom)) return ZoomProblem();
         await using var stream = file.OpenReadStream();
-        var set = await images.SetEmployeePhotoAsync(User.UserId(), stream, ct, onAccount: true);
+        var set = await images.SetEmployeePhotoAsync(User.UserId(), stream, ct, onAccount: true, zoom: photoZoom);
         return await Fresh(set, ct);
     }
+
+    /// <summary>How close the caller's current picture crops around the face, without uploading it again.</summary>
+    [HttpPut("photo/zoom")]
+    public async Task<ActionResult<UserDto>> SetPhotoZoom(UpdatePhotoZoomRequest request, CancellationToken ct) =>
+        await Fresh(await images.SetOwnPhotoZoomAsync(User.UserId(), request.PhotoZoom!.Value, ct), ct);
 
     [HttpDelete("photo")]
     public async Task<ActionResult<UserDto>> ClearPhoto(CancellationToken ct)
@@ -61,6 +68,13 @@ public class MeController(IAuthService auth, IEmployeeService employees, IImageA
         var me = await auth.GetProfileAsync(User.UserId(), ct);
         return me is null ? NotFound() : me;
     }
+
+    private BadRequestObjectResult ZoomProblem() => BadRequest(new ValidationProblemDetails(
+        new Dictionary<string, string[]> { ["zoom"] = [ImageRules.ZoomMessage] })
+    {
+        Title = "Podaci nisu ispravni.",
+        Status = StatusCodes.Status400BadRequest,
+    });
 
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest request, CancellationToken ct)

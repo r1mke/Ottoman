@@ -35,8 +35,10 @@ class GalleryPhotoChooser extends PhotoChooser {
   }
 }
 
-/// The account's own picture with buttons to set, replace or remove it. Every change goes to the server at once,
-/// which checks the file (only real JPEG, PNG or WebP up to 5 MB).
+/// The account's own picture with buttons to set, replace, adjust or remove it. Every change goes to the server at
+/// once, which checks the file (only real JPEG, PNG or WebP up to 5 MB). A new picture is uploaded first and then
+/// opened in the zoom editor, so the preview is the server's real crop around the face; the zoom button opens the
+/// same editor for the current picture.
 class ProfilePhoto extends StatefulWidget {
   const ProfilePhoto({
     super.key,
@@ -69,7 +71,29 @@ class _ProfilePhotoState extends State<ProfilePhoto> {
   Future<void> _change() async {
     final picked = await widget.chooser.choose();
     if (picked == null || !mounted) return;
-    await _run(() => widget.auth.setOwnPhoto(picked.bytes, picked.name));
+    var uploaded = false;
+    await _run(() async {
+      await widget.auth.setOwnPhoto(picked.bytes, picked.name);
+      uploaded = true;
+    });
+    if (uploaded && mounted) await _adjust();
+  }
+
+  /// Opens the zoom editor on the current picture and saves the zoom only when it changed.
+  Future<void> _adjust() async {
+    final user = widget.auth.user;
+    final url = user?.photoUrl;
+    if (user == null || url == null || url.isEmpty) return;
+    final current = user.photoZoom ?? AvatarZoom.min;
+    final chosen = await showAvatarZoomSheet(
+      context,
+      photoUrl: url,
+      zoom: current,
+      gender: user.gender,
+      seed: user.id,
+    );
+    if (chosen == null || chosen == current || !mounted) return;
+    await _run(() => widget.auth.setOwnPhotoZoom(chosen));
   }
 
   Future<void> _remove() async {
@@ -116,6 +140,13 @@ class _ProfilePhotoState extends State<ProfilePhoto> {
                   icon: const Icon(Icons.photo_camera_outlined, size: 20),
                   onPressed: _busy ? null : _change,
                 ),
+                if (hasPhoto)
+                  IconButton(
+                    key: const Key('photo_zoom'),
+                    tooltip: t.adjustPicture,
+                    icon: const Icon(Icons.zoom_in, size: 20),
+                    onPressed: _busy ? null : _adjust,
+                  ),
                 if (hasPhoto)
                   IconButton(
                     key: const Key('photo_remove'),

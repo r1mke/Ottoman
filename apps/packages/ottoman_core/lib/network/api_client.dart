@@ -153,9 +153,13 @@ class _AuthInterceptor extends Interceptor {
 }
 
 /// Multipart body for the image endpoints. The server decides the real type from the bytes.
-FormData imageForm(List<int> bytes, String filename) => FormData.fromMap({
-  'file': MultipartFile.fromBytes(bytes, filename: filename),
-});
+/// A picture upload. [zoom] (an avatar's crop, 1 to 2) goes along as a form field in the invariant format the
+/// server expects ("1.5"); left out, the server uses its default.
+FormData imageForm(List<int> bytes, String filename, {double? zoom}) =>
+    FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+      if (zoom != null) 'zoom': zoom.toString(),
+    });
 
 /// A fresh random key for one user intention (one tap on "Order" or "Book"). Reuse it for retries of that same
 /// attempt, never for a different one.

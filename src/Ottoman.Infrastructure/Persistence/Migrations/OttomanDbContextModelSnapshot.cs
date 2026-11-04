@@ -1589,6 +1589,11 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.Property<string>("PhotoKey")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<double>("PhotoZoom")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(1.0);
+
                     b.Property<DateTime>("RegisteredAtUtc")
                         .HasColumnType("datetime2");
 

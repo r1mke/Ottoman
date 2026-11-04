@@ -65,6 +65,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.LastName).HasMaxLength(100);
             e.Property(x => x.Gender).HasConversion<string>().HasMaxLength(10);
             e.Property(x => x.Bio).HasMaxLength(500);
+            e.Property(x => x.PhotoZoom).HasDefaultValue(1.0);
         });
 
         b.Entity<EmployeeProfile>(e =>

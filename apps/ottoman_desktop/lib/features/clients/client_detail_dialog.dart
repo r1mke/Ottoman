@@ -77,6 +77,14 @@ class _ClientDetailDialogState extends State<ClientDetailDialog> {
               children: [
                 Row(
                   children: [
+                    // The client's own picture, already cropped at the zoom they chose.
+                    PersonAvatar(
+                      key: const Key('client_detail_avatar'),
+                      photoUrl: c.photoUrl,
+                      seed: c.id,
+                      radius: 26,
+                    ),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

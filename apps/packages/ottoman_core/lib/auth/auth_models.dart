@@ -19,11 +19,11 @@ class AppUser {
   final String? phone;
   final List<String> roles;
 
-  /// Only barbers have these: their photo, and "Male" / "Female" for the default avatar.
+  /// The account's own picture (already cropped around the face), and "Male" / "Female" for the default avatar.
   final String? photoUrl;
   final String? gender;
 
-  /// A barber's own text about themselves and how close their avatar crops around the face (1 to 2).
+  /// The own text about themselves (staff), and how close the picture crops around the face (1 to 2; any role).
   final String? bio;
   final double? photoZoom;
 

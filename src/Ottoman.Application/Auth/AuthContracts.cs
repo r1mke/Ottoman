@@ -16,6 +16,9 @@ public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 public record UpdateProfileRequest(string FirstName, string LastName, string? Phone);
 
+/// <summary>How close the caller's current picture crops around the face, 1 (Cloudinary's default) to 2.</summary>
+public record UpdatePhotoZoomRequest(double? PhotoZoom);
+
 public record UserDto(
     string Id,
     string Email,

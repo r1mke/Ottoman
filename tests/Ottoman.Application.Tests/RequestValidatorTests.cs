@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Ottoman.Application.Auth;
 using Ottoman.Application.Employees;
 using Ottoman.Application.Reports;
 using Ottoman.Application.Reviews;
@@ -15,6 +16,19 @@ public class RequestValidatorTests
         v.Validate(new HideRequest(true)).IsValid.Should().BeTrue();
         v.Validate(new HideRequest(false)).IsValid.Should().BeTrue();
         v.Validate(new HideRequest(null)).IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public void A_photo_zoom_is_required_and_from_one_to_two()
+    {
+        var v = new UpdatePhotoZoomRequestValidator();
+        v.Validate(new UpdatePhotoZoomRequest(1.0)).IsValid.Should().BeTrue();
+        v.Validate(new UpdatePhotoZoomRequest(1.6)).IsValid.Should().BeTrue();
+        v.Validate(new UpdatePhotoZoomRequest(2.0)).IsValid.Should().BeTrue();
+        v.Validate(new UpdatePhotoZoomRequest(null)).IsValid.Should().BeFalse();
+        v.Validate(new UpdatePhotoZoomRequest(0.5)).IsValid.Should().BeFalse();
+        v.Validate(new UpdatePhotoZoomRequest(2.5)).IsValid.Should().BeFalse();
+        v.Validate(new UpdatePhotoZoomRequest(double.NaN)).IsValid.Should().BeFalse();
     }
 
     [Fact]

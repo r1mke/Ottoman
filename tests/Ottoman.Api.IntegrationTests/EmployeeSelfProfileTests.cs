@@ -27,6 +27,13 @@ public class EmployeeSelfProfileTests(ApiFixture api)
         return (barber, http);
     }
 
+    private static MultipartFormDataContent Picture(string? zoom)
+    {
+        var form = Picture();
+        if (zoom is not null) form.Add(new StringContent(zoom), "zoom");
+        return form;
+    }
+
     private static MultipartFormDataContent Picture()
     {
         var bytes = new byte[64];
@@ -217,5 +224,90 @@ public class EmployeeSelfProfileTests(ApiFixture api)
 
         (await admin.PutAsJsonAsync($"/api/v1/employees/{barber.Id}",
             new UpdateEmployeeRequest("Selma", "Brijač", null, "Barber", null, true, null, 3.0))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_client_zooms_their_picture_when_uploading_and_later_and_the_admin_sees_the_same_crop()
+    {
+        var (_, auth) = await api.CreateClient().NewClient();
+        var client = api.CreateClient().As(auth);
+
+        var set = await client.PutAsync("/api/v1/me/photo", Picture("1.5"));
+        set.StatusCode.Should().Be(HttpStatusCode.OK);
+        var me = (await set.Content.ReadFromJsonAsync<UserDto>())!;
+        me.PhotoZoom.Should().Be(1.5);
+        me.PhotoUrl.Should().Contain("c_thumb,g_face,w_512,h_512,z_0.67,");
+
+        var zoomed = await client.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(2.0));
+        zoomed.StatusCode.Should().Be(HttpStatusCode.OK);
+        me = (await zoomed.Content.ReadFromJsonAsync<UserDto>())!;
+        me.PhotoZoom.Should().Be(2.0);
+        me.PhotoUrl.Should().Contain("z_0.5,");
+        (await client.GetFromJsonAsync<UserDto>("/api/v1/me"))!.PhotoZoom.Should().Be(2.0);
+
+        // The admin's list and the client's detail show the same crop.
+        var admin = await Admin();
+        var listed = (await admin.GetFromJsonAsync<Ottoman.Application.Common.PagedResult<Ottoman.Application.Clients.ClientListItem>>(
+            $"/api/v1/clients?search={Uri.EscapeDataString(auth.User.Email)}"))!.Items.Single();
+        listed.PhotoUrl.Should().Be(me.PhotoUrl);
+        listed.PhotoZoom.Should().Be(2.0);
+        var detail = (await admin.GetFromJsonAsync<Ottoman.Application.Clients.ClientDetail>($"/api/v1/clients/{auth.User.Id}"))!;
+        detail.PhotoUrl.Should().Be(me.PhotoUrl);
+        detail.PhotoZoom.Should().Be(2.0);
+
+        // A new picture without a zoom starts from the default crop; removing it resets the zoom too.
+        var replaced = (await (await client.PutAsync("/api/v1/me/photo", Picture())).Content.ReadFromJsonAsync<UserDto>())!;
+        replaced.PhotoZoom.Should().Be(1.0);
+        replaced.PhotoUrl.Should().Contain("z_1,");
+        await client.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(1.4));
+        var removed = (await (await client.DeleteAsync("/api/v1/me/photo")).Content.ReadFromJsonAsync<UserDto>())!;
+        removed.PhotoUrl.Should().BeNull();
+        removed.PhotoZoom.Should().Be(1.0);
+
+        // Nothing to adjust without a picture.
+        (await client.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(1.5)))
+            .StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task A_zoom_outside_one_to_two_or_not_a_number_is_refused_and_changes_nothing()
+    {
+        var (_, auth) = await api.CreateClient().NewClient();
+        var client = api.CreateClient().As(auth);
+        var first = (await (await client.PutAsync("/api/v1/me/photo", Picture("1.2"))).Content.ReadFromJsonAsync<UserDto>())!;
+
+        foreach (var bad in new[] { "0.5", "2.5", "1,5", "abc", "NaN" })
+            (await client.PutAsync("/api/v1/me/photo", Picture(bad))).StatusCode.Should().Be(HttpStatusCode.BadRequest, bad);
+        (await client.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(0.9))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await client.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(2.1))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await client.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(null))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        // A valid zoom does not let a fake picture in: the file is still checked by its first bytes.
+        var html = new ByteArrayContent("<html>"u8.ToArray());
+        html.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        (await client.PutAsync("/api/v1/me/photo", new MultipartFormDataContent { { html, "file", "evil.png" }, { new StringContent("1.5"), "zoom" } }))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var me = (await client.GetFromJsonAsync<UserDto>("/api/v1/me"))!;
+        me.PhotoUrl.Should().Be(first.PhotoUrl);
+        me.PhotoZoom.Should().Be(1.2);
+
+        (await api.CreateClient().PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(1.5)))
+            .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task A_barber_can_use_the_same_zoom_route_for_their_own_picture()
+    {
+        var admin = await Admin();
+        var (barber, http) = await NewBarber(admin);
+        (await http.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(1.5)))
+            .StatusCode.Should().Be(HttpStatusCode.Conflict);
+
+        var set = (await (await http.PutAsync("/api/v1/me/photo", Picture("1.8"))).Content.ReadFromJsonAsync<UserDto>())!;
+        set.PhotoZoom.Should().Be(1.8);
+        var me = (await (await http.PutAsJsonAsync("/api/v1/me/photo/zoom", new UpdatePhotoZoomRequest(1.6))).Content.ReadFromJsonAsync<UserDto>())!;
+        me.PhotoZoom.Should().Be(1.6);
+        (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{barber.Id}"))!.PhotoUrl.Should().Contain("z_0.63,");
     }
 }

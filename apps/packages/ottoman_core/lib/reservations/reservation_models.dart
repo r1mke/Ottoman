@@ -160,6 +160,7 @@ class ClientItem {
     this.registeredAtUtc,
     this.isBlocked = false,
     this.photoUrl,
+    this.photoZoom = 1.0,
   });
 
   final String id;
@@ -168,7 +169,10 @@ class ClientItem {
   final String? phone;
   final DateTime? registeredAtUtc;
   final bool isBlocked;
+
+  /// The client's own picture, already cropped at [photoZoom] (1 to 2) around the face.
   final String? photoUrl;
+  final double photoZoom;
 
   factory ClientItem.fromJson(Map<String, dynamic> j) => ClientItem(
     id: j['id'] as String,
@@ -180,5 +184,6 @@ class ClientItem {
         : DateTime.parse(j['registeredAtUtc'] as String),
     isBlocked: (j['isBlocked'] as bool?) ?? false,
     photoUrl: j['photoUrl'] as String?,
+    photoZoom: (j['photoZoom'] as num?)?.toDouble() ?? 1.0,
   );
 }

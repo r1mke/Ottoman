@@ -122,3 +122,94 @@ class _AvatarZoomEditorState extends State<AvatarZoomEditor> {
     );
   }
 }
+
+/// Opens the [AvatarZoomEditor] in a bottom sheet with Cancel and Save, starting from [zoom]. Returns the chosen zoom
+/// on Save, null when the person backs out. Nothing is sent to the server here: the caller saves it.
+Future<double?> showAvatarZoomSheet(
+  BuildContext context, {
+  required String photoUrl,
+  double zoom = AvatarZoom.min,
+  String? gender,
+  String? seed,
+}) => showModalBottomSheet<double>(
+  context: context,
+  isScrollControlled: true,
+  showDragHandle: true,
+  builder: (_) => _AvatarZoomSheet(
+    photoUrl: photoUrl,
+    zoom: zoom.clamp(AvatarZoom.min, AvatarZoom.max),
+    gender: gender,
+    seed: seed,
+  ),
+);
+
+class _AvatarZoomSheet extends StatefulWidget {
+  const _AvatarZoomSheet({
+    required this.photoUrl,
+    required this.zoom,
+    this.gender,
+    this.seed,
+  });
+
+  final String photoUrl;
+  final double zoom;
+  final String? gender;
+  final String? seed;
+
+  @override
+  State<_AvatarZoomSheet> createState() => _AvatarZoomSheetState();
+}
+
+class _AvatarZoomSheetState extends State<_AvatarZoomSheet> {
+  late double _zoom = widget.zoom;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              t.adjustPicture,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 16),
+            AvatarZoomEditor(
+              photoUrl: widget.photoUrl,
+              zoom: _zoom,
+              gender: widget.gender,
+              seed: widget.seed,
+              onChangeEnd: (z) => setState(() => _zoom = z),
+            ),
+            const SizedBox(height: 16),
+            // Expanded: some app themes give buttons an infinite minimum width (full-width buttons).
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    key: const Key('avatar_zoom_cancel'),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(t.cancel),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    key: const Key('avatar_zoom_save'),
+                    onPressed: () => Navigator.pop(context, _zoom),
+                    child: Text(t.save),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

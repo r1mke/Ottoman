@@ -282,15 +282,15 @@ public class AuthService(
 
     private async Task<UserDto> ToDtoAsync(AppUser user)
     {
-        // Barbers carry their photo and gender so the sign-in screen can show them as a card; the admin's
-        // are kept on the account.
+        // Barbers carry their photo and gender so the sign-in screen can show them as a card; a client's and the
+        // admin's (picture with its zoom, gender, bio) are kept on the account.
         var profile = await db.EmployeeProfiles.AsNoTracking().Where(p => p.UserId == user.Id)
             .Select(p => new { p.PhotoKey, p.PhotoZoom, p.Gender, p.Bio }).FirstOrDefaultAsync();
         return new UserDto(
             user.Id, user.Email!, user.FirstName, user.LastName, user.PhoneNumber,
             (await users.GetRolesAsync(user)).ToList(),
-            profile is null ? images.AvatarUrl(user.PhotoKey, 1.0) : images.AvatarUrl(profile.PhotoKey, profile.PhotoZoom),
+            profile is null ? images.AvatarUrl(user.PhotoKey, user.PhotoZoom) : images.AvatarUrl(profile.PhotoKey, profile.PhotoZoom),
             (profile?.Gender ?? user.Gender)?.ToString(),
-            profile is null ? user.Bio : profile.Bio, profile?.PhotoZoom);
+            profile is null ? user.Bio : profile.Bio, profile?.PhotoZoom ?? user.PhotoZoom);
     }
 }

@@ -107,4 +107,89 @@ void main() {
 
     expect(chosen, [1.0]);
   });
+
+  group('showAvatarZoomSheet', () {
+    Future<List<double?>> openSheet(WidgetTester tester, double zoom) async {
+      final results = <double?>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('bs'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () async => results.add(
+                  await showAvatarZoomSheet(
+                    context,
+                    photoUrl: _url,
+                    zoom: zoom,
+                    seed: 'c1',
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      return results;
+    }
+
+    testWidgets(
+      'starts from the current zoom and Save returns the chosen one',
+      (tester) async {
+        final results = await openSheet(tester, 1.8);
+        expect(find.text('Namjesti sliku'), findsOneWidget);
+        expect(find.text('1.8×'), findsOneWidget);
+        expect(
+          tester
+              .widget<PersonAvatar>(
+                find.byKey(const Key('avatar_zoom_preview')),
+              )
+              .photoUrl,
+          contains(',z_0.56,'),
+        );
+
+        await tester.tap(find.byKey(const Key('avatar_zoom_reset')));
+        await tester.pumpAndSettle();
+        // The preview follows the choice before anything is saved.
+        expect(
+          tester
+              .widget<PersonAvatar>(
+                find.byKey(const Key('avatar_zoom_preview')),
+              )
+              .photoUrl,
+          contains(',z_1,'),
+        );
+        await tester.tap(find.byKey(const Key('avatar_zoom_save')));
+        await tester.pumpAndSettle();
+
+        expect(results, [1.0]);
+        expect(find.text('Namjesti sliku'), findsNothing);
+      },
+    );
+
+    testWidgets('Cancel returns nothing', (tester) async {
+      final results = await openSheet(tester, 1.2);
+      await tester.tap(find.byKey(const Key('avatar_zoom_cancel')));
+      await tester.pumpAndSettle();
+      expect(results, [null]);
+    });
+  });
+
+  test(
+    'an upload carries the zoom as an invariant form field only when given',
+    () {
+      final withZoom = imageForm([1, 2, 3], 'a.png', zoom: 1.5);
+      expect(
+        {for (final f in withZoom.fields) f.key: f.value},
+        {'zoom': '1.5'},
+      );
+      expect(withZoom.files.single.value.filename, 'a.png');
+      expect(imageForm([1], 'b.png').fields, isEmpty);
+    },
+  );
 }

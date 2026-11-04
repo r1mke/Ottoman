@@ -36,4 +36,39 @@ public class ImageRulesAvatarTests
     [InlineData(double.NaN, false)]
     public void Only_one_to_two_is_a_valid_zoom(double? zoom, bool valid) =>
         ImageRules.ValidZoom(zoom).Should().Be(valid);
+
+    [Theory]
+    [InlineData(null, true, null)]
+    [InlineData("", true, null)]
+    [InlineData("  ", true, null)]
+    [InlineData("1", true, 1.0)]
+    [InlineData("1.5", true, 1.5)]
+    [InlineData(" 2 ", true, 2.0)]
+    [InlineData("1,5", false, null)]     // never the local format: "1,5" would silently become 15 in some cultures
+    [InlineData("0.99", false, null)]
+    [InlineData("2.01", false, null)]
+    [InlineData("NaN", false, null)]
+    [InlineData("Infinity", false, null)]
+    [InlineData("abc", false, null)]
+    public void A_zoom_form_field_is_blank_or_an_invariant_number_from_one_to_two(string? raw, bool ok, double? expected)
+    {
+        ImageRules.TryParseZoom(raw, out var zoom).Should().Be(ok);
+        zoom.Should().Be(expected);
+    }
+
+    [Fact]
+    public void A_zoom_form_field_reads_the_same_whatever_the_server_culture()
+    {
+        var before = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("bs-Latn-BA");
+            ImageRules.TryParseZoom("1.25", out var zoom).Should().BeTrue();
+            zoom.Should().Be(1.25);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = before;
+        }
+    }
 }

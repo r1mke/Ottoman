@@ -12,7 +12,16 @@ import 'package:ottoman_mobile/features/profile/profile_photo.dart';
 class _Api implements HttpClientAdapter {
   final requests = <RequestOptions>[];
   String? photoUrl;
+  double photoZoom = 1.0;
   int photoStatus = 200;
+
+  /// Like the server: the crop value in the URL is the inverse of the zoom.
+  String? get croppedUrl => photoUrl == null
+      ? null
+      : '$photoUrl'.replaceFirst(
+          'z_1',
+          'z_${(1 / photoZoom).toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '')}',
+        );
 
   Iterable<RequestOptions> to(String method, String pathEnd) =>
       requests.where((r) => r.method == method && r.path.endsWith(pathEnd));
@@ -24,7 +33,8 @@ class _Api implements HttpClientAdapter {
     'lastName': 'Anić',
     'phone': null,
     'roles': ['Client'],
-    'photoUrl': photoUrl,
+    'photoUrl': croppedUrl,
+    'photoZoom': photoZoom,
   };
 
   @override
@@ -44,6 +54,9 @@ class _Api implements HttpClientAdapter {
         'accessTokenExpiresUtc': DateTime.utc(2030).toIso8601String(),
         'user': user,
       };
+    } else if (p.endsWith('/me/photo/zoom')) {
+      photoZoom = ((o.data as Map)['photoZoom'] as num).toDouble();
+      body = user;
     } else if (p.endsWith('/me/photo')) {
       if (photoStatus != 200) {
         status = photoStatus;
@@ -53,7 +66,10 @@ class _Api implements HttpClientAdapter {
           'detail': 'Datoteka nije slika.',
         };
       } else {
-        photoUrl = o.method == 'PUT' ? 'https://img/ana.jpg' : null;
+        photoUrl = o.method == 'PUT'
+            ? 'https://res.cloudinary.com/demo/image/upload/c_thumb,g_face,z_1,q_auto/ana'
+            : null;
+        photoZoom = 1.0;
         body = user;
       }
     } else if (p.endsWith('/me')) {
@@ -134,6 +150,11 @@ void main() {
     final put = api.to('PUT', '/me/photo').single;
     expect(put.data, isA<FormData>());
     expect((put.data as FormData).files.single.value.filename, 'ana.jpg');
+    // The new picture opens in the zoom editor; backing out keeps the default crop.
+    expect(find.byKey(const Key('avatar_zoom_slider')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('avatar_zoom_cancel')));
+    await tester.pumpAndSettle();
+    expect(api.to('PUT', '/me/photo/zoom'), isEmpty);
     expect(find.byKey(const Key('photo_remove')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('photo_remove')));
@@ -159,5 +180,85 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Datoteka nije slika.'), findsOneWidget);
     expect(find.byKey(const Key('photo_remove')), findsNothing);
+  });
+
+  testWidgets('a new picture is zoomed in the editor before it is shown', (
+    tester,
+  ) async {
+    final api = await _openAccount(tester, _Chooser());
+
+    await tester.tap(find.byKey(const Key('photo_change')));
+    await tester.pumpAndSettle();
+    expect(api.to('PUT', '/me/photo'), hasLength(1));
+    // The editor previews the server's crop of the uploaded picture.
+    expect(
+      tester
+          .widget<PersonAvatar>(find.byKey(const Key('avatar_zoom_preview')))
+          .photoUrl,
+      contains('z_1,'),
+    );
+
+    await tester.drag(
+      find.byKey(const Key('avatar_zoom_slider')),
+      const Offset(2000, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('2.0×'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('avatar_zoom_save')));
+    await tester.pumpAndSettle();
+
+    final zoom = api.to('PUT', '/me/photo/zoom').single;
+    expect(zoom.data, {'photoZoom': 2.0});
+    expect(
+      tester
+          .widget<PersonAvatar>(find.byKey(const Key('profile_photo')))
+          .photoUrl,
+      contains('z_0.5,'),
+    );
+  });
+
+  testWidgets('the zoom button adjusts the current picture; an unchanged zoom '
+      'sends nothing', (tester) async {
+    final api = await _openAccount(tester, _Chooser());
+    expect(find.byKey(const Key('photo_zoom')), findsNothing);
+    await tester.tap(find.byKey(const Key('photo_change')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('avatar_zoom_cancel')));
+    await tester.pumpAndSettle();
+
+    // Saving the zoom it already has is not a change.
+    await tester.tap(find.byKey(const Key('photo_zoom')));
+    await tester.pumpAndSettle();
+    expect(find.text('1.0×'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('avatar_zoom_save')));
+    await tester.pumpAndSettle();
+    expect(api.to('PUT', '/me/photo/zoom'), isEmpty);
+
+    await tester.tap(find.byKey(const Key('photo_zoom')));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('avatar_zoom_slider')),
+      const Offset(2000, 0),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('avatar_zoom_save')));
+    await tester.pumpAndSettle();
+    expect(api.to('PUT', '/me/photo/zoom').single.data, {'photoZoom': 2.0});
+
+    // Opening it again starts from the saved zoom; reset brings it back to 1.
+    await tester.tap(find.byKey(const Key('photo_zoom')));
+    await tester.pumpAndSettle();
+    expect(find.text('2.0×'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('avatar_zoom_reset')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('avatar_zoom_save')));
+    await tester.pumpAndSettle();
+    expect(api.to('PUT', '/me/photo/zoom').last.data, {'photoZoom': 1.0});
+    expect(
+      tester
+          .widget<PersonAvatar>(find.byKey(const Key('profile_photo')))
+          .photoUrl,
+      contains('z_1,'),
+    );
   });
 }

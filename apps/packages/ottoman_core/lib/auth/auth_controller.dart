@@ -126,11 +126,22 @@ class AuthController extends ChangeNotifier {
   }
 
   /// Sets or replaces the signed-in account's own picture (client, barber or admin) and refreshes the user.
-  Future<void> setOwnPhoto(List<int> bytes, String filename) async {
+  /// [zoom] is how close it crops around the face (1 to 2); left out, a new picture starts from 1.
+  Future<void> setOwnPhoto(
+    List<int> bytes,
+    String filename, {
+    double? zoom,
+  }) async {
     await api.put<dynamic>(
       '/api/v1/me/photo',
-      body: imageForm(bytes, filename),
+      body: imageForm(bytes, filename, zoom: zoom),
     );
+    await reloadUser();
+  }
+
+  /// Changes how close the account's current picture crops around the face (1 to 2) and refreshes the user.
+  Future<void> setOwnPhotoZoom(double zoom) async {
+    await api.put<dynamic>('/api/v1/me/photo/zoom', body: {'photoZoom': zoom});
     await reloadUser();
   }
 
