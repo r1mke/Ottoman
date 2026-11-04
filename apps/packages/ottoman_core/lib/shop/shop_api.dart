@@ -312,6 +312,22 @@ class ShopApi {
     await _api.get<Map<String, dynamic>>('/api/v1/orders/$id'),
   );
 
+  /// After the card sheet: the server asks the processor itself and finalises the order. The app never records a
+  /// payment on its own.
+  Future<ShopOrder> confirmPayment(int id) async => ShopOrder.fromJson(
+    await _api.post<Map<String, dynamic>>('/api/v1/orders/$id/confirm-payment'),
+  );
+
+  /// Whether the server could verify the order as paid now. Never throws: if it cannot tell yet, the webhook
+  /// finishes the job and the order shows as paid a little later.
+  Future<bool> verifyPaid(int id) async {
+    try {
+      return (await confirmPayment(id)).isPaid;
+    } on Object {
+      return false; // offline, not confirmed yet, an odd answer: the webhook settles it
+    }
+  }
+
   Future<ShopOrder> cancelOrder(int id) async => ShopOrder.fromJson(
     await _api.post<Map<String, dynamic>>('/api/v1/orders/$id/cancel'),
   );

@@ -18,6 +18,7 @@ public class OrderService(
     OttomanDbContext db,
     IPaymentGateway gateway,
     PendingRefunds refunds,
+    PaymentFinalizer finalizer,
     IOutbox outbox,
     IOptions<PaymentOptions> paymentOptions,
     TimeProvider clock,
@@ -188,7 +189,14 @@ public class OrderService(
         db.Payments.Add(payment);
         await db.SaveChangesAsync(ct);
 
-        await db.Orders.Where(o => o.Id == order.Id).ExecuteUpdateAsync(s => s.SetProperty(o => o.PaymentId, payment.Id), ct);
+        // One payment per order: attach only if the order has none yet, otherwise drop this one again.
+        var attached = await db.Orders.Where(o => o.Id == order.Id && o.PaymentId == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.PaymentId, payment.Id), ct);
+        if (attached == 0)
+        {
+            await db.Payments.Where(p => p.Id == payment.Id).ExecuteDeleteAsync(ct);
+            throw new InvalidOperationException($"Order {order.Id} already has a payment.");
+        }
         return intent.ClientSecret;
     }
 
@@ -249,7 +257,8 @@ public class OrderService(
                 o.DeliveryAddress, o.Note, o.TotalPrice,
                 o.CreatedAtUtc, o.ExpiresUtc, o.PaidAtUtc, o.FulfilledAtUtc, o.CancelledAtUtc, o.CancelledBy,
                 o.Items.OrderBy(i => i.Id).Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice, i.Quantity, i.UnitPrice * i.Quantity)).ToList(),
-                secret);
+                secret,
+                IsPaid: OrderStateMachine.IsPaid(o.Status, o.PaymentMethod, pay?.Status));
         }).ToList();
     }
 
@@ -269,6 +278,39 @@ public class OrderService(
         if (!await CloseAsync(id, order.Status, OrderStatus.Cancelled, by, ct))
             return Result<OrderDto>.Conflict("Narudžba je u međuvremenu promijenjena. Osvježite prikaz.");
 
+        return Result<OrderDto>.Ok((await LoadDtoAsync(actor, id, ct))!);
+    }
+
+    public async Task<Result<OrderDto>> ConfirmPaymentAsync(Actor actor, int id, CancellationToken ct)
+    {
+        // Only the owner, only their card order with a payment; anyone else sees "not found".
+        var order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, ct);
+        if (order is null || !actor.IsClient || order.ClientId != actor.UserId || order.PaymentMethod != PaymentMethod.Card || order.PaymentId is null)
+            return Result<OrderDto>.NotFound("Narudžba nije pronađena.");
+        var payment = await db.Payments.AsNoTracking().FirstAsync(p => p.Id == order.PaymentId, ct);
+
+        // Already settled (webhook first, or a second tap): nothing to do, the answer is the same.
+        if (payment.Status is not (PaymentStatus.Pending or PaymentStatus.Failed))
+            return Result<OrderDto>.Ok((await LoadDtoAsync(actor, id, ct))!);
+
+        PaymentIntentState intent;
+        try
+        {
+            intent = await gateway.GetIntentAsync(payment.ProviderRef, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            log.LogWarning(ex, "Could not read payment {Ref} of order {OrderId} from the processor", payment.ProviderRef, id);
+            return Result<OrderDto>.Conflict("Plaćanje trenutno ne možemo provjeriti. Status narudžbe se osvježava čim stigne potvrda.");
+        }
+
+        if (intent.OrderId is { } forOrder && forOrder != id)
+            return Result<OrderDto>.Invalid("Plaćanje ne pripada ovoj narudžbi.");
+        if (!intent.Succeeded)
+            return Result<OrderDto>.Conflict("Plaćanje još nije potvrđeno.");
+
+        var outcome = await finalizer.SucceededAsync(payment.Id, payment.ProviderRef, intent.AmountMinor, intent.Currency, ct);
+        if (outcome == FinalizeOutcome.Rejected) return Result<OrderDto>.Invalid("Iznos plaćanja ne odgovara narudžbi.");
         return Result<OrderDto>.Ok((await LoadDtoAsync(actor, id, ct))!);
     }
 

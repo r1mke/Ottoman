@@ -67,6 +67,14 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       final fresh = await widget.shop.order(o.id);
       if (!fresh.awaitsPayment) return;
       final result = await widget.cardPayment.pay(fresh);
+      // Success or an unclear error: the server verifies with the processor (the app never records a payment).
+      if (result == CardPaymentResult.paid ||
+          result == CardPaymentResult.failed) {
+        if (await widget.shop.verifyPaid(o.id)) {
+          say(t.paymentSucceeded);
+          return;
+        }
+      }
       say(switch (result) {
         CardPaymentResult.paid => t.paymentSucceeded,
         CardPaymentResult.cancelled => t.paymentCancelledPayLater,
@@ -147,6 +155,15 @@ class OrderCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
+                if (o.isPaid)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Chip(
+                      key: Key('paid_${o.id}'),
+                      label: Text(t.paymentStatusSucceeded),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
                 Chip(
                   label: Text(
                     orderStatusLabel(t, o.status),

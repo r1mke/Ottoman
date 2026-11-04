@@ -50,6 +50,11 @@ public class OrdersController(IOrderService orders) : ControllerBase
     public async Task<ActionResult<OrderDto>> Cancel(int id, CancellationToken ct) =>
         this.ToActionResult(await orders.CancelAsync(User.ToActor(), id, ct));
 
+    /// <summary>After the card sheet: the server verifies the payment with the processor and finalises the order.</summary>
+    [HttpPost("{id:int}/confirm-payment")]
+    public async Task<ActionResult<OrderDto>> ConfirmPayment(int id, CancellationToken ct) =>
+        this.ToActionResult(await orders.ConfirmPaymentAsync(User.ToActor(), id, ct));
+
     [HttpPost("{id:int}/fulfil")]
     [Authorize(Policy = Policies.AdminOnly)]
     public async Task<ActionResult<OrderDto>> Fulfil(int id, CancellationToken ct) =>

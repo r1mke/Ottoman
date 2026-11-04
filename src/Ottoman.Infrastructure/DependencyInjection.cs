@@ -123,6 +123,7 @@ public static class DependencyInjection
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentWebhookHandler, PaymentWebhookHandler>();
         services.AddScoped<PendingRefunds>();
+        services.AddScoped<PaymentFinalizer>();
         if (string.IsNullOrWhiteSpace(config[$"{PaymentOptions.Section}:SecretKey"]))
         {
             // No processor configured: nothing is ever charged, and orders only become paid via a signed webhook.

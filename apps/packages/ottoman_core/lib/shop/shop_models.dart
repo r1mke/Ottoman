@@ -155,6 +155,7 @@ class ShopOrder {
     this.note,
     this.expiresUtc,
     this.paymentClientSecret,
+    this.isPaid = false,
   });
 
   final int id;
@@ -174,7 +175,10 @@ class ShopOrder {
   /// Only present on the owner's own unpaid card order.
   final String? paymentClientSecret;
 
-  bool get awaitsPayment => status == OrderStatus.pendingPayment;
+  /// The money is in, as decided by the server (card payment verified, or paid at pickup).
+  final bool isPaid;
+
+  bool get awaitsPayment => status == OrderStatus.pendingPayment && !isPaid;
 
   /// What the order's owner may still do: withdraw unpaid orders (and pay-on-receipt ones).
   bool get clientCanCancel =>
@@ -204,6 +208,7 @@ class ShopOrder {
         .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
         .toList(),
     paymentClientSecret: j['paymentClientSecret'] as String?,
+    isPaid: (j['isPaid'] as bool?) ?? false,
   );
 }
 

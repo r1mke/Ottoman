@@ -557,6 +557,77 @@ public class ShopTests(ApiFixture api)
         after.PaymentStatus.Should().Be(PaymentStatus.Failed);
     }
 
+    // ------------------------------------------------------------------ server-side payment confirmation
+
+    private OfflinePaymentGateway Gateway => api.Services.GetRequiredService<OfflinePaymentGateway>();
+
+    private async Task<int> OrderPaidEvents(int orderId)
+    {
+        await using var scope = api.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<OttomanDbContext>().OutboxMessages
+            .CountAsync(m => m.Type == "OrderPaid" && m.PayloadJson.Contains($"\"OrderId\":{orderId},"));
+    }
+
+    [Fact]
+    public async Task After_the_card_sheet_the_server_verifies_the_payment_itself_and_pays_the_order_once()
+    {
+        var p = await NewProduct(price: 10m, stock: 4);
+        var (_, client) = await NewClient();
+        var o = await Dto(await Order(client, p, 1));
+        o.IsPaid.Should().BeFalse();
+        var intent = await RefOf(o.Id);
+
+        // The app says "done" before the card went through: the processor says no, nothing changes.
+        (await client.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.Status.Should().Be(OrderStatus.PendingPayment);
+
+        Gateway.MarkSucceeded(intent);
+        var res = await client.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null);
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        var paid = await Dto(res);
+        paid.Status.Should().Be(OrderStatus.Placed);
+        paid.IsPaid.Should().BeTrue();
+        paid.PaymentStatus.Should().Be(PaymentStatus.Succeeded);
+        paid.PaymentClientSecret.Should().BeNull("a paid order offers nothing to pay");
+
+        // A second tap and the webhook arriving later change nothing.
+        (await client.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await Webhook(Event("payment_intent.succeeded", intent, 511))).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await OrderPaidEvents(o.Id)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Only_the_owner_confirms_and_a_wrong_amount_never_pays()
+    {
+        var p = await NewProduct(price: 10m, stock: 4);
+        var (_, client) = await NewClient();
+        var (_, stranger) = await NewClient();
+        var o = await Dto(await Order(client, p, 1));
+        var intent = await RefOf(o.Id);
+
+        (await stranger.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await (await Admin()).PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        Gateway.MarkSucceeded(intent, amountMinor: 100);
+        (await client.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var after = (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!;
+        after.Status.Should().Be(OrderStatus.PendingPayment);
+        after.IsPaid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task A_pay_at_pickup_order_counts_as_paid_once_it_was_handed_over()
+    {
+        var p = await NewProduct(stock: 4);
+        var (_, client) = await NewClient();
+        var o = await Dto(await Order(client, p, 1, PaymentMethod.OnReceipt));
+        o.IsPaid.Should().BeFalse();
+        (await client.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        (await (await Admin()).PostAsync($"/api/v1/orders/{o.Id}/fulfil", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.IsPaid.Should().BeTrue();
+    }
+
     // ------------------------------------------------------------------ expiry
 
     [Fact]
@@ -631,6 +702,7 @@ public class ShopTests(ApiFixture api)
             throw new NotSupportedException();
         public Task RefundAsync(string providerRef, CancellationToken ct) => throw new HttpRequestException("Stripe returned 500");
         public Task CancelIntentAsync(string providerRef, CancellationToken ct) => Task.CompletedTask;
+        public Task<PaymentIntentState> GetIntentAsync(string providerRef, CancellationToken ct) => throw new NotSupportedException();
     }
 
     private async Task<(OrderDto Order, string Intent, HttpClient Client)> ExpiredCardOrder()
@@ -652,7 +724,8 @@ public class ShopTests(ApiFixture api)
         await using var scope = api.Services.CreateAsyncScope();
         var sp = scope.ServiceProvider;
         var refunds = ActivatorUtilities.CreateInstance<PendingRefunds>(sp, new RefundsDownGateway());
-        var handler = ActivatorUtilities.CreateInstance<PaymentWebhookHandler>(sp, refunds);
+        var finalizer = ActivatorUtilities.CreateInstance<PaymentFinalizer>(sp, refunds);
+        var handler = ActivatorUtilities.CreateInstance<PaymentWebhookHandler>(sp, finalizer);
         return await handler.HandleAsync(body, StripeWebhook.Header(body, ApiFixture.WebhookSecret, DateTimeOffset.UtcNow), default);
     }
 

@@ -54,7 +54,9 @@ public record OrderDto(
     string? CancelledBy,
     IReadOnlyList<OrderItemDto> Items,
     /// <summary>Present only on the owner's pending card orders: lets the app confirm the payment.</summary>
-    string? PaymentClientSecret = null);
+    string? PaymentClientSecret = null,
+    /// <summary>The money is in (decided by the server: card payment succeeded, or paid at pickup).</summary>
+    bool IsPaid = false);
 
 public record OrderFilter(OrderStatus? Status = null, string? ClientId = null);
 
@@ -65,6 +67,12 @@ public interface IOrderService
     Task<Result<OrderDto>> GetAsync(Actor actor, int id, CancellationToken ct);
     Task<Result<OrderDto>> CancelAsync(Actor actor, int id, CancellationToken ct);
     Task<Result<OrderDto>> FulfilAsync(Actor actor, int id, CancellationToken ct);
+
+    /// <summary>
+    /// The app reports that the card sheet finished. The server asks the processor itself and finalises the order
+    /// through the same idempotent path as the webhook; nothing the app says is taken as proof of payment.
+    /// </summary>
+    Task<Result<OrderDto>> ConfirmPaymentAsync(Actor actor, int id, CancellationToken ct);
 
     /// <summary>Releases stock of card orders that were not paid in time. Returns how many were closed.</summary>
     Task<int> ExpireUnpaidAsync(CancellationToken ct);

@@ -24,12 +24,23 @@ public class PaymentOptions
 
 public record PaymentIntentResult(string ProviderRef, string ClientSecret);
 
+/// <summary>What the processor says about a payment, read on the server (never taken from the app).</summary>
+/// <param name="Status">Stripe's status, e.g. "succeeded", "processing", "requires_payment_method".</param>
+/// <param name="OrderId">The order the intent was created for (its metadata), if any.</param>
+public record PaymentIntentState(string ProviderRef, string Status, long AmountMinor, string Currency, int? OrderId)
+{
+    public bool Succeeded => Status == "succeeded";
+}
+
 /// <summary>The card processor behind a port, so the shop logic is testable without network calls.</summary>
 public interface IPaymentGateway
 {
     Task<PaymentIntentResult> CreateIntentAsync(int orderId, long amountMinor, string currency, CancellationToken ct);
     Task RefundAsync(string providerRef, CancellationToken ct);
     Task CancelIntentAsync(string providerRef, CancellationToken ct);
+
+    /// <summary>Reads the payment from the processor (server-side verification of what the app reports).</summary>
+    Task<PaymentIntentState> GetIntentAsync(string providerRef, CancellationToken ct);
 }
 
 public enum PaymentEventKind

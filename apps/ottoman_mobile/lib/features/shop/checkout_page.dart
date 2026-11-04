@@ -92,7 +92,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         if (result == CardPaymentResult.failed) {
           // Not a plain cancel: the card may have been charged. Only the server knows; never withdraw such an
           // order here. Unpaid, it waits in "My orders" and closes on its own when it expires.
-          if (await _isPaid(order)) {
+          if (await widget.shop.verifyPaid(order.id)) {
             result = CardPaymentResult.paid;
           } else {
             messenger.showSnackBar(
@@ -103,6 +103,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
             );
             return;
           }
+        }
+        if (result == CardPaymentResult.paid) {
+          // The sheet says it went through; the server checks with the processor and finalises the order. If it
+          // cannot confirm yet (still processing), the webhook does, so the customer is not held up here.
+          await widget.shop.verifyPaid(order.id);
         }
         if (result != CardPaymentResult.paid) {
           await _withdraw(order);
@@ -125,16 +130,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  /// Asks the server whether the order was paid after all (the payment is recorded by the server, not the app).
-  Future<bool> _isPaid(ShopOrder order) async {
-    try {
-      final fresh = await widget.shop.order(order.id);
-      return fresh.status == OrderStatus.placed;
-    } on AppException {
-      return false;
     }
   }
 

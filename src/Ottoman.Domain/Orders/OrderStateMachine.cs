@@ -31,6 +31,13 @@ public static class OrderStateMachine
             : Transition.Deny("Narudžba mora biti zaprimljena (plaćena ili za plaćanje pri preuzimanju).");
     }
 
+    /// <summary>
+    /// Whether the money for the order is in: a card order once its payment succeeded (and was not refunded),
+    /// a pay-at-pickup order once it was handed over (paid at the counter).
+    /// </summary>
+    public static bool IsPaid(OrderStatus status, PaymentMethod method, PaymentStatus? payment) =>
+        method == PaymentMethod.Card ? payment == PaymentStatus.Succeeded : status == OrderStatus.Fulfilled;
+
     /// <summary>Whether a successful card payment should move the order forward.</summary>
     public static bool AcceptsPayment(OrderStatus status) => status == OrderStatus.PendingPayment;
 

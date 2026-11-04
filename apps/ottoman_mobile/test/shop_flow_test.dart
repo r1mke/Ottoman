@@ -63,6 +63,9 @@ class _Api implements HttpClientAdapter {
   /// What GET /orders/{id} returns; by default an unpaid card order.
   Map<String, dynamic>? orderDetail;
   int orderDetailStatus = 200;
+
+  /// What POST /orders/{id}/confirm-payment returns; by default "not confirmed yet".
+  Map<String, dynamic>? paidOnConfirm;
   List<Map<String, dynamic>> sections = [];
   int onSaleCount = 0;
   bool showCategoryBlock = true;
@@ -166,6 +169,14 @@ class _Api implements HttpClientAdapter {
       ];
     } else if (path.endsWith('/sections')) {
       body = sections;
+    } else if (path.endsWith('/confirm-payment')) {
+      // The server's own verification: it answers with the order as it now stands.
+      body =
+          paidOnConfirm ??
+          {
+            ..._order(status: 'PendingPayment', method: 'Card'),
+            'isPaid': false,
+          };
     } else if (RegExp(r'/orders/\d+$').hasMatch(path) && o.method == 'GET') {
       status = orderDetailStatus;
       body =
@@ -446,11 +457,19 @@ void main() {
     final card = _FakeCard(CardPaymentResult.paid);
     final api = await checkoutWithCard(tester, CardPaymentResult.paid, card);
 
-    final sent = api.last('POST', '/orders')!.data as Map<String, dynamic>;
+    final sent =
+        api.requests
+                .lastWhere(
+                  (r) => r.method == 'POST' && r.path.endsWith('/orders'),
+                )
+                .data
+            as Map<String, dynamic>;
     expect(sent['paymentMethod'], 'Card');
     expect(sent['fulfilment'], 'Pickup');
     expect(card.paid.single.paymentClientSecret, 'pi_1_secret_x');
     expect(find.text('Narudžba je zaprimljena.'), findsOneWidget);
+    // The app never records the payment itself: it asks the server to verify it.
+    expect(api.last('POST', '/orders/7/confirm-payment'), isNotNull);
   });
 
   testWidgets(
@@ -491,7 +510,10 @@ void main() {
     (tester) async {
       final card = _FakeCard(CardPaymentResult.failed);
       final api = await _openShop(tester, cardPayment: card);
-      api.orderDetail = _order(status: 'Placed', method: 'Card');
+      api.paidOnConfirm = {
+        ..._order(status: 'Placed', method: 'Card'),
+        'isPaid': true,
+      };
       api.createError = {
         ..._order(status: 'PendingPayment', method: 'Card'),
         'paymentClientSecret': 'pi_1_secret_x',
@@ -506,7 +528,7 @@ void main() {
       await tester.tap(find.byKey(const Key('confirm_order')));
       await tester.pumpAndSettle();
 
-      expect(api.last('GET', '/orders/7'), isNotNull);
+      expect(api.last('POST', '/orders/7/confirm-payment'), isNotNull);
       expect(api.last('POST', '/cancel'), isNull);
       expect(find.text('Narudžba je zaprimljena.'), findsOneWidget);
     },

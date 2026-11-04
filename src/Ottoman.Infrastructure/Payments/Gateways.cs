@@ -41,6 +41,20 @@ public class StripeGateway(HttpClient http, IOptions<PaymentOptions> options) : 
         using var _ = await SendAsync(request, ct);
     }
 
+    public async Task<PaymentIntentState> GetIntentAsync(string providerRef, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"v1/payment_intents/{Uri.EscapeDataString(providerRef)}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.Value.SecretKey);
+        using var doc = await SendAsync(request, ct);
+        var root = doc.RootElement;
+        var received = root.TryGetProperty("amount_received", out var r) && r.ValueKind == JsonValueKind.Number ? r.GetInt64() : 0;
+        var amount = received > 0 ? received : root.GetProperty("amount").GetInt64();
+        int? orderId = root.TryGetProperty("metadata", out var meta) && meta.TryGetProperty("orderId", out var o)
+                       && int.TryParse(o.GetString(), out var parsed) ? parsed : null;
+        return new PaymentIntentState(root.GetProperty("id").GetString()!, root.GetProperty("status").GetString()!,
+            amount, root.GetProperty("currency").GetString()!, orderId);
+    }
+
     private HttpRequestMessage Form(HttpMethod method, string path, Dictionary<string, string> fields)
     {
         var request = new HttpRequestMessage(method, path) { Content = new FormUrlEncodedContent(fields) };
@@ -67,13 +81,27 @@ public class OfflinePaymentGateway : IPaymentGateway
     public ConcurrentQueue<string> Refunds { get; } = new();
     public ConcurrentQueue<string> Cancelled { get; } = new();
     public ConcurrentQueue<(int OrderId, long AmountMinor, string Currency)> Created { get; } = new();
+    private readonly ConcurrentDictionary<string, PaymentIntentState> _intents = new();
 
     public Task<PaymentIntentResult> CreateIntentAsync(int orderId, long amountMinor, string currency, CancellationToken ct)
     {
         Created.Enqueue((orderId, amountMinor, currency));
         var id = $"pi_fake_{Guid.NewGuid():N}";
+        _intents[id] = new PaymentIntentState(id, "requires_payment_method", amountMinor, currency, orderId);
         return Task.FromResult(new PaymentIntentResult(id, $"{id}_secret_fake"));
     }
+
+    /// <summary>Nothing is ever charged offline; tests use this to play the part of a card that went through.</summary>
+    public void MarkSucceeded(string providerRef, long? amountMinor = null)
+    {
+        var intent = _intents[providerRef];
+        _intents[providerRef] = intent with { Status = "succeeded", AmountMinor = amountMinor ?? intent.AmountMinor };
+    }
+
+    public Task<PaymentIntentState> GetIntentAsync(string providerRef, CancellationToken ct) =>
+        _intents.TryGetValue(providerRef, out var intent)
+            ? Task.FromResult(intent)
+            : throw new HttpRequestException($"No such payment intent: {providerRef}");
 
     public Task RefundAsync(string providerRef, CancellationToken ct)
     {
