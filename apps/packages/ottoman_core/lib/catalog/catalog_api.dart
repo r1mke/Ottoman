@@ -119,6 +119,13 @@ class CatalogApi {
   Future<void> unlockEmployee(String id) =>
       _api.post<dynamic>('/api/v1/users/$id/unlock');
 
+  /// Sets a new password without the old one and ends every session of the barber. Admin only.
+  Future<void> setEmployeePassword(String id, String newPassword) =>
+      _api.post<dynamic>(
+        '/api/v1/users/$id/password',
+        body: {'newPassword': newPassword},
+      );
+
   Future<List<Employee>> employees({
     bool includeInactive = false,
     String? search,

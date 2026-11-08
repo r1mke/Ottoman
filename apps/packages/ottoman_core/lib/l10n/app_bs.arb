@@ -186,6 +186,16 @@
       }
     }
   },
+  "setPasswordTitle": "Izmijeni lozinku",
+  "setPasswordHint": "Nova lozinka za korisnika {name}. Stara lozinka nije potrebna; korisnik će se odjaviti sa svih uređaja.",
+  "@setPasswordHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "setPasswordDone": "Lozinka je promijenjena. Korisnik se mora ponovo prijaviti.",
   "orderCancelReason": "Razlog otkazivanja: {reason}",
   "@orderCancelReason": {
     "placeholders": {

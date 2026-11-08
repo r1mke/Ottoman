@@ -54,6 +54,21 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
     super.dispose();
   }
 
+  /// Edit never asks for a password; this sets a new one on request, without the old one.
+  Future<void> _changePassword() async {
+    final employee = widget.employee!;
+    final messenger = ScaffoldMessenger.of(context);
+    final t = AppLocalizations.of(context);
+    final done = await showSetPasswordDialog(
+      context,
+      name: '${employee.firstName} ${employee.lastName}',
+      save: (pw) => widget.catalog.setEmployeePassword(employee.id, pw),
+    );
+    if (done) {
+      messenger.showSnackBar(SnackBar(content: Text(t.setPasswordDone)));
+    }
+  }
+
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     setState(() {
@@ -190,6 +205,16 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
                   decoration: InputDecoration(labelText: t.bio),
                   maxLines: 2,
                 ),
+                if (!_isNew)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const Key('emp_change_password'),
+                      onPressed: _busy ? null : _changePassword,
+                      icon: const Icon(Icons.lock_reset_outlined, size: 18),
+                      label: Text(t.setPasswordTitle),
+                    ),
+                  ),
                 if (!_isNew)
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,

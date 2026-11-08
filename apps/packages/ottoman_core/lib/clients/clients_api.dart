@@ -180,6 +180,12 @@ class ClientsApi {
   Future<void> unlock(String id) =>
       _api.post<dynamic>('/api/v1/users/$id/unlock');
 
+  /// Sets a new password without the old one and ends every session of the client. Admin only.
+  Future<void> setPassword(String id, String newPassword) => _api.post<dynamic>(
+    '/api/v1/users/$id/password',
+    body: {'newPassword': newPassword},
+  );
+
   /// Blocking ends every session of the client at once.
   Future<ClientItem> setBlocked(String id, {required bool blocked}) async =>
       ClientItem.fromJson(

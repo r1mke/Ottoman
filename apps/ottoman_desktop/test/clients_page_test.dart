@@ -34,6 +34,7 @@ class _Api implements HttpClientAdapter {
   bool blocked = false;
   bool locked = false;
   int failBlockWith = 0;
+  bool weakPasswordRefused = false;
   int total = 2;
 
   Iterable<RequestOptions> to(String method, String pathEnd) =>
@@ -49,7 +50,19 @@ class _Api implements HttpClientAdapter {
     Object? body;
     var status = 200;
     final p = o.path;
-    if (p == '/api/v1/users/c1/unlock') {
+    if (p == '/api/v1/users/c1/password') {
+      if (weakPasswordRefused) {
+        status = 400;
+        body = {
+          'status': 400,
+          'title': 'Podaci nisu ispravni.',
+          'detail': 'Lozinka je prejednostavna.',
+        };
+      } else {
+        status = 204;
+        body = null;
+      }
+    } else if (p == '/api/v1/users/c1/unlock') {
       locked = false;
       body = {'id': 'c1', 'lockedUntilUtc': null};
     } else if (p.endsWith('/block') || p.endsWith('/unblock')) {
@@ -265,6 +278,83 @@ void main() {
     expect(api.to('POST', '/api/v1/clients/c1/unblock'), hasLength(1));
     expect(find.byKey(const Key('client_blocked_chip')), findsNothing);
   });
+
+  testWidgets(
+    'the admin sets a new password without the old one; the two fields must match',
+    (tester) async {
+      final api = await _open(tester);
+      await tester.tap(find.byKey(const Key('client_cell_c1')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('client_change_password')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('pw_current')),
+        findsNothing,
+        reason: 'the admin never types the old password',
+      );
+
+      await tester.enterText(find.byKey(const Key('setpw_new')), 'Weak');
+      await tester.tap(find.byKey(const Key('setpw_save')));
+      await tester.pumpAndSettle();
+      expect(
+        api.to('POST', '/password'),
+        isEmpty,
+        reason: 'a weak or empty second field is stopped on the form',
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('setpw_new')),
+        'Nova_Lozinka1!',
+      );
+      await tester.enterText(
+        find.byKey(const Key('setpw_repeat')),
+        'Drugacija1!',
+      );
+      await tester.tap(find.byKey(const Key('setpw_save')));
+      await tester.pumpAndSettle();
+      expect(find.text('Lozinke se ne podudaraju.'), findsOneWidget);
+      expect(api.to('POST', '/password'), isEmpty);
+
+      await tester.enterText(
+        find.byKey(const Key('setpw_repeat')),
+        'Nova_Lozinka1!',
+      );
+      await tester.tap(find.byKey(const Key('setpw_save')));
+      await tester.pumpAndSettle();
+
+      final sent = api.to('POST', '/api/v1/users/c1/password');
+      expect(sent, hasLength(1));
+      expect((sent.single.data as Map)['newPassword'], 'Nova_Lozinka1!');
+      expect(find.byKey(const Key('setpw_save')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a password the server refuses stays in the dialog with its message',
+    (tester) async {
+      final api = await _open(tester);
+      api.weakPasswordRefused = true;
+      await tester.tap(find.byKey(const Key('client_cell_c1')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('client_change_password')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('setpw_new')),
+        'Nova_Lozinka1!',
+      );
+      await tester.enterText(
+        find.byKey(const Key('setpw_repeat')),
+        'Nova_Lozinka1!',
+      );
+      await tester.tap(find.byKey(const Key('setpw_save')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('setpw_error')), findsOneWidget);
+      expect(find.text('Lozinka je prejednostavna.'), findsOneWidget);
+    },
+  );
 
   testWidgets('declining the question changes nothing', (tester) async {
     final api = await _open(tester);

@@ -471,6 +471,18 @@ class AppLocalizationsBs extends AppLocalizations {
   }
 
   @override
+  String get setPasswordTitle => 'Izmijeni lozinku';
+
+  @override
+  String setPasswordHint(String name) {
+    return 'Nova lozinka za korisnika $name. Stara lozinka nije potrebna; korisnik će se odjaviti sa svih uređaja.';
+  }
+
+  @override
+  String get setPasswordDone =>
+      'Lozinka je promijenjena. Korisnik se mora ponovo prijaviti.';
+
+  @override
   String orderCancelReason(String reason) {
     return 'Razlog otkazivanja: $reason';
   }

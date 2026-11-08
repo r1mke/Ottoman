@@ -298,4 +298,41 @@ void genderTests() {
     final saved = server.sent('PUT', '/employees/e1').single;
     expect((saved.data as Map)['gender'], 'Female');
   });
+
+  testWidgets(
+    'editing never asks for a password; Izmijeni lozinku sets one without the old',
+    (tester) async {
+      final server = await _open(tester);
+
+      // No password field in the edit form, and saving works without one.
+      expect(find.byKey(const Key('emp_password')), findsNothing);
+
+      final open = find.byKey(const Key('emp_change_password'));
+      await tester.ensureVisible(open);
+      await tester.tap(open);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pw_current')), findsNothing);
+
+      // Empty fields are validated only inside this dialog, and only when it is saved.
+      await tester.tap(find.byKey(const Key('setpw_save')));
+      await tester.pumpAndSettle();
+      expect(server.sent('POST', '/users/e1/password'), isEmpty);
+
+      await tester.enterText(
+        find.byKey(const Key('setpw_new')),
+        'Nova_Lozinka1!',
+      );
+      await tester.enterText(
+        find.byKey(const Key('setpw_repeat')),
+        'Nova_Lozinka1!',
+      );
+      await tester.tap(find.byKey(const Key('setpw_save')));
+      await tester.pumpAndSettle();
+
+      final sent = server.sent('POST', '/users/e1/password').single;
+      expect((sent.data as Map)['newPassword'], 'Nova_Lozinka1!');
+      expect(find.byKey(const Key('emp_save')), findsOneWidget);
+      expect(server.sent('PUT', '/employees/e1'), isEmpty);
+    },
+  );
 }

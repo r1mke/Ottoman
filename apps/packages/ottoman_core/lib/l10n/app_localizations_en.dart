@@ -472,6 +472,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get setPasswordTitle => 'Change password';
+
+  @override
+  String setPasswordHint(String name) {
+    return 'New password for $name. The old password is not needed; the user is signed out everywhere.';
+  }
+
+  @override
+  String get setPasswordDone =>
+      'Password changed. The user has to sign in again.';
+
+  @override
   String orderCancelReason(String reason) {
     return 'Reason for cancelling: $reason';
   }

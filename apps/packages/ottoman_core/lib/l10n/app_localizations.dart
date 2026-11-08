@@ -986,6 +986,24 @@ abstract class AppLocalizations {
   /// **'Narudžba #{id}'**
   String orderNumber(int id);
 
+  /// No description provided for @setPasswordTitle.
+  ///
+  /// In bs, this message translates to:
+  /// **'Izmijeni lozinku'**
+  String get setPasswordTitle;
+
+  /// No description provided for @setPasswordHint.
+  ///
+  /// In bs, this message translates to:
+  /// **'Nova lozinka za korisnika {name}. Stara lozinka nije potrebna; korisnik će se odjaviti sa svih uređaja.'**
+  String setPasswordHint(String name);
+
+  /// No description provided for @setPasswordDone.
+  ///
+  /// In bs, this message translates to:
+  /// **'Lozinka je promijenjena. Korisnik se mora ponovo prijaviti.'**
+  String get setPasswordDone;
+
   /// No description provided for @orderCancelReason.
   ///
   /// In bs, this message translates to:

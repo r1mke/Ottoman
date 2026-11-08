@@ -62,6 +62,19 @@ class _ClientDetailDialogState extends State<ClientDetailDialog> {
     }
   }
 
+  Future<void> _setPassword(ClientDetail c) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final t = AppLocalizations.of(context);
+    final done = await showSetPasswordDialog(
+      context,
+      name: c.fullName,
+      save: (pw) => widget.api.setPassword(c.id, pw),
+    );
+    if (done) {
+      messenger.showSnackBar(SnackBar(content: Text(t.setPasswordDone)));
+    }
+  }
+
   Future<void> _unlock(ClientDetail c) async {
     final unlocked = await unlockAccount(
       context,
@@ -142,6 +155,19 @@ class _ClientDetailDialogState extends State<ClientDetailDialog> {
                             style: const TextStyle(
                               color: WorkspaceColors.muted,
                             ),
+                          ),
+                          TextButton.icon(
+                            key: const Key('client_change_password'),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                            ),
+                            onPressed: _busy ? null : () => _setPassword(c),
+                            icon: const Icon(
+                              Icons.lock_reset_outlined,
+                              size: 18,
+                            ),
+                            label: Text(t.setPasswordTitle),
                           ),
                         ],
                       ),

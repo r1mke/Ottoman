@@ -186,6 +186,16 @@
       }
     }
   },
+  "setPasswordTitle": "Change password",
+  "setPasswordHint": "New password for {name}. The old password is not needed; the user is signed out everywhere.",
+  "@setPasswordHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "setPasswordDone": "Password changed. The user has to sign in again.",
   "orderCancelReason": "Reason for cancelling: {reason}",
   "@orderCancelReason": {
     "placeholders": {

@@ -1,3 +1,5 @@
+using FluentValidation;
+using Ottoman.Application.Auth;
 using Ottoman.Application.Common;
 
 namespace Ottoman.Application.Accounts;
@@ -16,6 +18,17 @@ public static class AccountLock
         lockoutEnabled && lockoutEnd is { } end && end.UtcDateTime > nowUtc ? end.UtcDateTime : null;
 }
 
+/// <summary>
+/// The admin picks a new password for a client or barber. The old password is never asked for (it is not the admin's);
+/// the app asks twice, but only the new value travels.
+/// </summary>
+public record AdminSetPasswordRequest(string NewPassword);
+
+public class AdminSetPasswordRequestValidator : AbstractValidator<AdminSetPasswordRequest>
+{
+    public AdminSetPasswordRequestValidator() => RuleFor(x => x.NewPassword).Strong();
+}
+
 /// <summary>Admin actions on any client's or barber's account. Admin-only at the HTTP edge.</summary>
 public interface IAccountAdmin
 {
@@ -24,4 +37,11 @@ public interface IAccountAdmin
     /// that are neither a client nor a barber (the admin's own account is not unlocked from here).
     /// </summary>
     Task<Result<AccountLockDto>> UnlockAsync(string id, CancellationToken ct);
+
+    /// <summary>
+    /// Sets a new password for a client or barber without the old one. Ends every session of that account and forgets
+    /// its push devices (as any password change does), and ends a sign-in lock. NotFound for unknown ids and for
+    /// accounts that are neither a client nor a barber; Invalid when the password breaks the strength policy.
+    /// </summary>
+    Task<Result<bool>> SetPasswordAsync(string id, string newPassword, CancellationToken ct);
 }

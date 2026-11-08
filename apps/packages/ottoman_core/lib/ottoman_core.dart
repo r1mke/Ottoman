@@ -40,6 +40,7 @@ export 'widgets/ottoman_logo.dart';
 export 'widgets/dialog_header.dart';
 export 'widgets/confirm_action.dart';
 export 'widgets/cancel_reason_dialog.dart';
+export 'widgets/set_password_dialog.dart';
 export 'validation/validators.dart';
 export 'gallery/gallery_models.dart';
 export 'gallery/gallery_api.dart';
