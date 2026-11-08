@@ -36,9 +36,7 @@ public class EmployeeSelfProfileTests(ApiFixture api)
 
     private static MultipartFormDataContent Picture()
     {
-        var bytes = new byte[64];
-        new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(bytes, 0);
-        BitConverter.GetBytes(Interlocked.Increment(ref _seq) + 90000).CopyTo(bytes, 8);
+        var bytes = TestImages.Png(Interlocked.Increment(ref _seq) + 90000);
         var file = new ByteArrayContent(bytes);
         file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         return new MultipartFormDataContent { { file, "file", "me.png" } };

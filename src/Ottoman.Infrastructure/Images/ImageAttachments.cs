@@ -36,7 +36,9 @@ public class ImageAttachments(
         if (await db.ProductImages.AnyAsync(i => i.ProductId == productId && i.ContentHash == prepared.Hash, ct))
             return Result<bool>.Conflict(SamePictureMessage);
 
-        var key = await store.UploadAsync(buffer, "ottoman/products", ct);
+        var stored = await StoreAsync(buffer, "ottoman/products", ct);
+        if (stored.Error is not null) return Result<bool>.Invalid(stored.Error);
+        var key = stored.Key!;
         try
         {
             db.ProductImages.Add(new ProductImage
@@ -88,7 +90,9 @@ public class ImageAttachments(
         if (await db.GalleryItems.AnyAsync(i => i.ContentHash == prepared.Hash, ct))
             return Result<int>.Conflict(SamePictureMessage);
 
-        var key = await store.UploadAsync(buffer, "ottoman/gallery", ct);
+        var stored = await StoreAsync(buffer, "ottoman/gallery", ct);
+        if (stored.Error is not null) return Result<int>.Invalid(stored.Error);
+        var key = stored.Key!;
         try
         {
             var item = new GalleryItem
@@ -144,7 +148,8 @@ public class ImageAttachments(
         var prepared = await PrepareAsync(content, ct);
         if (prepared.Error is not null) return Result<string>.Invalid(prepared.Error);
         using var buffer = prepared.Buffer!;
-        return Result<string>.Ok(await store.UploadAsync(buffer, "ottoman/announcements", ct));
+        var stored = await StoreAsync(buffer, "ottoman/announcements", ct);
+        return stored.Error is not null ? Result<string>.Invalid(stored.Error) : Result<string>.Ok(stored.Key!);
     }
 
     public Task DiscardImageAsync(string key) => TryDeleteAsync(key);
@@ -289,10 +294,27 @@ public class ImageAttachments(
         var prepared = await PrepareAsync(content, ct);
         if (prepared.Error is not null) return new UploadOutcome(null, prepared.Error);
         using var buffer = prepared.Buffer!;
-        return new UploadOutcome(await store.UploadAsync(buffer, folder, ct), null);
+        return await StoreAsync(buffer, folder, ct);
     }
 
-    /// <summary>Reads at most the allowed size and checks the real file type from its first bytes. The caller owns the buffer.</summary>
+    /// <summary>Sends checked bytes to the store; a file the image host cannot read comes back as an error, not a 500.</summary>
+    private async Task<UploadOutcome> StoreAsync(MemoryStream buffer, string folder, CancellationToken ct)
+    {
+        try
+        {
+            return new UploadOutcome(await store.UploadAsync(buffer, folder, ct), null);
+        }
+        catch (ImageRejectedException e)
+        {
+            log.LogInformation("The image store refused an upload to {Folder} as not a valid picture", folder);
+            return new UploadOutcome(null, e.Message);
+        }
+    }
+
+    /// <summary>
+    /// Reads at most the allowed size, checks the real file type from its first bytes and that the file is a whole
+    /// picture (not just a header or a cut-off download). The caller owns the buffer.
+    /// </summary>
     private async Task<Prepared> PrepareAsync(Stream content, CancellationToken ct)
     {
         var buffer = new MemoryStream();
@@ -304,8 +326,7 @@ public class ImageAttachments(
             if (buffer.Length > Options.MaxBytes) break;
         }
 
-        var head = buffer.GetBuffer().AsSpan(0, (int)Math.Min(buffer.Length, 16));
-        var problem = ImageRules.Check(buffer.Length, head, Options.MaxBytes);
+        var problem = ImageRules.CheckFile(buffer.GetBuffer().AsSpan(0, (int)buffer.Length), Options.MaxBytes);
         if (problem is not null)
         {
             buffer.Dispose();

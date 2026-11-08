@@ -29,6 +29,9 @@ public sealed class CloudinaryImageStore(HttpClient http, IOptions<ImageOptions>
 
         using var response = await http.PostAsync($"{o.CloudName}/image/upload", form, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
+        // 400 is Cloudinary's answer to a file it cannot read as a picture ("Invalid image file"); the caller turns it
+        // into a 400 for the user. Anything else (auth, rate limit, outage) is our problem and stays a server error.
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest) throw new ImageRejectedException(ImageRules.CorruptMessage);
         if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Cloudinary upload failed ({(int)response.StatusCode}).");
         using var doc = JsonDocument.Parse(body);
         return doc.RootElement.GetProperty("public_id").GetString()

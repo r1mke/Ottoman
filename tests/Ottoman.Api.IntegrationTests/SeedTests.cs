@@ -177,6 +177,7 @@ public class SeedTests(ApiFixture api)
 
         Ottoman.Application.Images.ImageRules.Detect(a).Should().Be("image/png");
         Ottoman.Application.Images.ImageRules.Check(a.Length, a, new Ottoman.Application.Images.ImageOptions().MaxBytes).Should().BeNull();
+        Ottoman.Application.Images.ImageRules.IsIntact(a).Should().BeTrue("the structural upload check accepts it too");
         a.Length.Should().BeLessThan(150_000, "small enough to upload quickly on every start");
         a.Should().Equal(PlaceholderImage.Create("Dandy Pomade"), "the same name always gives the same picture");
         a.Should().NotEqual(b, "different things look different");

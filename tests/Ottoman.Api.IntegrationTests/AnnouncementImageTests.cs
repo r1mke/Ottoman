@@ -9,7 +9,6 @@ namespace Ottoman.Api.IntegrationTests;
 [Collection("api")]
 public class AnnouncementImageTests(ApiFixture api)
 {
-    private static readonly byte[] PngHead = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
     private static int _seq;
 
     private async Task<HttpClient> Admin() =>
@@ -35,10 +34,7 @@ public class AnnouncementImageTests(ApiFixture api)
 
     private static byte[] Png()
     {
-        var bytes = new byte[64];
-        PngHead.CopyTo(bytes, 0);
-        BitConverter.GetBytes(Interlocked.Increment(ref _seq)).CopyTo(bytes, 8);
-        return bytes;
+        return TestImages.Png(Interlocked.Increment(ref _seq));
     }
 
     [Fact]

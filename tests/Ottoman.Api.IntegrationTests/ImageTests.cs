@@ -26,11 +26,13 @@ public class ImageTests(ApiFixture api)
 
     /// <summary>A distinct picture per call (the server refuses the same bytes twice for one product); pass the same
     /// <paramref name="unique"/> to get identical bytes.</summary>
-    private static byte[] Png(int length = 64, int? unique = null)
+    private static byte[] Png(int? unique = null) => TestImages.Png(unique ?? Interlocked.Increment(ref _pngSeq));
+
+    /// <summary>Too big to accept: a PNG signature followed by zeros (the size is checked before anything else).</summary>
+    private static byte[] Oversized(int length)
     {
         var bytes = new byte[length];
         PngHead.CopyTo(bytes, 0);
-        BitConverter.GetBytes(unique ?? Interlocked.Increment(ref _pngSeq)).CopyTo(bytes, 8);
         return bytes;
     }
 
@@ -131,7 +133,7 @@ public class ImageTests(ApiFixture api)
         var product = await NewProduct(admin);
         var before = Store.Uploaded.Count;
 
-        var res = await admin.PostAsync($"/api/v1/products/{product.Id}/images", Upload(Png(5 * 1024 * 1024 + 1)));
+        var res = await admin.PostAsync($"/api/v1/products/{product.Id}/images", Upload(Oversized(5 * 1024 * 1024 + 1)));
 
         res.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         Store.Uploaded.Count.Should().Be(before);
@@ -144,7 +146,7 @@ public class ImageTests(ApiFixture api)
         var product = await NewProduct(admin);
 
         var before = Store.Uploaded.Count;
-        var res = await admin.PostAsync($"/api/v1/products/{product.Id}/images", Upload(Png(7 * 1024 * 1024)));
+        var res = await admin.PostAsync($"/api/v1/products/{product.Id}/images", Upload(Oversized(7 * 1024 * 1024)));
 
         res.StatusCode.Should().Be(HttpStatusCode.RequestEntityTooLarge);
         Store.Uploaded.Count.Should().Be(before);

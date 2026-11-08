@@ -25,9 +25,7 @@ public class GalleryTests(ApiFixture api)
 
     private static MultipartFormDataContent Upload(int categoryId, string? employeeId = null, bool featured = false, string? caption = null, int? seed = null)
     {
-        var bytes = new byte[64];
-        new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(bytes, 0);
-        BitConverter.GetBytes(seed ?? Interlocked.Increment(ref _seq) + 70000).CopyTo(bytes, 8);
+        var bytes = TestImages.Png(seed ?? Interlocked.Increment(ref _seq) + 70000);
         var file = new ByteArrayContent(bytes);
         file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         var form = new MultipartFormDataContent
@@ -222,9 +220,7 @@ public class GalleryTests(ApiFixture api)
     public async Task The_admin_sets_and_removes_the_logo()
     {
         var admin = await Admin();
-        var bytes = new byte[64];
-        new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }.CopyTo(bytes, 0);
-        BitConverter.GetBytes(Interlocked.Increment(ref _seq) + 80000).CopyTo(bytes, 8);
+        var bytes = TestImages.Png(Interlocked.Increment(ref _seq) + 80000);
         var file = new ByteArrayContent(bytes);
         file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
 
