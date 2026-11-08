@@ -9,10 +9,15 @@ Dokumentacija preporuka: [`recommender-dokumentacija.md`](recommender-dokumentac
 
 ## Brzi početak
 
+Konfiguracija je u `deploy/.env`. U repozitoriju je umjesto njega `deploy/.env-tajne.zip` (upute fakulteta): **raspakujte ga lozinkom sa DL sistema tako da `.env` bude u istom folderu, `deploy/.env`**, pa pokrenite:
+
 ```bash
-cp deploy/.env.example deploy/.env     # popuniti lozinke i JWT ključ
+# 1) deploy/.env-tajne.zip -> raspakovati lozinkom sa DL-a u deploy/.env (ZIP sadrži jednu datoteku, .env)
+# (bez zipa: cp deploy/.env.example deploy/.env i popuniti vrijednosti; Stripe, Cloudinary i Firebase ključevi su opcionalni)
 docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 ```
+
+Prvi start sam primjenjuje migracije i puni demo podatke (oko pola minute), pa se može prijaviti odmah (vidi "Pristupni podaci" ispod). Aplikacije (exe i APK) su u GitHub Releaseu, u zipu `fit-build-GGGG-MM-DD.zip`.
 
 | Servis | Adresa |
 |---|---|
