@@ -15,6 +15,7 @@ public partial class DatabaseSeeder(
     UserManager<AppUser> users,
     RoleManager<IdentityRole> roles,
     IOptions<SeedOptions> options,
+    CatalogSeeder catalog,
     ILogger<DatabaseSeeder> log)
 {
     private readonly SeedOptions _opt = options.Value;
@@ -30,6 +31,10 @@ public partial class DatabaseSeeder(
             db.SalonSettings.Add(new SalonSettings { Id = 1, Name = "Ottoman" });
             await db.SaveChangesAsync(ct);
         }
+
+        // The demo catalog comes first: it fills the shop front page, gallery styles and salon profile, so the
+        // defaults below only fill what is still missing.
+        if (_opt.DemoData) await catalog.SeedAsync(ct);
 
         await SeedSalonBasicsAsync(ct);
 
@@ -136,19 +141,6 @@ public partial class DatabaseSeeder(
         await EnsureBlock(ShopSectionKind.BrandTiles, "Brendovi", "Marke", 12, first - 2);
         await EnsureBlock(ShopSectionKind.Recommended, "Možda vam se sviđa", "Za vas", 10, first - 1);
 
-        // A salon profile nobody has touched yet gets a short demo text.
-        var settings = await db.SalonSettings.SingleAsync(ct);
-        if (_opt.DemoData && settings.Description is null && settings.Address is null && settings.MapsUrl is null)
-        {
-            settings.Description = "Ottoman je moderan frizerski salon u kojem se tradicija brijanja spaja s današnjim stilom. "
-                + "Naši frizeri brinu o svakom detalju, od klasičnog šišanja do uređivanja brade.";
-            settings.Address = "Ferhadija 12, 71000 Sarajevo";
-            settings.Phone = "033 123 456";
-            settings.MapsUrl = "https://www.google.com/maps/search/?api=1&query=43.8586,18.4310";
-            settings.Latitude = 43.8586;
-            settings.Longitude = 18.4310;
-        }
-
         await db.SaveChangesAsync(ct);
     }
 
@@ -176,59 +168,26 @@ public partial class DatabaseSeeder(
         return user;
     }
 
+    /// <summary>The barbers, the clients and their history on top of the catalog. Skipped once the demo barbers exist.</summary>
     private async Task SeedDemoAsync(CancellationToken ct)
     {
-        if (await db.Services.AnyAsync(ct)) return;
+        if (await users.FindByEmailAsync("kerim@ottoman.local") is not null) return;
         var pw = _opt.DemoPassword;
 
-        var services = new[]
-        {
-            new Service { Name = "Šišanje", Description = "Klasično muško šišanje", Price = 25m, DurationMinutes = 30 },
-            new Service { Name = "Šišanje & brada", Description = "Šišanje uz uređivanje brade", Price = 40m, DurationMinutes = 60 },
-            new Service { Name = "Uređivanje brade", Description = "Oblikovanje i njega brade", Price = 15m, DurationMinutes = 30 },
-            new Service { Name = "Srednja / duga kosa", Description = "Šišanje srednje i duge kose", Price = 35m, DurationMinutes = 45 },
-            new Service { Name = "Masaža glave", Description = "Opuštajuća masaža glave", Price = 10m, DurationMinutes = 15 },
-            new Service { Name = "Brijanje vrućim ručnikom", Description = "Tradicionalno brijanje britvom i toplim ručnikom", Price = 20m, DurationMinutes = 30 },
-            new Service { Name = "Dječije šišanje", Description = "Šišanje za dječake do 12 godina", Price = 15m, DurationMinutes = 30 },
-            new Service { Name = "Bojenje brade", Description = "Prirodno bojenje sijedih dlaka u bradi", Price = 20m, DurationMinutes = 30 },
-        };
-        db.Services.AddRange(services);
-        await db.SaveChangesAsync(ct);
+        var services = await db.Services.OrderBy(s => s.Id).ToListAsync(ct);
+        var staffPhotos = SeedCatalog.Load().DemoStaffPhotos.ToDictionary(p => p.Email, p => p.PhotoKey);
 
         var kerim = await EnsureUserAsync("kerim@ottoman.local", pw, "Kerim", "Begić", Roles.Employee);
         var tarik = await EnsureUserAsync("tarik@ottoman.local", pw, "Tarik", "Mujkić", Roles.Employee);
         var adin = await EnsureUserAsync("adin@ottoman.local", pw, "Adin", "Hasanović", Roles.Employee);
         var demoClient = await EnsureUserAsync("klijent@ottoman.local", pw, "Demo", "Klijent", Roles.Client);
 
-        AddEmployee(kerim, "Master Barber", "Majstor u usponu", services);
-        AddEmployee(tarik, "Junior Barber", null, services.Take(3).ToArray());
-        AddEmployee(adin, "Barber", "Specijalista za fade i klasična brijanja", services.Where(s => s.Name != "Masaža glave").ToArray());
-
-        var dandy = new Brand { Name = "Dandy" };
-        var proraso = new Brand { Name = "Proraso" };
-        var reuzel = new Brand { Name = "Reuzel" };
-        var wax = new Category { Name = "Voskovi", Description = "Voskovi i pomade za stilizovanje" };
-        var beard = new Category { Name = "Njega brade", Description = "Ulja i balzami za bradu" };
-        var shampoo = new Category { Name = "Šamponi", Description = "Šamponi i njega kose" };
-        var aftershave = new Category { Name = "Poslije brijanja", Description = "Losioni za lice poslije brijanja" };
-        var tools = new Category { Name = "Pribor", Description = "Češljevi i četke" };
-        var products = new[]
-        {
-            new Product { Name = "Vosak za kosu Dandy Shaping Pomade", Description = "Pomada srednje fiksacije, prirodan efekt.", Brand = dandy, Category = wax, Price = 10m, Stock = 25, LowStockThreshold = 5 },
-            new Product { Name = "Dandy Matt Clay", Description = "Mat glina jake fiksacije.", Brand = dandy, Category = wax, Price = 12m, Stock = 18, LowStockThreshold = 5 },
-            new Product { Name = "Dandy Beard Oil", Description = "Ulje za njegu i omekšavanje brade.", Brand = dandy, Category = beard, Price = 14m, Stock = 12, LowStockThreshold = 4 },
-            new Product { Name = "Proraso Beard Balm", Description = "Balzam za bradu s eukaliptusom.", Brand = proraso, Category = beard, Price = 16m, Stock = 3, LowStockThreshold = 5 },
-            new Product { Name = "Reuzel Daily Shampoo", Description = "Svakodnevni šampon blage formule.", Brand = reuzel, Category = shampoo, Price = 13m, Stock = 20, LowStockThreshold = 5 },
-            new Product { Name = "Reuzel Tea Tree Shampoo", Description = "Šampon s čajevcem protiv perutanja.", Brand = reuzel, Category = shampoo, Price = 15m, Stock = 14, LowStockThreshold = 4 },
-            new Product { Name = "Proraso After Shave Lotion", Description = "Osvježavajući losion poslije brijanja.", Brand = proraso, Category = aftershave, Price = 11m, Stock = 16, LowStockThreshold = 4 },
-            new Product { Name = "Dandy After Shave Balm", Description = "Umirujući balzam za lice poslije brijanja.", Brand = dandy, Category = aftershave, Price = 12m, Stock = 9, LowStockThreshold = 4 },
-            new Product { Name = "Drveni češalj", Description = "Ručno rađen češalj od bukovine.", Category = tools, Price = 6m, Stock = 30, LowStockThreshold = 6 },
-            new Product { Name = "Četka za bradu", Description = "Četka od prirodne čekinje.", Category = tools, Price = 9m, Stock = 22, LowStockThreshold = 5 },
-        };
-        db.Products.AddRange(products);
+        AddEmployee(kerim, "Master Barber", "Majstor u usponu", services, staffPhotos.GetValueOrDefault("kerim@ottoman.local"));
+        AddEmployee(tarik, "Junior Barber", null, services.Take(3).ToArray(), staffPhotos.GetValueOrDefault("tarik@ottoman.local"));
+        AddEmployee(adin, "Barber", "Specijalista za fade i klasična brijanja", services.Where(s => s.Name != "Masaža glave").ToArray(), null);
         await db.SaveChangesAsync(ct);
 
-        // Clients registered over the last four months, so "new clients" in the reports has a shape.
+        // Fictional clients registered over the last four months, so "new clients" in the reports has a shape.
         var clients = new List<AppUser> { demoClient };
         for (var i = 0; i < DemoClients.Length; i++)
         {
@@ -236,17 +195,18 @@ public partial class DatabaseSeeder(
             clients.Add(await EnsureUserAsync(email, pw, first, last, Roles.Client, DateTime.UtcNow.AddDays(-110 + i * 13)));
         }
 
+        var products = await db.Products.AsNoTracking().Where(p => p.IsActive).OrderBy(p => p.Id).ToListAsync(ct);
         await SeedActivityAsync([kerim, tarik, adin], clients, services, products, ct);
         log.LogInformation("Seeded demo data");
     }
 
-    private void AddEmployee(AppUser user, string title, string? bio, IEnumerable<Service> assigned)
+    private void AddEmployee(AppUser user, string title, string? bio, IEnumerable<Service> assigned, string? photoKey)
     {
         // Titles are a list of their own; a barber points at one (it is created here if the list does not have it yet).
         var titleRow = db.EmployeeTitles.Local.FirstOrDefault(t => string.Equals(t.Name, title, StringComparison.OrdinalIgnoreCase))
                        ?? db.EmployeeTitles.FirstOrDefault(t => t.Name == title)
                        ?? new EmployeeTitle { Name = title };
-        var profile = new EmployeeProfile { UserId = user.Id, Title = titleRow, Bio = bio, Gender = Gender.Male };
+        var profile = new EmployeeProfile { UserId = user.Id, Title = titleRow, Bio = bio, Gender = Gender.Male, PhotoKey = photoKey };
         profile.Services = assigned.Select(s => new EmployeeService { EmployeeId = user.Id, ServiceId = s.Id }).ToList();
 
         // Mon-Fri 09:00-17:00 with a lunch break, Sat 09:00-14:00.

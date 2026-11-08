@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Reports\logo.png" LogicalName="Ottoman.Infrastructure.Reports.logo.png" />
+    <EmbeddedResource Include="Seeding\SeedData\catalog.json" LogicalName="Ottoman.Infrastructure.Seeding.catalog.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -37,16 +37,16 @@ public class SeedTests(ApiFixture api)
             Announcements = await db.Announcements.CountAsync(),
         });
 
-        counts.Services.Should().BeGreaterThanOrEqualTo(8);
-        counts.Products.Should().BeGreaterThanOrEqualTo(10);
+        counts.Services.Should().BeGreaterThanOrEqualTo(5);
+        counts.Products.Should().BeGreaterThanOrEqualTo(300);
         counts.Employees.Should().BeGreaterThanOrEqualTo(3);
-        counts.Brands.Should().BeGreaterThanOrEqualTo(3);
-        counts.Categories.Should().BeGreaterThanOrEqualTo(5);
+        counts.Brands.Should().BeGreaterThanOrEqualTo(18);
+        counts.Categories.Should().BeGreaterThanOrEqualTo(7);
         counts.Clients.Should().BeGreaterThanOrEqualTo(9);
         counts.Reservations.Should().BeGreaterThanOrEqualTo(150);
         counts.Orders.Should().BeGreaterThanOrEqualTo(40);
         counts.Reviews.Should().BeGreaterThanOrEqualTo(30);
-        counts.Announcements.Should().BeGreaterThanOrEqualTo(3);
+        counts.Announcements.Should().BeGreaterThanOrEqualTo(4);
     }
 
     [Fact]
@@ -170,88 +170,133 @@ public class SeedTests(ApiFixture api)
     }
 
     [Fact]
-    public void The_placeholder_picture_is_a_valid_distinct_png_that_the_upload_rules_accept()
+    public void The_embedded_catalog_is_consistent_with_itself()
     {
-        var a = PlaceholderImage.Create("Dandy Pomade");
-        var b = PlaceholderImage.Create("Masaža glave");
+        var c = SeedCatalog.Load();
+        var products = c.Products.Select(p => p.Id).ToHashSet();
+        var categories = c.Categories.Select(x => x.Id).ToHashSet();
+        var brands = c.Brands.Select(x => x.Id).ToHashSet();
+        var haircuts = c.HaircutCategories.Select(x => x.Id).ToHashSet();
 
-        Ottoman.Application.Images.ImageRules.Detect(a).Should().Be("image/png");
-        Ottoman.Application.Images.ImageRules.Check(a.Length, a, new Ottoman.Application.Images.ImageOptions().MaxBytes).Should().BeNull();
-        Ottoman.Application.Images.ImageRules.IsIntact(a).Should().BeTrue("the structural upload check accepts it too");
-        a.Length.Should().BeLessThan(150_000, "small enough to upload quickly on every start");
-        a.Should().Equal(PlaceholderImage.Create("Dandy Pomade"), "the same name always gives the same picture");
-        a.Should().NotEqual(b, "different things look different");
-
-        // Every PNG chunk carries a valid CRC, so strict decoders accept it too.
-        var offset = 8;
-        var chunks = new List<string>();
-        while (offset < a.Length)
-        {
-            var length = (a[offset] << 24) | (a[offset + 1] << 16) | (a[offset + 2] << 8) | a[offset + 3];
-            var body = a.AsSpan(offset + 4, 4 + length).ToArray();
-            var stored = (uint)((a[offset + 8 + length] << 24) | (a[offset + 9 + length] << 16) | (a[offset + 10 + length] << 8) | a[offset + 11 + length]);
-            Crc32(body).Should().Be(stored);
-            chunks.Add(System.Text.Encoding.ASCII.GetString(body, 0, 4));
-            offset += 12 + length;
-        }
-        chunks.Should().Equal("IHDR", "IDAT", "IEND");
+        c.Products.Count.Should().BeGreaterThan(300);
+        c.Products.Select(p => p.Name.ToLowerInvariant()).Should().OnlyHaveUniqueItems();
+        c.Products.Should().OnlyContain(p => (p.CategoryId == null || categories.Contains(p.CategoryId.Value)) && (p.BrandId == null || brands.Contains(p.BrandId.Value)));
+        c.Products.Should().OnlyContain(p => p.SalePrice == null || p.SalePrice < p.Price);
+        c.ProductImages.Should().OnlyContain(i => products.Contains(i.ProductId) && i.FileKey.StartsWith("ottoman/"));
+        c.Gallery.Should().OnlyContain(g => haircuts.Contains(g.CategoryId) && g.ImageKey.StartsWith("ottoman/"));
+        c.Gallery.Where(g => g.ContentHash != null).Select(g => g.ContentHash).Should().OnlyHaveUniqueItems();
+        c.Services.Select(x => x.Name).Should().OnlyHaveUniqueItems();
+        c.ShopSectionEntries.Should().OnlyContain(e => c.ShopSections.Any(s => s.Id == e.ShopSectionId));
+        c.ShopSections.Select(s => s.Kind).Should().Contain(["OnSale", "BrandTiles", "CategoryTiles", "Recommended"]);
     }
 
     [Fact]
-    public async Task Pictures_are_seeded_once_for_everything_that_has_none_when_an_account_is_configured()
+    public async Task The_real_catalog_is_loaded_with_picture_keys_and_nothing_is_uploaded()
     {
-        var store = new Ottoman.Infrastructure.Images.OfflineImageStore();
-        var configured = Microsoft.Extensions.Options.Options.Create(new Ottoman.Application.Images.ImageOptions { CloudName = "c", ApiKey = "k", ApiSecret = "s" });
-        await using var scope = api.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
-        var seeder = new DemoImageSeeder(db, store, configured, Microsoft.Extensions.Logging.Abstractions.NullLogger<DemoImageSeeder>.Instance);
+        var c = SeedCatalog.Load();
+        var catalogNames = c.Products.Select(x => x.Name).ToList();
+        var seen = await Query(async db => new
+        {
+            Products = await db.Products.CountAsync(),
+            ActiveWithoutPicture = await db.Products.CountAsync(p => p.IsActive && !db.ProductImages.Any(i => i.ProductId == p.Id)
+                && catalogNames.Contains(p.Name)),
+            OnSale = await db.Products.CountAsync(p => p.SalePrice != null),
+            LowStock = await db.Products.CountAsync(p => p.LowStockThreshold != null && p.Stock <= p.LowStockThreshold),
+            Keys = await db.ProductImages.Select(i => i.FileKey).Take(50).ToListAsync(),
+            BrandsWithLogo = await db.Brands.CountAsync(b => b.LogoKey != null),
+            ServicesWithoutPicture = await db.Services.CountAsync(s => s.ImageKey == null),
+            Gallery = await db.GalleryItems.CountAsync(),
+            Haircuts = await db.HaircutCategories.CountAsync(),
+            Sections = await db.ShopSections.Select(s => s.Kind).ToListAsync(),
+            Entries = await db.Set<ShopSectionEntry>().CountAsync(),
+            SalonDescription = await db.SalonSettings.Select(s => s.Description).SingleAsync(),
+            StaffPhotos = await db.EmployeeProfiles.CountAsync(e => e.PhotoKey != null),
+        });
 
-        await seeder.SeedAsync();
-        var uploaded = store.Uploaded.Count;
-        await seeder.SeedAsync();
-
-        uploaded.Should().BeGreaterThan(20, "products, services and barbers all got a picture");
-        store.Uploaded.Count.Should().Be(uploaded, "the second run found nothing left to do");
-        (await db.Products.CountAsync(p => !db.ProductImages.Any(i => i.ProductId == p.Id))).Should().Be(0);
-        (await db.Services.CountAsync(s => s.ImageKey == null)).Should().Be(0);
-        (await db.EmployeeProfiles.CountAsync(e => e.PhotoKey == null)).Should().Be(0);
-        store.Uploaded.Should().Contain(k => k.StartsWith("ottoman/products/"));
+        seen.Products.Should().BeGreaterThanOrEqualTo(c.Products.Count);
+        seen.ActiveWithoutPicture.Should().Be(0);
+        seen.OnSale.Should().BeGreaterThan(0);
+        seen.LowStock.Should().BeGreaterThan(0);
+        seen.Keys.Should().OnlyContain(k => k.StartsWith("ottoman/products/"), "the keys of the author's Cloudinary account are stored as they are");
+        seen.BrandsWithLogo.Should().BeGreaterThan(10);
+        seen.ServicesWithoutPicture.Should().Be(0);
+        seen.Gallery.Should().BeGreaterThanOrEqualTo(c.Gallery.Count);
+        seen.Haircuts.Should().BeGreaterThanOrEqualTo(6);
+        seen.Sections.Should().Contain([ShopSectionKind.OnSale, ShopSectionKind.BrandTiles, ShopSectionKind.CategoryTiles, ShopSectionKind.Recommended]);
+        seen.Entries.Should().BeGreaterThan(0);
+        seen.SalonDescription.Should().NotBeNullOrWhiteSpace();
+        seen.StaffPhotos.Should().BeGreaterThanOrEqualTo(2);
     }
 
     [Fact]
-    public async Task Without_an_account_nothing_is_uploaded_and_a_broken_one_never_stops_the_start()
+    public async Task Brand_tiles_of_the_front_page_point_at_brands_that_exist()
     {
-        await using var scope = api.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
-        var unconfigured = Microsoft.Extensions.Options.Options.Create(new Ottoman.Application.Images.ImageOptions());
-        var store = new Ottoman.Infrastructure.Images.OfflineImageStore();
+        var dangling = await Query(db => (
+            from e in db.Set<ShopSectionEntry>()
+            join s in db.ShopSections on e.ShopSectionId equals s.Id
+            where s.Kind == ShopSectionKind.BrandTiles && !db.Brands.Any(b => b.Id == e.EntityId)
+            select e).CountAsync());
 
-        await new DemoImageSeeder(db, store, unconfigured, Microsoft.Extensions.Logging.Abstractions.NullLogger<DemoImageSeeder>.Instance).SeedAsync();
-        store.Uploaded.Should().BeEmpty();
-
-        var configured = Microsoft.Extensions.Options.Options.Create(new Ottoman.Application.Images.ImageOptions { CloudName = "c", ApiKey = "k", ApiSecret = "s" });
-        var broken = new BrokenStore();
-        await FluentActions.Awaiting(() => new DemoImageSeeder(db, broken, configured, Microsoft.Extensions.Logging.Abstractions.NullLogger<DemoImageSeeder>.Instance).SeedAsync())
-            .Should().NotThrowAsync();
+        dangling.Should().Be(0, "ids of the file are translated to the ids of this database");
     }
 
-    /// <summary>Bitwise CRC-32 (the PNG one), written differently from the code under test on purpose.</summary>
-    private static uint Crc32(byte[] data)
+    [Fact]
+    public async Task The_clients_have_varied_reviews_replies_and_one_the_salon_took_down()
     {
-        var crc = 0xFFFFFFFFu;
-        foreach (var b in data)
+        var reviews = await Query(db => db.Reviews.AsNoTracking().ToListAsync());
+
+        reviews.Select(r => r.Rating).Distinct().Count().Should().BeGreaterThanOrEqualTo(4, "ratings are not all the same");
+        reviews.Select(r => r.TargetType).Distinct().Should().BeEquivalentTo([ReviewTargetType.Employee, ReviewTargetType.Service, ReviewTargetType.Product]);
+        reviews.Should().Contain(r => r.Comment != null);
+        reviews.Should().Contain(r => r.ReplyText != null);
+        reviews.Count(r => r.IsHidden).Should().BeGreaterThanOrEqualTo(1);
+    }
+
+    [Fact]
+    public async Task Seeding_the_whole_demo_again_adds_nothing_anywhere()
+    {
+        async Task<int[]> Counts() => await Query(async db => new[]
         {
-            crc ^= b;
-            for (var i = 0; i < 8; i++) crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320u : crc >> 1;
+            await db.Users.CountAsync(), await db.Products.CountAsync(), await db.ProductImages.CountAsync(),
+            await db.Brands.CountAsync(), await db.Categories.CountAsync(), await db.Services.CountAsync(),
+            await db.GalleryItems.CountAsync(), await db.HaircutCategories.CountAsync(), await db.EmployeeTitles.CountAsync(),
+            await db.ShopSections.CountAsync(), await db.Set<ShopSectionEntry>().CountAsync(), await db.Announcements.CountAsync(),
+            await db.UserNotifications.CountAsync(), await db.Reservations.CountAsync(), await db.Orders.CountAsync(),
+            await db.Payments.CountAsync(), await db.Reviews.CountAsync(), await db.EmployeeProfiles.CountAsync(),
+            await db.EmployeeServices.CountAsync(),
+        });
+        var before = await Counts();
+
+        for (var run = 0; run < 2; run++)
+        {
+            await using var scope = api.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<CatalogSeeder>().SeedAsync();
+            await scope.ServiceProvider.GetRequiredService<DatabaseSeeder>().SeedAsync();
         }
-        return ~crc;
+
+        (await Counts()).Should().Equal(before);
     }
 
-    private sealed class BrokenStore : Ottoman.Application.Images.IImageStore
+    [Fact]
+    public async Task A_catalog_that_an_admin_has_edited_is_not_overwritten()
     {
-        public Task<string> UploadAsync(Stream content, string folder, CancellationToken ct) => throw new HttpRequestException("no network");
+        string name;
+        await using (var scope = api.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
+            var product = await db.Products.OrderByDescending(p => p.Id).FirstAsync();
+            name = product.Name;
+            product.Price = 77.77m;
+            product.Stock = 3;
+            await db.SaveChangesAsync();
+        }
 
-        public Task DeleteAsync(string key, CancellationToken ct) => Task.CompletedTask;
+        await using (var scope = api.Services.CreateAsyncScope())
+            await scope.ServiceProvider.GetRequiredService<CatalogSeeder>().SeedAsync();
+
+        var after = await Query(db => db.Products.AsNoTracking().SingleAsync(p => p.Name == name));
+        after.Price.Should().Be(77.77m);
+        after.Stock.Should().Be(3);
     }
 
     [Fact]

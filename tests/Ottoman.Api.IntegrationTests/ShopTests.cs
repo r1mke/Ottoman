@@ -111,9 +111,11 @@ public class ShopTests(ApiFixture api)
     {
         var (_, client) = await NewClient();
         var all = (await client.GetFromJsonAsync<PagedResult<ProductDto>>("/api/v1/products?pageSize=100"))!;
-        all.Items.Should().Contain(p => p.Name.Contains("Dandy"));
+        all.Items.Should().HaveCount(100, "the demo shop has hundreds of products and a page is limited");
+        all.TotalCount.Should().BeGreaterThan(100);
 
         var dandy = (await client.GetFromJsonAsync<PagedResult<ProductDto>>("/api/v1/products?search=dandy"))!;
+        dandy.Items.Should().Contain(p => p.Name.Contains("Dandy"));
         dandy.Items.Should().OnlyContain(p => p.BrandName == "Dandy" || p.Name.Contains("Dandy", StringComparison.OrdinalIgnoreCase));
 
         var byPrice = (await client.GetFromJsonAsync<PagedResult<ProductDto>>("/api/v1/products?sort=PriceDesc&pageSize=100"))!;

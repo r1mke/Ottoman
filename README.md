@@ -68,7 +68,7 @@ cd apps/ottoman_desktop && flutter build windows --release   # -> build/windows/
 
 ### Slike (Cloudinary)
 
-Slike (proizvodi, usluge, frizeri, galerija, logo, novosti) čuvaju se na Cloudinaryju. U `deploy/.env` postavite `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` i `CLOUDINARY_API_SECRET`. Bez njih API provjerava upload (vrsta i veličina), ali sliku nigdje ne sprema, pa demo podaci i nove stavke ostaju bez slika (aplikacije tada prikazuju ikonu ili inicijale). S ključevima demo podaci pri startu dobiju generisane zamjenske slike.
+Slike (proizvodi, usluge, frizeri, galerija, logo, novosti) čuvaju se na Cloudinaryju. U `deploy/.env` postavite `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` i `CLOUDINARY_API_SECRET`. Bez njih API provjerava upload (vrsta i veličina), ali sliku nigdje ne sprema, pa demo podaci i nove stavke ostaju bez slika (aplikacije tada prikazuju ikonu ili inicijale). Demo podaci (`Seed__DemoData=true`) dolaze sa stvarnim katalogom salona (7 kategorija, 18 brendova, oko 330 proizvoda sa slikama, usluge, galerija, početna stranica shopa i profil salona; datoteka `src/Ottoman.Infrastructure/Seeding/SeedData/catalog.json`, ugrađena u `Ottoman.Infrastructure`) te sa izmišljenim klijentima i njihovom historijom (termini, narudžbe, recenzije), tako da izvještaji, preporuke i recenzije imaju šta prikazati na svježoj bazi. Seed ne šalje nijednu sliku: sprema samo ključeve slika koji pokazuju na autorov Cloudinary račun, pa se slike pojave čim se postave Cloudinary postavke iz `.env` datoteke u priloženom ZIP-u; bez njih aplikacije rade i prikazuju prazne zamjenske slike. Seed je idempotentan (drugo pokretanje ne dodaje ništa) i ne prepisuje ono što je admin izmijenio.
 
 ### Push obavijesti (Firebase, opcionalno)
 

@@ -10,11 +10,12 @@ namespace Ottoman.Infrastructure.Seeding;
 
 /// <summary>
 /// Demo history, so that every screen (dashboard, reports, reviews, recommendations, inbox) has something to show on
-/// a fresh database: two months of appointments, orders, ratings and messages. Deterministic: the same data every time.
+/// a fresh database: three months of appointments, orders, ratings and messages of fictional clients (their data is
+/// invented, never copied from real accounts). Deterministic in shape: the same dice every time, dates relative to today.
 /// </summary>
 public partial class DatabaseSeeder
 {
-    private const int HistoryDays = 60;
+    private const int HistoryDays = 90;
 
     private static readonly (string First, string Last, string Email)[] DemoClients =
     [
@@ -224,7 +225,8 @@ public partial class DatabaseSeeder
                 : recent && roll < 0.5 ? OrderStatus.Placed : roll < 0.88 ? OrderStatus.Fulfilled : OrderStatus.Cancelled;
             var card = rnd.NextDouble() < 0.3;
 
-            var lines = products.OrderBy(_ => rnd.Next()).Take(rnd.Next(1, 4))
+            // Orders concentrate on the shop's first products, so "bought together" and the top-products report have shape.
+            var lines = products.Take(40).OrderBy(_ => rnd.Next()).Take(rnd.Next(1, 4))
                 .Select(p => new OrderItem { ProductId = p.Id, ProductName = p.Name, UnitPrice = p.Price, Quantity = rnd.Next(1, 3) })
                 .ToList();
             var total = lines.Sum(l => l.UnitPrice * l.Quantity);
@@ -297,6 +299,11 @@ public partial class DatabaseSeeder
         foreach (var o in orders.Where(o => o.Status == OrderStatus.Fulfilled).OrderBy(_ => rnd.Next()).Take(14))
             Add(o.ClientId, ReviewTargetType.Product, o.Items[0].ProductId.ToString(), o.FulfilledAtUtc ?? o.CreatedAtUtc, ProductComments);
 
+        // One review the salon took down, so moderation has both states to show (it counts for nothing in ratings).
+        var hidden = reviews.FirstOrDefault(r => r.Comment is not null && r.Rating <= 3 && r.ReplyText is null)
+                     ?? reviews.FirstOrDefault(r => r.Comment is not null && r.ReplyText is null);
+        if (hidden is not null) hidden.IsHidden = true;
+
         db.Reviews.AddRange(reviews);
         await db.SaveChangesAsync(ct);
     }
@@ -317,6 +324,7 @@ public partial class DatabaseSeeder
                 Title = "Nova usluga: brijanje vrućim ručnikom",
                 Body = "Od ovog mjeseca nudimo tradicionalno brijanje s toplim ručnikom. Rezervišite u aplikaciji.",
                 Audience = AnnouncementAudience.Clients,
+                Category = AnnouncementCategory.News,
                 CreatedAtUtc = now.AddDays(-9),
             },
             new Announcement
@@ -324,16 +332,28 @@ public partial class DatabaseSeeder
                 Title = "Radno vrijeme za praznike",
                 Body = "U danima državnih praznika radimo od 9 do 13 sati. Termine možete rezervisati unaprijed.",
                 Audience = AnnouncementAudience.All,
+                Category = AnnouncementCategory.Notice,
                 CreatedAtUtc = now.AddDays(-4),
+                ExpiresAtUtc = now.AddDays(21),
             },
             new Announcement
             {
                 Title = "Popust 10% na proizvode za bradu",
                 Body = "Ove sedmice svi proizvodi iz kategorije Njega brade su 10% jeftiniji pri preuzimanju u salonu.",
                 Audience = AnnouncementAudience.Clients,
+                Category = AnnouncementCategory.Promotion,
                 CreatedAtUtc = now.AddDays(-1),
             },
-        };
+        }.Concat(SeedCatalog.Load().Announcements.Select(a => new Announcement
+        {
+            Title = a.Title,
+            Body = a.Body,
+            Audience = Enum.Parse<AnnouncementAudience>(a.Audience),
+            ImageKey = a.ImageKey,
+            Category = AnnouncementCategory.Notice,
+            CreatedAtUtc = now.AddDays(-2),
+            ExpiresAtUtc = now.AddDays(10),
+        })).ToArray();
         foreach (var a in news)
         {
             a.CreatedByUserId = admin;

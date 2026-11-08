@@ -49,13 +49,12 @@ public class RecommendationTests(ApiFixture api)
     {
         var (_, client) = await NewClient();
         var oil = await ProductNamed(client, "Dandy Beard Oil");
-        var balm = await ProductNamed(client, "Proraso Beard Balm");
         (await Buy(client, oil.Id)).StatusCode.Should().Be(HttpStatusCode.Created);
 
         var recs = (await Recommended(client))!;
 
         recs.Select(p => p.Id).Should().NotContain(oil.Id, "they already own it");
-        recs.First().Id.Should().Be(balm.Id, "same category, same use");
+        recs.First().CategoryId.Should().Be(oil.CategoryId, "the best offer is in the same category, for the same use");
     }
 
     [Fact]
@@ -63,15 +62,16 @@ public class RecommendationTests(ApiFixture api)
     {
         var (_, client) = await NewClient();
         var oil = await ProductNamed(client, "Dandy Beard Oil");
-        var balm = await ProductNamed(client, "Proraso Beard Balm");
         (await Buy(client, oil.Id)).StatusCode.Should().Be(HttpStatusCode.Created);
 
         var recs = (await client.GetFromJsonAsync<List<Ottoman.Application.Recommendations.Recommended<ProductDto>>>("/api/v1/recommendations/products?count=6"))!;
 
-        var forBalm = recs.Single(r => r.Item.Id == balm.Id).Reason;
-        forBalm.Kind.Should().Be("SimilarToInterest");
-        forBalm.SourceName.Should().Be(oil.Name);
-        forBalm.Text.Should().Contain(oil.Name).And.Contain("Jer ste kupili").And.Contain("ista kategorija");
+        var first = recs.First();
+        first.Item.CategoryId.Should().Be(oil.CategoryId);
+        var reason = first.Reason;
+        reason.Kind.Should().Be("SimilarToInterest");
+        reason.SourceName.Should().Be(oil.Name);
+        reason.Text.Should().Contain(oil.Name).And.Contain("Jer ste kupili").And.Contain("ista kategorija");
         recs.Should().OnlyContain(r => r.Reason.Text.Length > 0, "no recommendation is shown without a reason");
     }
 
