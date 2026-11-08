@@ -675,5 +675,6 @@
   "searchAnnouncements": "Search announcements",
   "previousPage": "Previous",
   "nextPage": "Next",
-  "editNotResent": "Edits are not sent again; recipients see the new text in the app."
+  "editNotResent": "Edits are not sent again; recipients see the new text in the app.",
+  "emailOrUsername": "Email or user name"
 }

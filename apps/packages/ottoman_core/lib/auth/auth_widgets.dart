@@ -149,9 +149,10 @@ class _LoginFormState extends State<LoginForm> {
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.username],
                 textInputAction: TextInputAction.next,
-                decoration: InputDecoration(labelText: t.email),
+                // An e-mail or a user name (the demo accounts "desktop" and "mobile").
+                decoration: InputDecoration(labelText: t.emailOrUsername),
                 validator: (v) =>
-                    (v == null || !v.contains('@')) ? t.invalidEmail : null,
+                    (v == null || v.trim().isEmpty) ? t.requiredField : null,
               ),
               const SizedBox(height: 16),
             ],

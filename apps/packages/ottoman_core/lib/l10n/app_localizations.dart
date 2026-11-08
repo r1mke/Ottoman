@@ -3499,6 +3499,12 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Izmjena se ne šalje ponovo; primaoci vide novi tekst u aplikaciji.'**
   String get editNotResent;
+
+  /// No description provided for @emailOrUsername.
+  ///
+  /// In bs, this message translates to:
+  /// **'Email ili korisničko ime'**
+  String get emailOrUsername;
 }
 
 class _AppLocalizationsDelegate

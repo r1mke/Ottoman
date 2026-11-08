@@ -87,7 +87,7 @@ void main() {
     await tester.tap(find.byKey(const Key('login_submit')));
     await tester.pump();
 
-    expect(find.text('Unesite email u formatu ime@domena.ba'), findsOneWidget);
+    expect(find.text('Obavezno polje'), findsWidgets);
     expect(auth.status, AuthStatus.unauthenticated);
   });
 

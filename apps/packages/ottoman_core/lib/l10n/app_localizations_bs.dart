@@ -1807,4 +1807,7 @@ class AppLocalizationsBs extends AppLocalizations {
   @override
   String get editNotResent =>
       'Izmjena se ne šalje ponovo; primaoci vide novi tekst u aplikaciji.';
+
+  @override
+  String get emailOrUsername => 'Email ili korisničko ime';
 }

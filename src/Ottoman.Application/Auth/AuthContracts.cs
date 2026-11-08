@@ -54,6 +54,12 @@ public static class PasswordResetTexts
     public const string InvalidCode = "Kod za reset lozinke nije važeći ili je istekao.";
 }
 
+/// <summary>The login field takes an e-mail address or a user name; user names never contain "@".</summary>
+public static class LoginNames
+{
+    public static bool IsEmail(string login) => login.Contains('@');
+}
+
 /// <summary>E-mail addresses are stored trimmed and in lower case; lookups go through Identity's normalised (upper) form.</summary>
 public static class EmailAddresses
 {

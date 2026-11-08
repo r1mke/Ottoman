@@ -36,7 +36,59 @@ public partial class DatabaseSeeder(
         if (!string.IsNullOrWhiteSpace(_opt.AdminEmail) && !string.IsNullOrWhiteSpace(_opt.AdminPassword))
             await EnsureUserAsync(_opt.AdminEmail, _opt.AdminPassword, "Admin", "Ottoman", Roles.Admin);
 
-        if (_opt.DemoData) await SeedDemoAsync(ct);
+        if (_opt.DemoData)
+        {
+            await SeedDemoAsync(ct);
+            await SeedTemplateAccountsAsync(ct);
+        }
+    }
+
+    /// <summary>The password the faculty's credentials template prescribes for the demo accounts.</summary>
+    public const string TemplatePassword = "test";
+
+    /// <summary>
+    /// The accounts of the credentials template in the README: "desktop" (administrator, desktop app), "mobile"
+    /// (client, mobile app) and "uposlenik" (the demo barber Adin, both apps), all with the password "test". That
+    /// password is far below the policy, so it is hashed directly here instead of going through the validators; this
+    /// only ever runs with demo data, which the production start-up guards refuse. Registration and password changes
+    /// keep the strong policy. Idempotent: an existing account is left as it is.
+    /// </summary>
+    private async Task SeedTemplateAccountsAsync(CancellationToken ct)
+    {
+        await EnsureTemplateUserAsync("desktop", "desktop@ottoman.local", "Desktop", "Administrator", Roles.Admin);
+        await EnsureTemplateUserAsync("mobile", "mobile@ottoman.local", "Mobile", "Klijent", Roles.Client);
+
+        var adin = await users.FindByEmailAsync("adin@ottoman.local");
+        if (adin is not null && await users.FindByNameAsync("uposlenik") is null)
+        {
+            adin.UserName = "uposlenik";
+            adin.PasswordHash = users.PasswordHasher.HashPassword(adin, TemplatePassword);
+            await users.UpdateNormalizedUserNameAsync(adin);
+            await users.UpdateSecurityStampAsync(adin);
+            await users.UpdateAsync(adin);
+        }
+        await db.SaveChangesAsync(ct);
+    }
+
+    private async Task EnsureTemplateUserAsync(string userName, string email, string first, string last, string role)
+    {
+        if (await users.FindByNameAsync(userName) is not null) return;
+        var user = new AppUser
+        {
+            UserName = userName,
+            Email = email,
+            EmailConfirmed = true,
+            FirstName = first,
+            LastName = last,
+            RegisteredAtUtc = DateTime.UtcNow,
+        };
+        user.PasswordHash = users.PasswordHasher.HashPassword(user, TemplatePassword);
+        var created = await users.CreateAsync(user); // no password argument: the hash above is kept as it is
+        if (!created.Succeeded)
+            throw new InvalidOperationException(
+                $"Seeding user {userName} failed: {string.Join("; ", created.Errors.Select(e => e.Description))}");
+        await users.AddToRoleAsync(user, role);
+        log.LogInformation("Seeded template account {UserName} ({Role})", userName, role);
     }
 
     /// <summary>Opening hours and the haircut styles the gallery starts with; only filled in when there are none.</summary>

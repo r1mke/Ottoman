@@ -25,12 +25,22 @@ Bez `ASPNETCORE_ENVIRONMENT` u `deploy/.env` compose pokreće API u **Production
 
 ### Pristupni podaci za testiranje
 
+Prema predlošku iz uputa (polje za prijavu prima korisničko ime ili email; ovi računi postoje samo uz demo podatke, `Seed__DemoData=true`):
+
+| Kontekst | Korisničko ime | Lozinka |
+|---|---|---|
+| Desktop verzija (administrator) | `desktop` | `test` |
+| Mobilna verzija (klijent) | `mobile` | `test` |
+| Uloga zaposlenik (frizer Adin, obje aplikacije) | `uposlenik` | `test` |
+
+Lozinka `test` je namjerno ispod pravila jačine i postavlja se samo pri seedanju demo računa; registracija i promjena lozinke i dalje traže jaku lozinku. Ostali demo računi:
+
 Vrijednosti iz `deploy/.env.example` (lokalni demo, `SEED_DEMO_DATA=true`). Ako `deploy/.env` postavlja druge lozinke, vrijede te.
 
 | Uloga | Aplikacija | Korisničko ime (e-mail) | Lozinka |
 |---|---|---|---|
 | Administrator | desktop | `admin@ottoman.local` | `ChangeMe_Admin1!` |
-| Zaposlenik (frizer) | mobile (i desktop) | `kerim@ottoman.local`, `tarik@ottoman.local`, `adin@ottoman.local` | `Test123!` |
+| Zaposlenik (frizer) | mobile (i desktop) | `kerim@ottoman.local`, `tarik@ottoman.local` | `Test123!` |
 | Klijent | mobile | `klijent@ottoman.local` | `Test123!` |
 
 To su razvojne vrijednosti (`SEED_ADMIN_PASSWORD`, `SEED_DEMO_PASSWORD`); u produkciji API odbija start s demo podacima ili lozinkom iz primjera.

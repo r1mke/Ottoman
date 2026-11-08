@@ -1809,4 +1809,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get editNotResent =>
       'Edits are not sent again; recipients see the new text in the app.';
+
+  @override
+  String get emailOrUsername => 'Email or user name';
 }

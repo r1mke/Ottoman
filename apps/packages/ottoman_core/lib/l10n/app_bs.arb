@@ -679,5 +679,6 @@
   "searchAnnouncements": "Pretraži obavijesti",
   "previousPage": "Prethodna",
   "nextPage": "Sljedeća",
-  "editNotResent": "Izmjena se ne šalje ponovo; primaoci vide novi tekst u aplikaciji."
+  "editNotResent": "Izmjena se ne šalje ponovo; primaoci vide novi tekst u aplikaciji.",
+  "emailOrUsername": "Email ili korisničko ime"
 }

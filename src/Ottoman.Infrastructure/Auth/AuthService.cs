@@ -122,7 +122,10 @@ public class AuthService(
 
     public async Task<AuthResult<AuthResponse>> LoginAsync(LoginRequest request, CancellationToken ct)
     {
-        var user = await users.FindByEmailAsync(request.Email.Trim());
+        // The field takes an e-mail or a user name (the seeded demo accounts "desktop", "mobile"); exactly one lookup
+        // either way, so the time taken does not depend on which kind of identifier exists.
+        var login = request.Email.Trim();
+        var user = LoginNames.IsEmail(login) ? await users.FindByEmailAsync(login) : await users.FindByNameAsync(login);
         if (user is null)
         {
             // Burn comparable CPU so response time does not reveal whether the account exists.
