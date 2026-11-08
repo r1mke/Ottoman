@@ -29,20 +29,22 @@ public record CreateEmployeeRequest(
     string Email,
     string? Phone,
     string Password,
-    string Title,
+    string? Title,
     string? Bio,
     IReadOnlyList<int>? ServiceIds,
-    string? Gender = null);
+    string? Gender = null,
+    int? TitleId = null);
 
 public record UpdateEmployeeRequest(
     string FirstName,
     string LastName,
     string? Phone,
-    string Title,
+    string? Title,
     string? Bio,
     bool IsActive,
     string? Gender = null,
-    double? PhotoZoom = null);
+    double? PhotoZoom = null,
+    int? TitleId = null);
 
 /// <summary>What a barber may change about themselves. Title, services, working hours and status stay with the admin.</summary>
 public record UpdateOwnEmployeeProfileRequest(string? Gender, string? Bio, double? PhotoZoom);
@@ -115,6 +117,18 @@ public static class HhMm
     public static string Format(TimeOnly t) => t.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
 }
 
+/// <summary>
+/// A barber's title is picked from the shared list: by <c>titleId</c> (the apps) or by its exact name (older clients).
+/// A title that is not on the list is refused, never added on the fly; the list is managed on its own.
+/// </summary>
+public static class EmployeeTitleChoice
+{
+    public const string Missing = "Odaberite titulu.";
+    public const string Unknown = "Titula ne postoji.";
+
+    public static bool Given(int? titleId, string? title) => titleId is > 0 || !string.IsNullOrWhiteSpace(title);
+}
+
 public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRequest>
 {
     public CreateEmployeeRequestValidator()
@@ -124,7 +138,8 @@ public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRe
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(256).WithName("Email");
         RuleFor(x => x.Phone).BosnianPhone().WithName("Telefon");
         RuleFor(x => x.Password).Strong();
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(100).WithName("Titula");
+        RuleFor(x => x).Must(x => EmployeeTitleChoice.Given(x.TitleId, x.Title)).WithName("Titula").WithMessage(EmployeeTitleChoice.Missing);
+        RuleFor(x => x.Title).MaximumLength(100).WithName("Titula");
         RuleFor(x => x.Gender).Must(GenderNames.IsValid).WithMessage("Spol mora biti Male ili Female.");
         RuleFor(x => x.Bio).MaximumLength(500).WithName("Opis");
     }
@@ -137,7 +152,8 @@ public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRe
         RuleFor(x => x.FirstName).NotEmpty().MaximumLength(100).WithName("Ime");
         RuleFor(x => x.LastName).NotEmpty().MaximumLength(100).WithName("Prezime");
         RuleFor(x => x.Phone).BosnianPhone().WithName("Telefon");
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(100).WithName("Titula");
+        RuleFor(x => x).Must(x => EmployeeTitleChoice.Given(x.TitleId, x.Title)).WithName("Titula").WithMessage(EmployeeTitleChoice.Missing);
+        RuleFor(x => x.Title).MaximumLength(100).WithName("Titula");
         RuleFor(x => x.Gender).Must(GenderNames.IsValid).WithMessage("Spol mora biti Male ili Female.");
         RuleFor(x => x.PhotoZoom).Must(Ottoman.Application.Images.ImageRules.ValidZoom)
             .WithMessage("Zoom mora biti između 1 i 2.");

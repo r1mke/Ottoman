@@ -86,27 +86,46 @@ public class EmployeeTitleTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task Saving_a_barber_with_a_new_title_puts_it_on_the_list()
+    public async Task A_barber_takes_a_title_from_the_list_by_id_or_name_and_an_unknown_title_is_refused()
     {
         var admin = await Admin();
-        var title = Unique("Brijač");
+        var title = (await (await Add(admin, Unique("Brijač"))).Content.ReadFromJsonAsync<EmployeeTitleDto>())!;
+        var before = (await List(admin)).Count;
 
+        // Unknown: refused with a reason, and nothing is added to the list (by name, by id, or neither).
+        var unknown = await admin.PostAsJsonAsync("/api/v1/employees", new CreateEmployeeRequest(
+            "Nov", "Frizer", TestClient.UniqueEmail(), null, "Emp_Pass123!", Unique("Izmišljena"), null, null));
+        unknown.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await unknown.Content.ReadAsStringAsync()).Should().Contain("Titula ne postoji.");
+        (await admin.PostAsJsonAsync("/api/v1/employees", new CreateEmployeeRequest(
+            "Nov", "Frizer", TestClient.UniqueEmail(), null, "Emp_Pass123!", null, null, null, TitleId: 999999)))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var none = await admin.PostAsJsonAsync("/api/v1/employees", new CreateEmployeeRequest(
+            "Nov", "Frizer", TestClient.UniqueEmail(), null, "Emp_Pass123!", null, null, null));
+        none.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await none.Content.ReadAsStringAsync()).Should().Contain("Odaberite titulu.");
+        (await List(admin)).Should().HaveCount(before);
+
+        // By id.
         var created = await admin.PostAsJsonAsync("/api/v1/employees", new CreateEmployeeRequest(
-            "Nov", "Frizer", TestClient.UniqueEmail(), null, "Emp_Pass123!", title, null, null));
+            "Nov", "Frizer", TestClient.UniqueEmail(), null, "Emp_Pass123!", null, null, null, TitleId: title.Id));
         created.StatusCode.Should().Be(HttpStatusCode.Created);
         var barber = (await created.Content.ReadFromJsonAsync<EmployeeDto>())!;
+        barber.TitleId.Should().Be(title.Id, "the barber points at the list entry");
+        barber.Title.Should().Be(title.Name);
+        (await List(admin)).Single(t => t.Id == title.Id).InUse.Should().Be(1);
 
-        var entry = (await List(admin)).Single(t => t.Name == title);
-        entry.InUse.Should().Be(1);
-        barber.TitleId.Should().Be(entry.Id, "the barber points at the list entry");
-        barber.Title.Should().Be(title);
-
-        // Changing the barber's title frees the old one for deletion.
-        var other = Unique("Majstor");
+        // By name (any case) on update; an unknown name on update is refused and changes nothing.
         (await admin.PutAsJsonAsync($"/api/v1/employees/{barber.Id}",
-            new UpdateEmployeeRequest("Nov", "Frizer", null, other, null, true))).StatusCode.Should().Be(HttpStatusCode.OK);
-        (await admin.DeleteAsync($"{Url}/{entry.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
-        (await List(admin)).Select(t => t.Name).Should().Contain(other);
+            new UpdateEmployeeRequest("Nov", "Frizer", null, Unique("Nema"), null, true))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{barber.Id}"))!.TitleId.Should().Be(title.Id);
+        (await admin.PutAsJsonAsync($"/api/v1/employees/{barber.Id}",
+            new UpdateEmployeeRequest("Nov", "Frizer", null, "junior barber", null, true))).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await admin.GetFromJsonAsync<EmployeeDto>($"/api/v1/employees/{barber.Id}"))!.Title.Should().Be("Junior Barber");
+
+        // Changing the barber's title freed the old one for deletion.
+        (await admin.DeleteAsync($"{Url}/{title.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await List(admin)).Should().HaveCount(before - 1);
     }
 
     [Fact]
@@ -114,6 +133,7 @@ public class EmployeeTitleTests(ApiFixture api)
     {
         var admin = await Admin();
         var title = Unique("Stara");
+        (await Add(admin, title)).StatusCode.Should().Be(HttpStatusCode.Created);
         var created = await admin.PostAsJsonAsync("/api/v1/employees", new CreateEmployeeRequest(
             "Preimenovan", "Frizer", TestClient.UniqueEmail(), null, "Emp_Pass123!", title, null, null));
         created.StatusCode.Should().Be(HttpStatusCode.Created);

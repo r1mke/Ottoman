@@ -85,27 +85,13 @@ public class EmployeeTitles(OttomanDbContext db) : IEmployeeTitles
         return Result<bool>.Ok(true);
     }
 
-    public async Task<int> EnsureAsync(string name, CancellationToken ct)
+    public async Task<int?> FindAsync(int? id, string? name, CancellationToken ct)
     {
-        var clean = Clean(name);
-        if (clean.Length == 0) throw new ArgumentException("A title needs a name.", nameof(name));
+        if (id is > 0) return await db.EmployeeTitles.Where(t => t.Id == id).Select(t => (int?)t.Id).FirstOrDefaultAsync(ct);
+        var clean = Clean(name ?? "");
+        if (clean.Length == 0) return null;
         // The default collation is case-insensitive, so "barber" finds "Barber".
-        var existing = await db.EmployeeTitles.Where(t => t.Name == clean).Select(t => (int?)t.Id).FirstOrDefaultAsync(ct);
-        if (existing is { } id) return id;
-
-        var title = new EmployeeTitle { Name = clean };
-        db.EmployeeTitles.Add(title);
-        try
-        {
-            await db.SaveChangesAsync(ct);
-            return title.Id;
-        }
-        catch (DbUpdateException e) when (IsUniqueViolation(e))
-        {
-            // Somebody added the same title a moment ago: use theirs.
-            db.Entry(title).State = EntityState.Detached;
-            return await db.EmployeeTitles.Where(t => t.Name == clean).Select(t => t.Id).FirstAsync(ct);
-        }
+        return await db.EmployeeTitles.Where(t => t.Name == clean).Select(t => (int?)t.Id).FirstOrDefaultAsync(ct);
     }
 
     private static string InUseMessage(string name, int count) =>

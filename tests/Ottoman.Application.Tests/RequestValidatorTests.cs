@@ -101,3 +101,24 @@ public class TimeOffClashesTests
         text.Should().Contain("(8)").And.Contain("Klijent 5").And.NotContain("Klijent 6").And.Contain("i još 3");
     }
 }
+
+public class EmployeeTitleChoiceTests
+{
+    [Theory]
+    [InlineData(null, null, false)]
+    [InlineData(0, "  ", false)]
+    [InlineData(-1, null, false)]
+    [InlineData(3, null, true)]
+    [InlineData(null, "Barber", true)]
+    public void A_title_is_given_by_id_or_by_name(int? id, string? name, bool given) =>
+        Ottoman.Application.Employees.EmployeeTitleChoice.Given(id, name).Should().Be(given);
+
+    [Fact]
+    public void The_create_validator_asks_for_a_title()
+    {
+        var v = new Ottoman.Application.Employees.CreateEmployeeRequestValidator();
+        var r = new Ottoman.Application.Employees.CreateEmployeeRequest("Ana", "Anić", "ana@x.ba", null, "Jaka_Lozinka1!", null, null, null);
+        v.Validate(r).Errors.Select(e => e.ErrorMessage).Should().Contain("Odaberite titulu.");
+        v.Validate(r with { TitleId = 2 }).Errors.Select(e => e.ErrorMessage).Should().NotContain("Odaberite titulu.");
+    }
+}

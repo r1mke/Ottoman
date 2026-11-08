@@ -30,7 +30,7 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
   late final _last = TextEditingController(text: widget.employee?.lastName);
   late final _email = TextEditingController(text: widget.employee?.email);
   late final _phone = TextEditingController(text: widget.employee?.phone);
-  late String _title = widget.employee?.title ?? '';
+  late int? _titleId = widget.employee?.titleId;
   late String? _gender = widget.employee?.gender;
   late String? _photoUrl = widget.employee?.photoUrl;
   late final _bio = TextEditingController(text: widget.employee?.bio);
@@ -69,7 +69,7 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
           email: _email.text.trim(),
           phone: nullIfEmpty(_phone.text),
           password: _password.text,
-          title: _title.trim(),
+          titleId: _titleId!,
           gender: _gender,
           bio: nullIfEmpty(_bio.text),
         );
@@ -79,7 +79,7 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
           firstName: _first.text.trim(),
           lastName: _last.text.trim(),
           phone: nullIfEmpty(_phone.text),
-          title: _title.trim(),
+          titleId: _titleId!,
           gender: _gender,
           bio: nullIfEmpty(_bio.text),
           isActive: _active,
@@ -163,8 +163,8 @@ class _EmployeeDialogState extends State<EmployeeDialog> {
                 const SizedBox(height: 12),
                 _TitleField(
                   catalog: widget.catalog,
-                  value: _title,
-                  onChanged: (v) => setState(() => _title = v),
+                  value: _titleId,
+                  onChanged: (v) => setState(() => _titleId = v),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -557,9 +557,8 @@ class _WorkingHoursDialogState extends State<WorkingHoursDialog> {
   }
 }
 
-/// The title of a barber: a drop-down over the shared list. The last entry opens the list editor, so a new title can
-/// be added (or an unused one removed) without leaving the form. A title the barber already has stays selectable
-/// even if it is no longer on the list.
+/// The title of a barber: a drop-down over the shared list, by id (the server refuses a title that is not on it). The
+/// last entry opens the list editor, so a new title can be added (or an unused one removed) without leaving the form.
 class _TitleField extends StatefulWidget {
   const _TitleField({
     required this.catalog,
@@ -568,20 +567,20 @@ class _TitleField extends StatefulWidget {
   });
 
   final CatalogApi catalog;
-  final String value;
-  final ValueChanged<String> onChanged;
+  final int? value;
+  final ValueChanged<int> onChanged;
 
   @override
   State<_TitleField> createState() => _TitleFieldState();
 }
 
 class _TitleFieldState extends State<_TitleField> {
-  static const _manage = '\u0000manage';
+  static const _manage = -1;
 
   late Future<List<EmployeeTitle>> _titles = widget.catalog.employeeTitles();
 
   Future<void> _openManager() async {
-    final added = await showDialog<String>(
+    final added = await showDialog<int>(
       context: context,
       builder: (_) => TitleListDialog(catalog: widget.catalog),
     );
@@ -599,28 +598,21 @@ class _TitleFieldState extends State<_TitleField> {
     return FutureBuilder<List<EmployeeTitle>>(
       future: _titles,
       builder: (context, snap) {
-        final names = <String>[
-          for (final x in snap.data ?? const <EmployeeTitle>[]) x.name,
-        ];
-        final current = widget.value.trim();
-        if (current.isNotEmpty &&
-            !names.any((n) => n.toLowerCase() == current.toLowerCase())) {
-          names.insert(0, current);
-        }
-        final selected = names.cast<String?>().firstWhere(
-          (n) => n!.toLowerCase() == current.toLowerCase(),
-          orElse: () => null,
-        );
+        final titles = snap.data ?? const <EmployeeTitle>[];
+        final selected = titles.any((x) => x.id == widget.value)
+            ? widget.value
+            : null;
         // A new key per value rebuilds the field: initialValue is only read when the field is created.
         return KeyedSubtree(
-          key: ValueKey(selected),
-          child: DropdownButtonFormField<String>(
+          key: ValueKey('${selected}_${titles.length}'),
+          child: DropdownButtonFormField<int>(
             key: const Key('emp_title'),
             initialValue: selected,
             isExpanded: true,
             decoration: InputDecoration(labelText: t.title),
             items: [
-              for (final n in names) DropdownMenuItem(value: n, child: Text(n)),
+              for (final x in titles)
+                DropdownMenuItem(value: x.id, child: Text(x.name)),
               DropdownMenuItem(
                 value: _manage,
                 child: Row(
@@ -635,7 +627,8 @@ class _TitleFieldState extends State<_TitleField> {
                 ),
               ),
             ],
-            validator: (v) => (v == null || v.isEmpty) ? t.requiredField : null,
+            validator: (v) =>
+                (v == null || v == _manage) ? t.requiredField : null,
             onChanged: (v) {
               if (v == _manage) {
                 _openManager();
@@ -650,7 +643,7 @@ class _TitleFieldState extends State<_TitleField> {
   }
 }
 
-/// Add and remove titles of the shared list. Pops with the name that was added last, so the form can select it.
+/// Add and remove titles of the shared list. Pops with the id of the title added last, so the form can select it.
 class TitleListDialog extends StatefulWidget {
   const TitleListDialog({super.key, required this.catalog});
 
@@ -663,7 +656,7 @@ class TitleListDialog extends StatefulWidget {
 class _TitleListDialogState extends State<TitleListDialog> {
   final _name = TextEditingController();
   List<EmployeeTitle>? _titles;
-  String? _lastAdded;
+  int? _lastAdded;
   String? _error;
   bool _busy = false;
 
@@ -708,7 +701,7 @@ class _TitleListDialogState extends State<TitleListDialog> {
     if (name.isEmpty) return;
     await _run(() async {
       final created = await widget.catalog.addEmployeeTitle(name);
-      _lastAdded = created.name;
+      _lastAdded = created.id;
       _name.clear();
     });
   }

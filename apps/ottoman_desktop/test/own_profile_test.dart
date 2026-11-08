@@ -47,6 +47,7 @@ class _Server implements HttpClientAdapter {
     'lastName': 'Brijač',
     'fullName': 'Selma Brijač',
     'title': 'Barber',
+    'titleId': 1,
     'photoUrl': hasPhoto ? _avatar(zoom) : null,
     'photoZoom': zoom,
     'gender': gender,

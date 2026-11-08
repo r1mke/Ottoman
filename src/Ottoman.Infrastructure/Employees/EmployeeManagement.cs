@@ -117,8 +117,9 @@ public class EmployeeManagement(
             RegisteredAtUtc = clock.GetUtcNow().UtcDateTime,
         };
 
-        // A title typed through the API joins the pick list; the barber points at it by id.
-        var titleId = await titles.EnsureAsync(r.Title, ct);
+        // The title must already be on the list (it is managed on its own); an unknown one is refused, not added.
+        if (await titles.FindAsync(r.TitleId, r.Title, ct) is not { } titleId)
+            return Result<EmployeeDto>.Invalid(EmployeeTitleChoice.Unknown);
         string? failure = null;
         var strategy = db.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
@@ -150,8 +151,8 @@ public class EmployeeManagement(
     public async Task<Result<EmployeeDto>> UpdateAsync(string id, UpdateEmployeeRequest r, CancellationToken ct)
     {
         if (!await db.EmployeeProfiles.AnyAsync(p => p.UserId == id, ct)) return Result<EmployeeDto>.NotFound();
-        // Resolved before anything is tracked: a title typed through the API joins the pick list.
-        var titleId = await titles.EnsureAsync(r.Title, ct);
+        if (await titles.FindAsync(r.TitleId, r.Title, ct) is not { } titleId)
+            return Result<EmployeeDto>.Invalid(EmployeeTitleChoice.Unknown);
         var profile = await db.EmployeeProfiles.FirstOrDefaultAsync(p => p.UserId == id, ct);
         var user = await users.FindByIdAsync(id);
         if (profile is null || user is null) return Result<EmployeeDto>.NotFound();

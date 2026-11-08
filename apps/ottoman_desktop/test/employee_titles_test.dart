@@ -59,7 +59,8 @@ class _Server implements HttpClientAdapter {
         'firstName': 'Kerim',
         'lastName': 'Begić',
         'fullName': 'Kerim Begić',
-        'title': (o.data as Map)['title'],
+        'title': 'Barber',
+        'titleId': (o.data as Map)['titleId'],
         'isActive': true,
         'serviceIds': <int>[],
       };
@@ -79,7 +80,11 @@ class _Server implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Future<_Server> _open(WidgetTester tester, {String title = 'Barber'}) async {
+Future<_Server> _open(
+  WidgetTester tester, {
+  String title = 'Barber',
+  int titleId = 1,
+}) async {
   tester.view.devicePixelRatio = 1.0;
   tester.view.physicalSize = const Size(1400, 1000);
   addTearDown(tester.view.reset);
@@ -96,6 +101,7 @@ Future<_Server> _open(WidgetTester tester, {String title = 'Barber'}) async {
     'firstName': 'Kerim',
     'lastName': 'Begić',
     'title': title,
+    'titleId': titleId,
     'isActive': true,
     'serviceIds': <int>[],
   });
@@ -160,21 +166,21 @@ void main() {
     await tester.pumpAndSettle();
 
     final saved = server.sent('PUT', '/employees/e1').single;
-    expect((saved.data as Map)['title'], 'Master Barber');
+    expect((saved.data as Map)['titleId'], 3);
+    expect((saved.data as Map).containsKey('title'), isFalse);
   });
 
   testWidgets(
-    'a title the barber has stays selectable even if the list lacks it',
+    'a title that is not on the list is not offered: one must be picked',
     (tester) async {
-      await _open(tester, title: 'Legacy majstor');
+      final server = await _open(tester, title: 'Legacy majstor', titleId: 99);
 
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('emp_title')),
-          matching: find.text('Legacy majstor'),
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('Legacy majstor'), findsNothing);
+      await tester.ensureVisible(find.text('Spremi'));
+      await tester.tap(find.text('Spremi'));
+      await tester.pumpAndSettle();
+      expect(server.sent('PUT', '/employees/e1'), isEmpty);
+      expect(find.text('Obavezno polje'), findsWidgets);
     },
   );
 
