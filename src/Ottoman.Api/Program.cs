@@ -57,7 +57,7 @@ try
     {
         o.Filters.Add<ValidationFilter>();
         o.Filters.Add<AuditFilter>();
-    });
+    }).ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = InvalidModelState.Respond);
     builder.Services.AddOpenApi();
     builder.Services.AddExceptionHandler<HttpExceptionHandler>();
     builder.Services.AddProblemDetails();

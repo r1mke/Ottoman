@@ -88,6 +88,7 @@ public static class DependencyInjection
                 o.Lockout.AllowedForNewUsers = true;
             })
             .AddRoles<Microsoft.AspNetCore.Identity.IdentityRole>()
+            .AddErrorDescriber<BosnianIdentityErrorDescriber>()
             .AddEntityFrameworkStores<OttomanDbContext>()
             .AddTokenProvider<DataProtectorTokenProvider<AppUser>>(TokenOptions.DefaultProvider);
         services.AddScoped<StoredKeyEncryption>();
