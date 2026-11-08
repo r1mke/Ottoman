@@ -185,7 +185,7 @@ public class ShopTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task Brands_and_categories_crud_and_deleting_keeps_the_products()
+    public async Task Brands_and_categories_in_use_by_products_cannot_be_deleted()
     {
         var admin = await Admin();
         var brand = (await (await admin.PostAsJsonAsync("/api/v1/brands", new NameRequest($"Brend {Guid.NewGuid():N}"))).Content.ReadFromJsonAsync<BrandDto>())!;
@@ -198,11 +198,29 @@ public class ShopTests(ApiFixture api)
         product.BrandName.Should().Be(brand.Name);
         product.CategoryName.Should().Be(category.Name);
 
-        (await admin.DeleteAsync($"/api/v1/brands/{brand.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        // In use (even by an inactive product): refused with the count, and the product keeps both.
+        var hidden = await admin.PostAsJsonAsync("/api/v1/products",
+            new ProductUpsertRequest($"P {Guid.NewGuid():N}", null, brand.Id, category.Id, 9m, 1, null, false));
+        hidden.StatusCode.Should().Be(HttpStatusCode.Created);
+        var brandRes = await admin.DeleteAsync($"/api/v1/brands/{brand.Id}");
+        brandRes.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await brandRes.Content.ReadAsStringAsync()).Should().Contain("Brend se koristi kod 2 proizvoda");
+        var categoryRes = await admin.DeleteAsync($"/api/v1/categories/{category.Id}");
+        categoryRes.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await categoryRes.Content.ReadAsStringAsync()).Should().Contain("Kategorija se koristi kod 2 proizvoda");
         var after = (await admin.GetFromJsonAsync<ProductDto>($"/api/v1/products/{product.Id}"))!;
-        after.BrandId.Should().BeNull();
+        after.BrandId.Should().Be(brand.Id);
         after.CategoryId.Should().Be(category.Id);
+
+        // Once no product uses them, they go.
+        var hiddenId = (await hidden.Content.ReadFromJsonAsync<ProductDto>())!.Id;
+        foreach (var (id, name) in new[] { (product.Id, product.Name), (hiddenId, $"P {Guid.NewGuid():N}") })
+            (await admin.PutAsJsonAsync($"/api/v1/products/{id}", new ProductUpsertRequest(name, null, null, null, 9m, 1, null)))
+                .StatusCode.Should().Be(HttpStatusCode.OK);
+        (await admin.DeleteAsync($"/api/v1/brands/{brand.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await admin.DeleteAsync($"/api/v1/categories/{category.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await admin.DeleteAsync($"/api/v1/brands/{brand.Id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await admin.DeleteAsync($"/api/v1/categories/{category.Id}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     // ------------------------------------------------------------------ ordering

@@ -124,6 +124,13 @@ class _Api implements HttpClientAdapter {
         'name': 'Dandy',
         'logoUrl': o.method == 'PUT' ? 'https://img/dandy.png' : null,
       };
+    } else if (o.method == 'DELETE' && o.path.endsWith('/brands/1')) {
+      status = 409;
+      body = {
+        'title': 'Sukob',
+        'status': 409,
+        'detail': 'Brend se koristi kod 3 proizvoda. Prvo im promijenite brend.',
+      };
     } else if (o.path.endsWith('/manage')) {
       body = rules;
     } else if (o.method == 'POST' && o.path.endsWith('/sections')) {
@@ -378,6 +385,45 @@ void main() {
     await tester.tap(find.byKey(const Key('logo_clear_2')));
     await tester.pumpAndSettle();
     expect(api.last('DELETE', '/brands/2/logo'), isNotNull);
+  });
+
+  testWidgets('deleting a brand in use shows the server message and keeps it', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1.0;
+    tester.view.physicalSize = const Size(1200, 1800);
+    addTearDown(tester.view.reset);
+    final api = _Api();
+    final shop = ShopApi(
+      ApiClient(
+        baseUrl: 'http://test',
+        dio: Dio()..httpClientAdapter = api,
+        readToken: () async => 't',
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('bs'),
+        home: Scaffold(
+          body: NamesDialog.brands(shop: shop, chooser: _Chooser()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('name_delete_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
+    await tester.pumpAndSettle();
+
+    expect(api.last('DELETE', '/brands/1'), isNotNull);
+    expect(
+      find.text('Brend se koristi kod 3 proizvoda. Prvo im promijenite brend.'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('name_row_1')), findsOneWidget);
   });
 
   testWidgets('a section title that is too short is refused before it is sent, '

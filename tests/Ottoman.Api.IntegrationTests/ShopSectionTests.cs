@@ -330,6 +330,45 @@ public class ShopSectionTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task A_category_or_brand_a_section_uses_cannot_be_deleted()
+    {
+        var admin = await Admin();
+        var cat = (await (await admin.PostAsJsonAsync("/api/v1/categories", new NameRequest(Unique("Kx")))).Content.ReadFromJsonAsync<CategoryDto>())!;
+        var tile = (await (await admin.PostAsJsonAsync("/api/v1/categories", new NameRequest(Unique("Ky")))).Content.ReadFromJsonAsync<CategoryDto>())!;
+        var brand = (await (await admin.PostAsJsonAsync("/api/v1/brands", new NameRequest(Unique("Bx")))).Content.ReadFromJsonAsync<BrandDto>())!;
+
+        // A category section filtered by both: deleting the category would have deleted the section (cascade).
+        var section = (await (await admin.PostAsJsonAsync("/api/v1/shop/sections",
+            new ShopSectionRequest(Unique("Filtar"), ShopSectionKind.Category, cat.Id, 10, true, null, brand.Id)))
+            .Content.ReadFromJsonAsync<ShopSectionAdminDto>())!;
+        var catRes = await admin.DeleteAsync($"/api/v1/categories/{cat.Id}");
+        catRes.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await catRes.Content.ReadAsStringAsync()).Should().Contain("Kategorija se koristi u sekcijama trgovine (1)");
+        var brandRes = await admin.DeleteAsync($"/api/v1/brands/{brand.Id}");
+        brandRes.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await brandRes.Content.ReadAsStringAsync()).Should().Contain("Brend se koristi u sekcijama trgovine (1)");
+        (await Manage(admin)).Should().Contain(x => x.Id == section.Id);
+
+        // A hand-picked category tile counts as use too.
+        var block = (await Manage(admin)).Single(x => x.Kind == ShopSectionKind.CategoryTiles);
+        try
+        {
+            (await admin.PutAsJsonAsync($"/api/v1/shop/sections/{block.Id}", Edit(block, maxItems: 6, entries: [tile.Id, cat.Id])))
+                .StatusCode.Should().Be(HttpStatusCode.OK);
+            (await admin.DeleteAsync($"/api/v1/categories/{tile.Id}")).StatusCode.Should().Be(HttpStatusCode.Conflict);
+        }
+        finally
+        {
+            (await admin.PutAsJsonAsync($"/api/v1/shop/sections/{block.Id}", Edit(block))).StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
+        (await admin.DeleteAsync($"/api/v1/shop/sections/{section.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await admin.DeleteAsync($"/api/v1/categories/{cat.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await admin.DeleteAsync($"/api/v1/categories/{tile.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await admin.DeleteAsync($"/api/v1/brands/{brand.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
     public async Task Category_tiles_must_be_an_even_number_so_the_last_row_is_full()
     {
         var admin = await Admin();

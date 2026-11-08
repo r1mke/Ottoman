@@ -291,11 +291,29 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
 
     public async Task<Result<bool>> DeleteBrandAsync(int id, CancellationToken ct)
     {
-        // Products keep existing without a brand (FK is SET NULL).
-        var rows = await db.Brands.Where(b => b.Id == id).ExecuteDeleteAsync(ct);
-        if (rows == 1) recommendations.Invalidate();
-        return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
+        // One statement: the brand goes only while nothing points at it, so products never lose their brand silently
+        // (the FK would SET NULL) and no shop section is left filtering by a brand that no longer exists.
+        var rows = await db.Brands
+            .Where(b => b.Id == id && !db.Products.Any(p => p.BrandId == id) && !db.ShopSections.Any(BrandUse(id)))
+            .ExecuteDeleteAsync(ct);
+        if (rows == 1)
+        {
+            recommendations.Invalidate();
+            return Result<bool>.Ok(true);
+        }
+        if (!await db.Brands.AnyAsync(b => b.Id == id, ct)) return Result<bool>.NotFound();
+        var products = await db.Products.CountAsync(p => p.BrandId == id, ct);
+        var sections = await db.ShopSections.CountAsync(BrandUse(id), ct);
+        return Result<bool>.Conflict(CatalogUsage.InUseMessage(isBrand: true, products, sections));
     }
+
+    /// <summary>A section that filters by the brand or shows it as a hand-picked brand tile.</summary>
+    private static System.Linq.Expressions.Expression<Func<ShopSection, bool>> BrandUse(int id) =>
+        s => s.BrandId == id || (s.Kind == ShopSectionKind.BrandTiles && s.Entries.Any(e => e.EntityId == id));
+
+    /// <summary>A section that lists the category (deleting it would delete the section) or shows it as a hand-picked tile.</summary>
+    private static System.Linq.Expressions.Expression<Func<ShopSection, bool>> CategoryUse(int id) =>
+        s => s.CategoryId == id || (s.Kind == ShopSectionKind.CategoryTiles && s.Entries.Any(e => e.EntityId == id));
 
     // ---------------------------------------------------------------- categories
 
@@ -326,8 +344,17 @@ public class ProductCatalog(OttomanDbContext db, IRecommendationCache recommenda
 
     public async Task<Result<bool>> DeleteCategoryAsync(int id, CancellationToken ct)
     {
-        var rows = await db.Categories.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
-        if (rows == 1) recommendations.Invalidate();
-        return rows == 1 ? Result<bool>.Ok(true) : Result<bool>.NotFound();
+        var rows = await db.Categories
+            .Where(c => c.Id == id && !db.Products.Any(p => p.CategoryId == id) && !db.ShopSections.Any(CategoryUse(id)))
+            .ExecuteDeleteAsync(ct);
+        if (rows == 1)
+        {
+            recommendations.Invalidate();
+            return Result<bool>.Ok(true);
+        }
+        if (!await db.Categories.AnyAsync(c => c.Id == id, ct)) return Result<bool>.NotFound();
+        var products = await db.Products.CountAsync(p => p.CategoryId == id, ct);
+        var sections = await db.ShopSections.CountAsync(CategoryUse(id), ct);
+        return Result<bool>.Conflict(CatalogUsage.InUseMessage(isBrand: false, products, sections));
     }
 }
