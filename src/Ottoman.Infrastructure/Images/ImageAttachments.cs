@@ -154,6 +154,12 @@ public class ImageAttachments(
 
     public Task DiscardImageAsync(string key) => TryDeleteAsync(key);
 
+    public Task<Result<bool>> ReplaceAnnouncementImageAsync(int announcementId, Stream? content, CancellationToken ct) =>
+        ReplaceAsync(
+            async () => await db.Announcements.Where(a => a.Id == announcementId).Select(a => new KeyRow(a.ImageKey)).FirstOrDefaultAsync(ct),
+            key => db.Announcements.Where(a => a.Id == announcementId).ExecuteUpdateAsync(s => s.SetProperty(x => x.ImageKey, key), ct),
+            content, "ottoman/announcements", ct);
+
     // ------------------------------------------------------------ brand logos
 
     public Task<Result<bool>> SetBrandLogoAsync(int brandId, Stream content, CancellationToken ct) =>

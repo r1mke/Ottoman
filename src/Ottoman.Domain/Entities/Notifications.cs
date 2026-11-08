@@ -29,6 +29,16 @@ public class Announcement
     /// <summary>Storage key of the picture of the news item (optional).</summary>
     public string? ImageKey { get; set; }
 
+    public AnnouncementCategory Category { get; set; } = AnnouncementCategory.News;
+
+    /// <summary>After this moment recipients no longer see it; null = no end.</summary>
+    public DateTime? ExpiresAtUtc { get; set; }
+
+    /// <summary>Taken down by the admin (a status, not a delete): recipients no longer see it, the admin still does.</summary>
+    public bool IsHidden { get; set; }
+
+    public DateTime? UpdatedAtUtc { get; set; }
+
     public string CreatedByUserId { get; set; } = null!;
     public DateTime CreatedAtUtc { get; set; }
 }

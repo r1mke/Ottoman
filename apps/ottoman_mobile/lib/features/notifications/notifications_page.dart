@@ -121,13 +121,39 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   ListTile(
                     onTap: () => _open(n),
                     leading: Icon(notificationIcon(n.kind)),
-                    title: Text(
-                      n.title,
-                      style: TextStyle(
-                        fontWeight: n.isRead
-                            ? FontWeight.w500
-                            : FontWeight.w800,
-                      ),
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (n.category != null)
+                          Container(
+                            key: Key('notification_category_${n.id}'),
+                            margin: const EdgeInsets.only(bottom: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: scheme.secondaryContainer,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              announcementCategoryLabel(t, n.category!),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: scheme.onSecondaryContainer,
+                              ),
+                            ),
+                          ),
+                        Text(
+                          n.title,
+                          style: TextStyle(
+                            fontWeight: n.isRead
+                                ? FontWeight.w500
+                                : FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
                     subtitle: Text(
                       n.body,

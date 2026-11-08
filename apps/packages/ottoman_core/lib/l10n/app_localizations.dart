@@ -1835,13 +1835,13 @@ abstract class AppLocalizations {
   /// No description provided for @previousPage.
   ///
   /// In bs, this message translates to:
-  /// **'Prethodna stranica'**
+  /// **'Prethodna'**
   String get previousPage;
 
   /// No description provided for @nextPage.
   ///
   /// In bs, this message translates to:
-  /// **'Sljedeća stranica'**
+  /// **'Sljedeća'**
   String get nextPage;
 
   /// No description provided for @auditLog.
@@ -3397,6 +3397,108 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Proizvod'**
   String get reviewTargetProduct;
+
+  /// No description provided for @announcementCategory.
+  ///
+  /// In bs, this message translates to:
+  /// **'Kategorija'**
+  String get announcementCategory;
+
+  /// No description provided for @categoryNews.
+  ///
+  /// In bs, this message translates to:
+  /// **'Novost'**
+  String get categoryNews;
+
+  /// No description provided for @categoryPromotion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Akcija'**
+  String get categoryPromotion;
+
+  /// No description provided for @categoryNotice.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obavijest'**
+  String get categoryNotice;
+
+  /// No description provided for @expiresOn.
+  ///
+  /// In bs, this message translates to:
+  /// **'Vrijedi do'**
+  String get expiresOn;
+
+  /// No description provided for @noExpiry.
+  ///
+  /// In bs, this message translates to:
+  /// **'Bez datuma isteka'**
+  String get noExpiry;
+
+  /// No description provided for @chooseExpiry.
+  ///
+  /// In bs, this message translates to:
+  /// **'Odaberi datum isteka'**
+  String get chooseExpiry;
+
+  /// No description provided for @clearExpiry.
+  ///
+  /// In bs, this message translates to:
+  /// **'Ukloni datum isteka'**
+  String get clearExpiry;
+
+  /// No description provided for @announcementHidden.
+  ///
+  /// In bs, this message translates to:
+  /// **'Skrivena'**
+  String get announcementHidden;
+
+  /// No description provided for @announcementExpired.
+  ///
+  /// In bs, this message translates to:
+  /// **'Istekla'**
+  String get announcementExpired;
+
+  /// No description provided for @hideAnnouncement.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sakrij'**
+  String get hideAnnouncement;
+
+  /// No description provided for @showAnnouncement.
+  ///
+  /// In bs, this message translates to:
+  /// **'Prikaži ponovo'**
+  String get showAnnouncement;
+
+  /// No description provided for @hideAnnouncementQuestion.
+  ///
+  /// In bs, this message translates to:
+  /// **'Sakriti obavijest? Primaoci je više neće vidjeti; možete je kasnije ponovo prikazati.'**
+  String get hideAnnouncementQuestion;
+
+  /// No description provided for @editAnnouncement.
+  ///
+  /// In bs, this message translates to:
+  /// **'Uredi obavijest'**
+  String get editAnnouncement;
+
+  /// No description provided for @announcementSaved.
+  ///
+  /// In bs, this message translates to:
+  /// **'Obavijest je sačuvana.'**
+  String get announcementSaved;
+
+  /// No description provided for @searchAnnouncements.
+  ///
+  /// In bs, this message translates to:
+  /// **'Pretraži obavijesti'**
+  String get searchAnnouncements;
+
+  /// No description provided for @editNotResent.
+  ///
+  /// In bs, this message translates to:
+  /// **'Izmjena se ne šalje ponovo; primaoci vide novi tekst u aplikaciji.'**
+  String get editNotResent;
 }
 
 class _AppLocalizationsDelegate

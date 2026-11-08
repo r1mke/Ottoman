@@ -66,6 +66,19 @@ class _Api implements HttpClientAdapter {
               'title': 'Podaci nisu ispravni.',
               'detail': 'Odabrani korisnik ne postoji.',
             };
+    } else if (path.endsWith('/hide') && o.method == 'PUT') {
+      final hidden = (o.data as Map)['hidden'] as bool;
+      sent.first['isHidden'] = hidden;
+      body = sent.first;
+    } else if (RegExp(r'/announcements/\d+$').hasMatch(path) &&
+        o.method == 'PUT') {
+      final d = o.data as Map;
+      sent.first
+        ..['title'] = d['title']
+        ..['body'] = d['body']
+        ..['category'] = d['category']
+        ..['expiresAtUtc'] = d['expiresAtUtc'];
+      body = sent.first;
     } else if (path.endsWith('/announcements')) {
       body = {'items': sent, 'totalCount': sent.length};
     } else if (path.endsWith('/clients')) {
@@ -255,6 +268,93 @@ void main() {
           .controller!
           .text,
       'T',
+    );
+  });
+
+  testWidgets('a new message is sent with its category', (tester) async {
+    final api = await _open(tester);
+    await tester.enterText(find.byKey(const Key('msg_title')), 'Akcija');
+    await tester.enterText(find.byKey(const Key('msg_body')), 'Vosak -20%');
+    await tester.tap(find.byKey(const Key('msg_category')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Akcija').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('msg_send')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
+    await tester.pumpAndSettle();
+
+    final body = api.where('POST', '/announcements').single.data as Map;
+    expect(body['category'], 'Promotion');
+    expect(body['expiresAtUtc'], isNull);
+  });
+
+  testWidgets('a sent message is edited without sending it again', (
+    tester,
+  ) async {
+    final api = await _open(tester);
+    expect(find.byKey(const Key('sent_category_1')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('edit_1')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('ne šalje ponovo'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('edit_title')),
+      'Akcija do petka',
+    );
+    await tester.tap(find.byKey(const Key('edit_category')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Obavijest').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('edit_save')));
+    await tester.pumpAndSettle();
+
+    final put = api.where('PUT', '/announcements/1').single.data as Map;
+    expect(put['title'], 'Akcija do petka');
+    expect(put['category'], 'Notice');
+    expect(api.where('POST', '/announcements'), isEmpty);
+    expect(find.text('Akcija do petka'), findsOneWidget);
+  });
+
+  testWidgets('hiding asks first, then the message is marked hidden', (
+    tester,
+  ) async {
+    final api = await _open(tester);
+
+    await tester.tap(find.byKey(const Key('hide_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action_cancel')));
+    await tester.pumpAndSettle();
+    expect(api.where('PUT', '/hide'), isEmpty);
+
+    await tester.tap(find.byKey(const Key('hide_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_action')));
+    await tester.pumpAndSettle();
+    expect((api.where('PUT', '/hide').single.data as Map)['hidden'], true);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('sent_status_1')),
+        matching: find.text('Skrivena'),
+      ),
+      findsOneWidget,
+    );
+
+    // Showing it again needs no confirmation.
+    await tester.tap(find.byKey(const Key('hide_1')));
+    await tester.pumpAndSettle();
+    expect((api.where('PUT', '/hide').last.data as Map)['hidden'], false);
+  });
+
+  testWidgets('the list is searched on the server', (tester) async {
+    final api = await _open(tester);
+    await tester.enterText(find.byKey(const Key('ann_search')), 'vosak');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(
+      api.where('GET', '/announcements').last.queryParameters['search'],
+      'vosak',
     );
   });
 }

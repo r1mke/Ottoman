@@ -11,6 +11,14 @@ String audienceLabel(AppLocalizations t, String audience) => switch (audience) {
   _ => audience,
 };
 
+/// "Novost", "Akcija" or "Obavijest".
+String announcementCategoryLabel(AppLocalizations t, String category) =>
+    switch (category) {
+      AnnouncementCategory.promotion => t.categoryPromotion,
+      AnnouncementCategory.notice => t.categoryNotice,
+      _ => t.categoryNews,
+    };
+
 IconData notificationIcon(String kind) => switch (kind) {
   'ReservationCreated' => Icons.event_available_outlined,
   'ReservationCancelled' => Icons.event_busy_outlined,

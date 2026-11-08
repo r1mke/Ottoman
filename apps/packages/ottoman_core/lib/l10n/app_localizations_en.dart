@@ -914,10 +914,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clientRecentOrders => 'Recent orders';
 
   @override
-  String get previousPage => 'Previous page';
+  String get previousPage => 'Previous';
 
   @override
-  String get nextPage => 'Next page';
+  String get nextPage => 'Next';
 
   @override
   String get auditLog => 'Activity log';
@@ -1756,4 +1756,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reviewTargetProduct => 'Product';
+
+  @override
+  String get announcementCategory => 'Category';
+
+  @override
+  String get categoryNews => 'News';
+
+  @override
+  String get categoryPromotion => 'Promotion';
+
+  @override
+  String get categoryNotice => 'Notice';
+
+  @override
+  String get expiresOn => 'Valid until';
+
+  @override
+  String get noExpiry => 'No end date';
+
+  @override
+  String get chooseExpiry => 'Choose end date';
+
+  @override
+  String get clearExpiry => 'Remove end date';
+
+  @override
+  String get announcementHidden => 'Hidden';
+
+  @override
+  String get announcementExpired => 'Expired';
+
+  @override
+  String get hideAnnouncement => 'Hide';
+
+  @override
+  String get showAnnouncement => 'Show again';
+
+  @override
+  String get hideAnnouncementQuestion =>
+      'Hide the announcement? Recipients will no longer see it; you can show it again later.';
+
+  @override
+  String get editAnnouncement => 'Edit announcement';
+
+  @override
+  String get announcementSaved => 'Announcement saved.';
+
+  @override
+  String get searchAnnouncements => 'Search announcements';
+
+  @override
+  String get editNotResent =>
+      'Edits are not sent again; recipients see the new text in the app.';
 }

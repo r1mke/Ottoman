@@ -38,6 +38,9 @@ public interface IImageAttachments
     /// <summary>Uploads the picture of a news item that is about to be created and returns its storage key.</summary>
     Task<Result<string>> UploadAnnouncementImageAsync(Stream content, CancellationToken ct);
 
+    /// <summary>Replaces (stream) or removes (null) the picture of a sent announcement.</summary>
+    Task<Result<bool>> ReplaceAnnouncementImageAsync(int announcementId, Stream? content, CancellationToken ct);
+
     /// <summary>Deletes an uploaded picture that was never attached (the creation failed afterwards).</summary>
     Task DiscardImageAsync(string key);
     Task<Result<bool>> SetBrandLogoAsync(int brandId, Stream content, CancellationToken ct);

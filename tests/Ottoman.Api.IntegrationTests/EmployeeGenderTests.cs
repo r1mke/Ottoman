@@ -92,7 +92,7 @@ public class EmployeeGenderTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task Announcements_no_longer_take_pictures()
+    public async Task An_announcement_picture_change_needs_a_file()
     {
         var admin = await Admin();
         var created = await admin.PostAsJsonAsync("/api/v1/announcements", new Ottoman.Application.Notifications.AnnouncementRequest(
@@ -101,6 +101,6 @@ public class EmployeeGenderTests(ApiFixture api)
 
         var res = await admin.PutAsync($"/api/v1/announcements/{id}/image", new MultipartFormDataContent());
 
-        res.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed);
+        res.StatusCode.Should().Be(HttpStatusCode.BadRequest, "the picture of a sent announcement can be replaced, but only with a file");
     }
 }

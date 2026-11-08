@@ -914,10 +914,10 @@ class AppLocalizationsBs extends AppLocalizations {
   String get clientRecentOrders => 'Posljednje narudžbe';
 
   @override
-  String get previousPage => 'Prethodna stranica';
+  String get previousPage => 'Prethodna';
 
   @override
-  String get nextPage => 'Sljedeća stranica';
+  String get nextPage => 'Sljedeća';
 
   @override
   String get auditLog => 'Dnevnik aktivnosti';
@@ -1754,4 +1754,57 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get reviewTargetProduct => 'Proizvod';
+
+  @override
+  String get announcementCategory => 'Kategorija';
+
+  @override
+  String get categoryNews => 'Novost';
+
+  @override
+  String get categoryPromotion => 'Akcija';
+
+  @override
+  String get categoryNotice => 'Obavijest';
+
+  @override
+  String get expiresOn => 'Vrijedi do';
+
+  @override
+  String get noExpiry => 'Bez datuma isteka';
+
+  @override
+  String get chooseExpiry => 'Odaberi datum isteka';
+
+  @override
+  String get clearExpiry => 'Ukloni datum isteka';
+
+  @override
+  String get announcementHidden => 'Skrivena';
+
+  @override
+  String get announcementExpired => 'Istekla';
+
+  @override
+  String get hideAnnouncement => 'Sakrij';
+
+  @override
+  String get showAnnouncement => 'Prikaži ponovo';
+
+  @override
+  String get hideAnnouncementQuestion =>
+      'Sakriti obavijest? Primaoci je više neće vidjeti; možete je kasnije ponovo prikazati.';
+
+  @override
+  String get editAnnouncement => 'Uredi obavijest';
+
+  @override
+  String get announcementSaved => 'Obavijest je sačuvana.';
+
+  @override
+  String get searchAnnouncements => 'Pretraži obavijesti';
+
+  @override
+  String get editNotResent =>
+      'Izmjena se ne šalje ponovo; primaoci vide novi tekst u aplikaciji.';
 }

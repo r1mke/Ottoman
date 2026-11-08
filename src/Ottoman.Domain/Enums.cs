@@ -65,6 +65,18 @@ public enum AnnouncementAudience
     User = 3,
 }
 
+/// <summary>What kind of news an announcement is; the apps show it as a small label.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum AnnouncementCategory
+{
+    /// <summary>"Novost".</summary>
+    News = 0,
+    /// <summary>"Akcija": a promotion.</summary>
+    Promotion = 1,
+    /// <summary>"Obavijest": practical information (hours, closures).</summary>
+    Notice = 2,
+}
+
 public enum ReminderKind
 {
     /// <summary>About a day before the appointment.</summary>

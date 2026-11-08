@@ -60,10 +60,35 @@ public class AnnouncementsController(INotificationService notifications) : Contr
     }
 
     [HttpGet]
-    public Task<PagedResult<AnnouncementDto>> List([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default) =>
-        notifications.ListAnnouncementsAsync(new PageQuery(page, pageSize), ct);
+    public Task<PagedResult<AnnouncementDto>> List(
+        [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default) =>
+        notifications.ListAnnouncementsAsync(search, new PageQuery(page, pageSize), ct);
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<AnnouncementDto>> Get(int id, CancellationToken ct) =>
         this.ToActionResult(await notifications.GetAnnouncementAsync(id, ct));
+
+    /// <summary>Edits the text, category and end date. Never sends anything again.</summary>
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<AnnouncementDto>> Update(int id, UpdateAnnouncementRequest request, CancellationToken ct) =>
+        this.ToActionResult(await notifications.UpdateAnnouncementAsync(id, request, ct));
+
+    /// <summary>Hides it from every recipient, or shows it again (a status, not a delete).</summary>
+    [HttpPut("{id:int}/hide")]
+    public async Task<ActionResult<AnnouncementDto>> Hide(int id, AnnouncementHideRequest request, CancellationToken ct) =>
+        this.ToActionResult(await notifications.SetAnnouncementHiddenAsync(id, request.Hidden!.Value, ct));
+
+    [HttpPut("{id:int}/image")]
+    [RejectOversizedUpload]
+    [RequestSizeLimit(ImageUpload.RequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ImageUpload.FormLimit)]
+    public async Task<ActionResult<AnnouncementDto>> SetImage(int id, IFormFile file, CancellationToken ct)
+    {
+        await using var stream = file.OpenReadStream();
+        return this.ToActionResult(await notifications.SetAnnouncementImageAsync(id, stream, ct));
+    }
+
+    [HttpDelete("{id:int}/image")]
+    public async Task<ActionResult<AnnouncementDto>> ClearImage(int id, CancellationToken ct) =>
+        this.ToActionResult(await notifications.SetAnnouncementImageAsync(id, null, ct));
 }

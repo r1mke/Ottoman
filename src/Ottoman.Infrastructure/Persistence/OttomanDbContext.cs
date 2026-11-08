@@ -330,6 +330,7 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.Body).HasMaxLength(2000);
             e.Property(x => x.ImageKey).HasMaxLength(300);
             e.Property(x => x.Audience).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.Category).HasConversion<string>().HasMaxLength(20).HasDefaultValue(Ottoman.Domain.AnnouncementCategory.News);
             e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 

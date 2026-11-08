@@ -233,4 +233,30 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('a news item shows its category as a small label', (
+    tester,
+  ) async {
+    final api = await _open(tester);
+    api.items = [
+      {
+        ..._n(9, 'Popust na vosak'),
+        'kind': 'Announcement',
+        'category': 'Promotion',
+      },
+      _n(10, 'Termin potvrđen'),
+    ];
+
+    await tester.tap(find.byKey(const Key('open_notifications')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('notification_category_9')),
+        matching: find.text('Akcija'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('notification_category_10')), findsNothing);
+  });
 }
