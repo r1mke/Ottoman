@@ -37,7 +37,6 @@ Map<String, dynamic> _order({
   'fulfilment': 'Pickup',
   'paymentMethod': method,
   'paymentStatus': null,
-  'deliveryAddress': null,
   'note': null,
   'totalPrice': 22.5,
   'createdAtUtc': DateTime.utc(2030, 1, 7, 10).toIso8601String(),
@@ -388,7 +387,7 @@ void main() {
     await tester.tap(find.byKey(const Key('go_checkout')));
     await tester.pumpAndSettle();
 
-    // Card and delivery are unavailable without a payment SDK.
+    // Card is unavailable without a payment SDK.
     expect(
       tester
           .widget<RadioListTile<String>>(find.byKey(const Key('pay_card')))

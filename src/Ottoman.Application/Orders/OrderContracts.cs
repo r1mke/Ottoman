@@ -11,7 +11,6 @@ public record CreateOrderRequest(
     IReadOnlyList<OrderLineRequest> Items,
     FulfilmentType Fulfilment,
     PaymentMethod PaymentMethod,
-    string? DeliveryAddress = null,
     string? Note = null);
 
 public class CreateOrderRequestValidator : AbstractValidator<CreateOrderRequest>
@@ -25,10 +24,9 @@ public class CreateOrderRequestValidator : AbstractValidator<CreateOrderRequest>
             i.RuleFor(l => l.Quantity).InclusiveBetween(1, Ottoman.Domain.Orders.OrderPricing.MaxQuantityPerLine)
                 .WithName("Količina");
         });
-        RuleFor(x => x.Fulfilment).IsInEnum();
+        // Goods are collected at the salon: Pickup is the only fulfilment there is.
+        RuleFor(x => x.Fulfilment).IsInEnum().WithMessage("Proizvodi se preuzimaju u salonu.");
         RuleFor(x => x.PaymentMethod).IsInEnum();
-        // Goods are collected at the salon; delivery is not offered.
-        RuleFor(x => x.Fulfilment).Equal(FulfilmentType.Pickup).WithMessage("Proizvodi se preuzimaju u salonu.");
         RuleFor(x => x.Note).MaximumLength(500).WithName("Napomena");
     }
 }
@@ -43,7 +41,6 @@ public record OrderDto(
     FulfilmentType Fulfilment,
     PaymentMethod PaymentMethod,
     PaymentStatus? PaymentStatus,
-    string? DeliveryAddress,
     string? Note,
     decimal TotalPrice,
     DateTime CreatedAtUtc,

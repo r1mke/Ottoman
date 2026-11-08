@@ -25,8 +25,8 @@ String paymentStatusLabel(AppLocalizations t, String? status) =>
 String paymentMethodLabel(AppLocalizations t, String method) =>
     method == PaymentMethod.card ? t.payByCard : t.payOnReceipt;
 
-String fulfilmentLabel(AppLocalizations t, String f) =>
-    f == FulfilmentType.delivery ? t.delivery : t.pickup;
+/// Always "Preuzimanje u salonu": pickup is the only way an order is handed over.
+String fulfilmentLabel(AppLocalizations t, String f) => t.pickup;
 
 Color orderStatusColor(ColorScheme scheme, String status) => switch (status) {
   OrderStatus.placed => scheme.primary,

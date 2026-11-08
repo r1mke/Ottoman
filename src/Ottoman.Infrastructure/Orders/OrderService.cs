@@ -59,7 +59,6 @@ public class OrderService(
             Status = r.PaymentMethod == PaymentMethod.Card ? OrderStatus.PendingPayment : OrderStatus.Placed,
             Fulfilment = r.Fulfilment,
             PaymentMethod = r.PaymentMethod,
-            DeliveryAddress = r.Fulfilment == FulfilmentType.Delivery ? r.DeliveryAddress?.Trim() : null,
             Note = string.IsNullOrWhiteSpace(r.Note) ? null : r.Note.Trim(),
             CreatedAtUtc = now,
             ExpiresUtc = r.PaymentMethod == PaymentMethod.Card ? now.AddMinutes(Pay.PendingOrderMinutes) : null,
@@ -254,7 +253,7 @@ public class OrderService(
             return new OrderDto(
                 o.Id, o.ClientId, names.GetValueOrDefault(o.ClientId),
                 o.Status, o.Fulfilment, o.PaymentMethod, pay?.Status,
-                o.DeliveryAddress, o.Note, o.TotalPrice,
+                o.Note, o.TotalPrice,
                 o.CreatedAtUtc, o.ExpiresUtc, o.PaidAtUtc, o.FulfilledAtUtc, o.CancelledAtUtc, o.CancelledBy,
                 o.Items.OrderBy(i => i.Id).Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice, i.Quantity, i.UnitPrice * i.Quantity)).ToList(),
                 secret,

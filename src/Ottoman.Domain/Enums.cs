@@ -32,10 +32,10 @@ public enum OrderStatus
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
+/// <summary>How an order reaches the client. Only pickup in the salon: the salon does not deliver, by design.</summary>
 public enum FulfilmentType
 {
     Pickup = 0,
-    Delivery = 1,
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

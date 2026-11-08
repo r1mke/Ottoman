@@ -41,6 +41,10 @@ Stvarne vrijednosti `.env` datoteke isporučuju se odvojeno, u arhivi `.env-tajn
 
 U `deploy/.env` postavite `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` i `STRIPE_WEBHOOK_SECRET`. Lokalno se webhook secret dobije s `stripe listen --api-key <sk_test_...> --print-secret`, a događaji se proslijede s `stripe listen --forward-to localhost:5080/api/v1/payments/webhook`. Bez ključeva narudžba karticom se ne može platiti (ostaje plaćanje pri preuzimanju). Aplikacije dobijaju publishable ključ od API-ja (`GET /api/v1/payments/config`), nije ugrađen u build. Nakon uspješnog plaćanja mobilna aplikacija poziva `POST /api/v1/orders/{id}/confirm-payment`: server sam pita Stripe za PaymentIntent (status, iznos, valuta, narudžba) i zaključuje narudžbu istim idempotentnim putem kao webhook, pa plaćanje radi i bez `stripe listen`; webhook ostaje kao drugi, nezavisni put (i za povrat novca).
 
+### Narudžbe: samo preuzimanje u salonu
+
+Salon ne dostavlja, namjerno: svaka narudžba iz prodavnice preuzima se u salonu („Preuzimanje u salonu“), plaćena karticom unaprijed ili pri preuzimanju. API prima samo `"fulfilment": "Pickup"`; dostava i adresa za dostavu ne postoje ni u bazi ni u aplikacijama.
+
 ### Pokretanje aplikacija
 
 ```bash

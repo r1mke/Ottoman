@@ -590,10 +590,6 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DeliveryAddress")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
                     b.Property<DateTime?>("ExpiresUtc")
                         .HasColumnType("datetime2");
 

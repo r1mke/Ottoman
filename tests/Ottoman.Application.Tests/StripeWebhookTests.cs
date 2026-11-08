@@ -99,8 +99,8 @@ public class ShopValidatorTests
 {
     private static readonly CreateOrderRequestValidator Order = new();
 
-    private static CreateOrderRequest Req(FulfilmentType f = FulfilmentType.Pickup, PaymentMethod m = PaymentMethod.Card, string? address = null, int qty = 1) =>
-        new([new OrderLineRequest(1, qty)], f, m, address);
+    private static CreateOrderRequest Req(FulfilmentType f = FulfilmentType.Pickup, PaymentMethod m = PaymentMethod.Card, int qty = 1) =>
+        new([new OrderLineRequest(1, qty)], f, m);
 
     [Fact]
     public void A_pickup_card_order_is_valid() => Order.Validate(Req()).IsValid.Should().BeTrue();
@@ -118,7 +118,7 @@ public class ShopValidatorTests
     [Fact]
     public void Only_pickup_is_offered()
     {
-        Order.Validate(Req(FulfilmentType.Delivery, PaymentMethod.Card, "Ulica 1")).IsValid.Should().BeFalse();
+        Order.Validate(Req((FulfilmentType)1, PaymentMethod.Card)).IsValid.Should().BeFalse("delivery no longer exists");
         Order.Validate(Req(FulfilmentType.Pickup, PaymentMethod.OnReceipt)).IsValid.Should().BeTrue();
     }
 

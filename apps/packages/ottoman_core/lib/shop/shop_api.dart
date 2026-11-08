@@ -276,7 +276,6 @@ class ShopApi {
     required Map<int, int> quantities,
     required String fulfilment,
     required String paymentMethod,
-    String? deliveryAddress,
     String? note,
     String? idempotencyKey,
   }) async => ShopOrder.fromJson(
@@ -290,7 +289,6 @@ class ShopApi {
         ],
         'fulfilment': fulfilment,
         'paymentMethod': paymentMethod,
-        'deliveryAddress': deliveryAddress,
         'note': note,
       },
     ),

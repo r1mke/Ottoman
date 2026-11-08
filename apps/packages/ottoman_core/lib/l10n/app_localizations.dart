@@ -920,18 +920,6 @@ abstract class AppLocalizations {
   /// **'Preuzimanje u salonu'**
   String get pickup;
 
-  /// No description provided for @delivery.
-  ///
-  /// In bs, this message translates to:
-  /// **'Dostava'**
-  String get delivery;
-
-  /// No description provided for @deliveryAddress.
-  ///
-  /// In bs, this message translates to:
-  /// **'Adresa za dostavu'**
-  String get deliveryAddress;
-
   /// No description provided for @payByCard.
   ///
   /// In bs, this message translates to:

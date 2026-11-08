@@ -168,8 +168,6 @@
   "limitReached": "No more pieces in stock.",
   "checkout": "Checkout",
   "pickup": "Pick up at the salon",
-  "delivery": "Delivery",
-  "deliveryAddress": "Delivery address",
   "payByCard": "By card",
   "payOnReceipt": "On receipt",
   "placeOrder": "Place order",

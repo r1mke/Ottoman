@@ -245,7 +245,6 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
             e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             e.Property(x => x.Fulfilment).HasConversion<string>().HasMaxLength(20);
             e.Property(x => x.PaymentMethod).HasConversion<string>().HasMaxLength(20);
-            e.Property(x => x.DeliveryAddress).HasMaxLength(300);
             e.Property(x => x.Note).HasMaxLength(500);
             e.Property(x => x.TotalPrice).HasPrecision(18, 2);
             e.Property(x => x.RowVersion).IsRowVersion();

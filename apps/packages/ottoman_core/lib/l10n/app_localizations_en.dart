@@ -436,12 +436,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickup => 'Pick up at the salon';
 
   @override
-  String get delivery => 'Delivery';
-
-  @override
-  String get deliveryAddress => 'Delivery address';
-
-  @override
   String get payByCard => 'By card';
 
   @override

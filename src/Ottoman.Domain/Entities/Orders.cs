@@ -7,7 +7,6 @@ public class Order
     public OrderStatus Status { get; set; }
     public FulfilmentType Fulfilment { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
-    public string? DeliveryAddress { get; set; }
     public string? Note { get; set; }
 
     // Snapshot: computed by the server from current prices at the moment of ordering.

@@ -168,8 +168,6 @@
   "limitReached": "Nema više komada na zalihi.",
   "checkout": "Naplata",
   "pickup": "Preuzimanje u salonu",
-  "delivery": "Dostava",
-  "deliveryAddress": "Adresa za dostavu",
   "payByCard": "Karticom",
   "payOnReceipt": "Pri preuzimanju",
   "placeOrder": "Naruči",

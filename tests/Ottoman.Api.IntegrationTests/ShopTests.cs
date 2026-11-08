@@ -47,8 +47,8 @@ public class ShopTests(ApiFixture api)
     }
 
     private static Task<HttpResponseMessage> Order(HttpClient http, ProductDto p, int qty = 1,
-        PaymentMethod method = PaymentMethod.Card, FulfilmentType f = FulfilmentType.Pickup, string? address = null) =>
-        http.PostAsJsonAsync("/api/v1/orders", new CreateOrderRequest([new OrderLineRequest(p.Id, qty)], f, method, address));
+        PaymentMethod method = PaymentMethod.Card, FulfilmentType f = FulfilmentType.Pickup) =>
+        http.PostAsJsonAsync("/api/v1/orders", new CreateOrderRequest([new OrderLineRequest(p.Id, qty)], f, method));
 
     private static async Task<OrderDto> Dto(HttpResponseMessage res) => (await res.Content.ReadFromJsonAsync<OrderDto>())!;
 
@@ -350,7 +350,16 @@ public class ShopTests(ApiFixture api)
     {
         var p = await NewProduct();
         var (_, client) = await NewClient();
-        (await Order(client, p, 1, PaymentMethod.Card, FulfilmentType.Delivery, "Maršala Tita 5")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // "Delivery" is not a value any more: a Bosnian 400, and an address sent along is simply ignored.
+        var delivery = await client.PostAsync("/api/v1/orders", new StringContent(
+            $"{{\"items\":[{{\"productId\":{p.Id},\"quantity\":1}}],\"fulfilment\":\"Delivery\",\"paymentMethod\":\"Card\"}}",
+            Encoding.UTF8, "application/json"));
+        delivery.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var withAddress = await client.PostAsync("/api/v1/orders", new StringContent(
+            $"{{\"items\":[{{\"productId\":{p.Id},\"quantity\":1}}],\"fulfilment\":\"Pickup\",\"paymentMethod\":\"OnReceipt\",\"deliveryAddress\":\"Ulica 1\"}}",
+            Encoding.UTF8, "application/json"));
+        withAddress.StatusCode.Should().Be(HttpStatusCode.Created);
+        (await withAddress.Content.ReadAsStringAsync()).Should().Contain("\"fulfilment\":\"Pickup\"").And.NotContain("deliveryAddress");
         (await Order(client, p, 1, PaymentMethod.Card)).StatusCode.Should().Be(HttpStatusCode.Created);
     }
 

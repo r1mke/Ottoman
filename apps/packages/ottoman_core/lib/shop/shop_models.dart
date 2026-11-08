@@ -105,9 +105,9 @@ abstract final class OrderStatus {
   static const expired = 'Expired';
 }
 
+/// Orders are collected in the salon; there is no delivery, by design.
 abstract final class FulfilmentType {
   static const pickup = 'Pickup';
-  static const delivery = 'Delivery';
 }
 
 abstract final class PaymentMethod {
@@ -151,7 +151,6 @@ class ShopOrder {
     required this.items,
     this.clientName,
     this.paymentStatus,
-    this.deliveryAddress,
     this.note,
     this.expiresUtc,
     this.paymentClientSecret,
@@ -165,7 +164,6 @@ class ShopOrder {
   final String fulfilment;
   final String paymentMethod;
   final String? paymentStatus;
-  final String? deliveryAddress;
   final String? note;
   final double totalPrice;
   final DateTime createdAtUtc;
@@ -197,7 +195,6 @@ class ShopOrder {
     fulfilment: j['fulfilment'] as String,
     paymentMethod: j['paymentMethod'] as String,
     paymentStatus: j['paymentStatus'] as String?,
-    deliveryAddress: j['deliveryAddress'] as String?,
     note: j['note'] as String?,
     totalPrice: (j['totalPrice'] as num).toDouble(),
     createdAtUtc: DateTime.parse(j['createdAtUtc'] as String),

@@ -435,12 +435,6 @@ class AppLocalizationsBs extends AppLocalizations {
   String get pickup => 'Preuzimanje u salonu';
 
   @override
-  String get delivery => 'Dostava';
-
-  @override
-  String get deliveryAddress => 'Adresa za dostavu';
-
-  @override
   String get payByCard => 'Karticom';
 
   @override

@@ -40,7 +40,6 @@ Map<String, dynamic> _order(
   'fulfilment': 'Pickup',
   'paymentMethod': method,
   'paymentStatus': paymentStatus,
-  'deliveryAddress': null,
   'note': null,
   'totalPrice': 20,
   'createdAtUtc': DateTime.utc(2030, 1, 7, 10).toIso8601String(),
