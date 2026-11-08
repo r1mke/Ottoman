@@ -46,6 +46,21 @@ public class InputHygieneTests(ApiFixture api)
         (await barber.Content.ReadFromJsonAsync<EmployeeDto>())!.Email.Should().Be($"edin.{local}@ottoman.test");
     }
 
+    [Fact]
+    public async Task Registering_an_existing_address_rehearses_the_account_write_and_leaves_nothing_behind()
+    {
+        var c = api.CreateClient();
+        var email = TestClient.UniqueEmail();
+        (await c.Register(email)).EnsureSuccessStatusCode();
+        for (var i = 0; i < 3; i++) (await c.Register(email)).StatusCode.Should().Be(HttpStatusCode.Accepted);
+
+        await using var scope = api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
+        (await db.Users.CountAsync(u => u.Email!.StartsWith("decoy-"))).Should().Be(0, "the rehearsal is always rolled back");
+        (await db.Users.CountAsync(u => u.NormalizedEmail == email.ToUpperInvariant())).Should().Be(1);
+        (await api.CreateClient().Login(email, TestClient.StrongPassword)).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
     [Theory]
     [InlineData("Ana\u0000Anić")]
     [InlineData("Ana‮ćina")]

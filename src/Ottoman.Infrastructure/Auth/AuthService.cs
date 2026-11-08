@@ -39,11 +39,12 @@ public class AuthService(
         var existing = await users.FindByEmailAsync(email);
         if (existing is not null)
         {
-            // The new-account path hashes the password; do the same so the time taken does not reveal the account.
-            users.PasswordHasher.HashPassword(existing, request.Password);
+            // Indistinguishable from a fresh registration, in the answer and in the time it takes: the same account
+            // write (hash, Identity's checks, insert, role) runs for a throwaway address and is rolled back.
+            await RehearseRegistrationAsync(request, ct);
             outbox.Enqueue(new RegistrationAttemptedForExistingAccount(existing.Email!, existing.FullName));
             await db.SaveChangesAsync(ct);
-            return AuthResult<bool>.Ok(true); // indistinguishable from a fresh registration
+            return AuthResult<bool>.Ok(true);
         }
 
         var user = new AppUser
@@ -80,6 +81,41 @@ public class AuthService(
         if (duplicate) return AuthResult<bool>.Ok(true); // lost a race with another registration
 
         return AuthResult<bool>.Fail(AuthFailure.ValidationFailed, failure.Errors.Select(e => e.Description).ToArray());
+    }
+
+    /// <summary>
+    /// Does what creating an account does, inside a transaction that is always rolled back, so a registration for an
+    /// existing address costs as much as a new one (measured: without it the existing-address path was ~20-200 ms
+    /// faster, enough to tell over a few dozen tries whether an address has an account).
+    /// </summary>
+    private async Task RehearseRegistrationAsync(RegisterRequest request, CancellationToken ct)
+    {
+        var decoyEmail = $"decoy-{Guid.NewGuid():N}@invalid.local";
+        var decoy = new AppUser
+        {
+            UserName = decoyEmail,
+            Email = decoyEmail,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            PhoneNumber = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+            RegisteredAtUtc = Now,
+        };
+        var strategy = db.Database.CreateExecutionStrategy();
+        try
+        {
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                if ((await users.CreateAsync(decoy, request.Password)).Succeeded)
+                    await users.AddToRoleAsync(decoy, Roles.Client);
+                await tx.RollbackAsync(ct);
+            });
+        }
+        finally
+        {
+            // Nothing of the rehearsal may be saved later by mistake.
+            db.ChangeTracker.Clear();
+        }
     }
 
     // ------------------------------------------------------------------- login
