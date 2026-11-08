@@ -259,8 +259,8 @@ public class SeedTests(ApiFixture api)
     {
         foreach (var email in new[] { "kerim@ottoman.local", "tarik@ottoman.local", "klijent@ottoman.local", "elmir@ottoman.local" })
             (await api.CreateClient().LoginOk(email, ApiFixture.DemoPassword)).User.Email.Should().Be(email);
-        // The credentials template of the rules (user name, password "test"); Adin is the "uposlenik" account.
-        foreach (var login in new[] { "desktop", "mobile", "uposlenik", "adin@ottoman.local" })
+        // The credentials template of the rules (user name, password "test"); Adin is the "employee" account.
+        foreach (var login in new[] { "desktop", "mobile", "employee", "adin@ottoman.local" })
             (await api.CreateClient().LoginOk(login, "test")).User.Should().NotBeNull();
     }
 }

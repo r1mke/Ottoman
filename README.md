@@ -25,15 +25,15 @@ Bez `ASPNETCORE_ENVIRONMENT` u `deploy/.env` compose pokreće API u **Production
 
 ### Pristupni podaci za testiranje
 
-Prema predlošku iz uputa (polje za prijavu prima korisničko ime ili email; ovi računi postoje samo uz demo podatke, `Seed__DemoData=true`):
+Prema predlošku iz uputa (polje za prijavu prima korisničko ime ili email, bez obzira na velika i mala slova; ovi računi postoje samo uz demo podatke, `Seed__DemoData=true`):
 
 | Kontekst | Korisničko ime | Lozinka |
 |---|---|---|
-| Desktop verzija (administrator) | `desktop` | `test` |
-| Mobilna verzija (klijent) | `mobile` | `test` |
-| Uloga zaposlenik (frizer Adin, obje aplikacije) | `uposlenik` | `test` |
+| Desktop verzija | `desktop` | `test` |
+| Mobilna verzija | `mobile` | `test` |
+| Više korisničkih uloga | `employee` | `test` |
 
-Lozinka `test` je namjerno ispod pravila jačine i postavlja se samo pri seedanju demo računa; registracija i promjena lozinke i dalje traže jaku lozinku. Ostali demo računi:
+Korisničko ime je naziv uloge: `desktop` je administrator (uloga `Admin`, desktop aplikacija), `mobile` je klijent (uloga `Client`, mobilna aplikacija), a `employee` je demo frizer Adin (uloga `Employee`, obje aplikacije), pa je i njegova lozinka za ovaj račun `test`. Lozinka `test` je namjerno ispod pravila jačine i postoji samo za ove seedane demo račune; registracija i promjena lozinke i dalje traže jaku lozinku. Ostali demo računi:
 
 Vrijednosti iz `deploy/.env.example` (lokalni demo, `SEED_DEMO_DATA=true`). Ako `deploy/.env` postavlja druge lozinke, vrijede te.
 

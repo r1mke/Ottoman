@@ -48,7 +48,8 @@ public partial class DatabaseSeeder(
 
     /// <summary>
     /// The accounts of the credentials template in the README: "desktop" (administrator, desktop app), "mobile"
-    /// (client, mobile app) and "uposlenik" (the demo barber Adin, both apps), all with the password "test". That
+    /// (client, mobile app) and "employee" (the demo barber Adin, both apps): the user name is the name of the role, as
+    /// the README template of the rules asks. All have the password "test". That
     /// password is far below the policy, so it is hashed directly here instead of going through the validators; this
     /// only ever runs with demo data, which the production start-up guards refuse. Registration and password changes
     /// keep the strong policy. Idempotent: an existing account is left as it is.
@@ -59,9 +60,10 @@ public partial class DatabaseSeeder(
         await EnsureTemplateUserAsync("mobile", "mobile@ottoman.local", "Mobile", "Klijent", Roles.Client);
 
         var adin = await users.FindByEmailAsync("adin@ottoman.local");
-        if (adin is not null && await users.FindByNameAsync("uposlenik") is null)
+        if (adin is not null && await users.FindByNameAsync("employee") is null)
         {
-            adin.UserName = "uposlenik";
+            // Also renames the account an earlier version of the seed called "uposlenik".
+            adin.UserName = "employee";
             adin.PasswordHash = users.PasswordHasher.HashPassword(adin, TemplatePassword);
             await users.UpdateNormalizedUserNameAsync(adin);
             await users.UpdateSecurityStampAsync(adin);
