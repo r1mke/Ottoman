@@ -35,6 +35,20 @@ public class PagingTests(ApiFixture api)
         Total(beyond).Should().Be(5, "the total does not depend on the page asked for");
     }
 
+    [Theory]
+    [InlineData("/api/v1/brands")]
+    [InlineData("/api/v1/products")]
+    [InlineData("/api/v1/clients")]
+    [InlineData("/api/v1/reservations")]
+    [InlineData("/api/v1/orders")]
+    [InlineData("/api/v1/audit")]
+    public async Task An_absurd_page_number_is_an_empty_page_not_a_500(string url)
+    {
+        var res = await (await Admin()).GetAsync($"{url}?page=2147483647&pageSize=2147483647");
+        res.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, url);
+        (await res.Content.ReadAsStringAsync()).Should().Contain("[]");
+    }
+
     [Fact]
     public async Task No_list_can_be_asked_for_more_than_the_maximum_page_size()
     {

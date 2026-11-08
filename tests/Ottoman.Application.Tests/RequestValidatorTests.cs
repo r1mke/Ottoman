@@ -64,7 +64,7 @@ public class RequestValidatorTests
     [Fact]
     public void A_custom_report_is_checked_against_the_menu_at_the_edge()
     {
-        var v = new CustomReportRequestValidator();
+        var v = new CustomReportRequestValidator(new FixedClock(new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero)));
         var from = new DateOnly(2026, 1, 1);
         var to = new DateOnly(2026, 1, 31);
         v.Validate(new CustomReportRequest(CustomReportSources.Reservations, ["date", "price"], from, to)).IsValid.Should().BeTrue();
@@ -74,4 +74,9 @@ public class RequestValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Single().ErrorMessage.Should().Contain("barem jedno polje");
     }
+}
+
+internal sealed class FixedClock(DateTimeOffset now) : TimeProvider
+{
+    public override DateTimeOffset GetUtcNow() => now;
 }

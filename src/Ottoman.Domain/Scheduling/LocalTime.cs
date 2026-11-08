@@ -35,4 +35,14 @@ public static class LocalTime
     /// <summary>The UTC range covering the whole local calendar day (23 or 25 hours on DST change days).</summary>
     public static TimeRange DayRangeUtc(DateOnly date, TimeZoneInfo zone) =>
         new(ToUtc(date, TimeOnly.MinValue, zone), ToUtc(date.AddDays(1), TimeOnly.MinValue, zone));
+
+    private static readonly DateOnly FilterMin = new(1900, 1, 1);
+    private static readonly DateOnly FilterMax = new(9000, 12, 31);
+
+    /// <summary>
+    /// A date used only as a list filter, pulled into 1900..9000. No data lies outside, so the result is the same,
+    /// and 0001-01-01 or 9999-12-31 can no longer overflow when turned into a UTC day range.
+    /// </summary>
+    public static DateOnly ClampFilterDate(DateOnly date) =>
+        date < FilterMin ? FilterMin : date > FilterMax ? FilterMax : date;
 }

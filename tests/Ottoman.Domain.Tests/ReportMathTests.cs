@@ -15,7 +15,20 @@ public class ReportMathTests
     [InlineData(2030, 1, 1, 2030, 1, 1, true)]
     [InlineData(2030, 1, 1, 2032, 6, 1, false)]    // far too long
     public void Range_validation(int y1, int m1, int d1, int y2, int m2, int d2, bool ok) =>
-        (ReportMath.ValidateRange(D(y1, m1, d1), D(y2, m2, d2)) is null).Should().Be(ok);
+        (ReportMath.ValidateRange(D(y1, m1, d1), D(y2, m2, d2), D(2030, 6, 1)) is null).Should().Be(ok);
+
+    [Fact]
+    public void Missing_ancient_and_far_future_dates_are_refused_so_date_maths_cannot_overflow()
+    {
+        var today = D(2026, 11, 8);
+        ReportMath.ValidateRange(default, default, today).Should().Be("Odaberite početni i završni datum.");
+        ReportMath.ValidateRange(default, D(2026, 1, 1), today).Should().NotBeNull();
+        ReportMath.ValidateRange(D(1999, 12, 31), D(2000, 1, 5), today).Should().Contain("2000");
+        ReportMath.ValidateRange(D(9999, 12, 1), D(9999, 12, 31), today).Should().Contain("godinu");
+        ReportMath.ValidateRange(D(2027, 11, 1), D(2027, 11, 9), today).Should().Contain("godinu");
+        ReportMath.ValidateRange(D(2000, 1, 1), D(2000, 1, 1), today).Should().BeNull();
+        ReportMath.ValidateRange(D(2027, 11, 1), D(2027, 11, 8), today).Should().BeNull();
+    }
 
     [Fact]
     public void The_previous_period_is_the_same_length_right_before()

@@ -13,7 +13,7 @@ namespace Ottoman.Infrastructure.Reports;
 /// columns needed and bucketed in memory by salon-local date, which keeps daylight-saving days correct; for one salon
 /// the volume is small.
 /// </summary>
-public class ReportService(OttomanDbContext db) : IReportService
+public class ReportService(OttomanDbContext db, TimeProvider clock) : IReportService
 {
     private const int MaxRows = 10_000;
 
@@ -32,11 +32,13 @@ public class ReportService(OttomanDbContext db) : IReportService
         public decimal Revenue => ServicesRevenue + ProductsRevenue;
     }
 
+    private DateOnly Today => DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+
     // ---------------------------------------------------------------- dashboard
 
     public async Task<Result<DashboardDto>> DashboardAsync(DateOnly from, DateOnly to, CancellationToken ct)
     {
-        var problem = ReportMath.ValidateRange(from, to);
+        var problem = ReportMath.ValidateRange(from, to, Today);
         if (problem is not null) return Result<DashboardDto>.Invalid(problem);
 
         var zone = await ZoneAsync(ct);
@@ -189,7 +191,7 @@ public class ReportService(OttomanDbContext db) : IReportService
 
     public async Task<Result<TableDto>> TableAsync(string report, DateOnly from, DateOnly to, CancellationToken ct)
     {
-        var problem = ReportMath.ValidateRange(from, to);
+        var problem = ReportMath.ValidateRange(from, to, Today);
         if (problem is not null) return Result<TableDto>.Invalid(problem);
         var zone = await ZoneAsync(ct);
 
@@ -248,7 +250,7 @@ public class ReportService(OttomanDbContext db) : IReportService
 
     public async Task<Result<TableDto>> CustomAsync(CustomReportRequest r, CancellationToken ct)
     {
-        var problem = CustomReportCatalog.Validate(r);
+        var problem = CustomReportCatalog.Validate(r, Today);
         if (problem is not null) return Result<TableDto>.Invalid(problem);
 
         var zone = await ZoneAsync(ct);

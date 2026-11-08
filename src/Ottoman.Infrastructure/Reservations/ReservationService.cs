@@ -406,8 +406,8 @@ public class ReservationService(
         var zoneId = await db.SalonSettings.AsNoTracking().Select(s => s.TimeZoneId).SingleAsync(ct);
         var zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
         return (
-            fromDate is { } fd ? LocalTime.DayRangeUtc(fd, zone).Start : fromUtc,
-            toDate is { } td ? LocalTime.DayRangeUtc(td, zone).End : toUtc);
+            fromDate is { } fd ? LocalTime.DayRangeUtc(LocalTime.ClampFilterDate(fd), zone).Start : fromUtc,
+            toDate is { } td ? LocalTime.DayRangeUtc(LocalTime.ClampFilterDate(td), zone).End : toUtc);
     }
 
     private static bool CanSee(Actor actor, Reservation r) => actor.Kind switch

@@ -15,9 +15,19 @@ public static class ReportMath
 
     public static int DaysIn(DateOnly from, DateOnly to) => to.DayNumber - from.DayNumber + 1;
 
-    /// <summary>Returns an error text, or null when the range is usable.</summary>
-    public static string? ValidateRange(DateOnly from, DateOnly to)
+    /// <summary>The salon's data starts long after this; earlier dates are typing mistakes.</summary>
+    public static readonly DateOnly EarliestDate = new(2000, 1, 1);
+
+    /// <summary>
+    /// Returns an error text, or null when the range is usable. Both dates are required (a missing query value binds
+    /// as 0001-01-01), not before <see cref="EarliestDate"/>, not more than a year after <paramref name="today"/>,
+    /// in order, and at most <see cref="MaxRangeDays"/> long; so date arithmetic on the range can never overflow.
+    /// </summary>
+    public static string? ValidateRange(DateOnly from, DateOnly to, DateOnly today)
     {
+        if (from == default || to == default) return "Odaberite početni i završni datum.";
+        if (from < EarliestDate || to < EarliestDate) return "Datum ne može biti prije 01.01.2000.";
+        if (from > today.AddYears(1) || to > today.AddYears(1)) return "Datum može biti najviše godinu dana unaprijed.";
         if (to < from) return "Završni datum ne može biti prije početnog.";
         if (DaysIn(from, to) > MaxRangeDays) return $"Period ne može biti duži od {MaxRangeDays} dana.";
         return null;

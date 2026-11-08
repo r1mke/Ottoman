@@ -14,7 +14,8 @@ namespace Ottoman.Api.IntegrationTests;
 
 /// <summary>
 /// Reports are checked against rows inserted directly with known dates and amounts. Every test uses its own window in
-/// 2037, which no other test touches, so the expected numbers are exact.
+/// 2003, which no other test or demo row touches, so the expected numbers are exact (report dates must lie between
+/// 2000 and a year from today).
 /// </summary>
 [Collection("api")]
 public class ReportTests(ApiFixture api)
@@ -83,7 +84,7 @@ public class ReportTests(ApiFixture api)
     [Fact]
     public async Task Reports_are_for_admins_only_so_staff_never_see_earnings()
     {
-        var from = new DateOnly(2037, 1, 1);
+        var from = new DateOnly(2003, 1, 1);
         var (_, client) = await NewClient();
         var barber = api.CreateClient().As(await api.CreateClient().LoginOk("kerim@ottoman.local", ApiFixture.DemoPassword));
 
@@ -107,9 +108,33 @@ public class ReportTests(ApiFixture api)
     public async Task Bad_ranges_are_refused()
     {
         var admin = await Admin();
-        (await admin.GetAsync("/api/v1/reports/dashboard?from=2037-02-10&to=2037-02-01")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await admin.GetAsync("/api/v1/reports/dashboard?from=2030-01-01&to=2037-02-01")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await admin.GetAsync("/api/v1/reports/nonsense?from=2037-02-01&to=2037-02-02")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await admin.GetAsync("/api/v1/reports/dashboard?from=2003-02-10&to=2003-02-01")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.GetAsync("/api/v1/reports/dashboard?from=2001-01-01&to=2003-06-01")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.GetAsync("/api/v1/reports/nonsense?from=2003-02-01&to=2003-02-02")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Theory]
+    [InlineData("dashboard", "")]
+    [InlineData("dashboard", "?from=2003-01-01")]
+    [InlineData("dashboard", "?from=0001-01-01&to=0001-01-01")]
+    [InlineData("dashboard", "?from=9999-12-01&to=9999-12-31")]
+    [InlineData("dashboard", "?from=1999-12-01&to=2000-01-05")]
+    [InlineData("revenue", "")]
+    [InlineData("revenue", "?from=0001-01-01&to=0001-01-02")]
+    [InlineData("reservations", "?from=9999-12-30&to=9999-12-31")]
+    [InlineData("revenue/export", "?from=0001-01-01&to=0001-01-01")]
+    public async Task Missing_ancient_or_far_future_dates_are_a_400_with_a_reason_never_a_500(string report, string query)
+    {
+        var res = await (await Admin()).GetAsync($"/api/v1/reports/{report}{query}");
+        res.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await res.Content.ReadAsStringAsync()).Should().MatchRegex("Odaberite|2000|godinu");
+    }
+
+    [Fact]
+    public async Task A_custom_report_with_absurd_dates_is_a_400()
+    {
+        var body = new CustomReportRequest("Reservations", ["date"], new DateOnly(9999, 12, 1), new DateOnly(9999, 12, 31));
+        (await (await Admin()).PostAsJsonAsync("/api/v1/reports/custom", body)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     // ------------------------------------------------------------------ the numbers
@@ -119,18 +144,18 @@ public class ReportTests(ApiFixture api)
     {
         var (clientId, _) = await NewClient();
         var kerim = await KerimId();
-        // window: 1-10 March 2037 (10 days); previous period: 19-28 February 2037
-        await Reservation(clientId, kerim, At(2037, 3, 2), 25, ReservationStatus.Completed);
-        await Reservation(clientId, kerim, At(2037, 3, 5), 40, ReservationStatus.Completed);
-        await Reservation(clientId, kerim, At(2037, 3, 6), 100, ReservationStatus.Cancelled);
-        await Reservation(clientId, kerim, At(2037, 3, 7), 30, ReservationStatus.NoShow);
-        await Reservation(clientId, kerim, At(2037, 3, 8), 999, ReservationStatus.Confirmed);   // not done yet: no money
-        await Order(clientId, At(2037, 3, 4), 20, OrderStatus.Fulfilled);
-        await Order(clientId, At(2037, 3, 4), 500, OrderStatus.Cancelled);
-        await Order(clientId, At(2037, 3, 4), 500, OrderStatus.Placed);                          // paid/reserved but not handed over
-        await Reservation(clientId, kerim, At(2037, 2, 25), 50, ReservationStatus.Completed);   // previous period
+        // window: 1-10 March 2003 (10 days); previous period: 19-28 February 2003
+        await Reservation(clientId, kerim, At(2003, 3, 2), 25, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 3, 5), 40, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 3, 6), 100, ReservationStatus.Cancelled);
+        await Reservation(clientId, kerim, At(2003, 3, 7), 30, ReservationStatus.NoShow);
+        await Reservation(clientId, kerim, At(2003, 3, 8), 999, ReservationStatus.Confirmed);   // not done yet: no money
+        await Order(clientId, At(2003, 3, 4), 20, OrderStatus.Fulfilled);
+        await Order(clientId, At(2003, 3, 4), 500, OrderStatus.Cancelled);
+        await Order(clientId, At(2003, 3, 4), 500, OrderStatus.Placed);                          // paid/reserved but not handed over
+        await Reservation(clientId, kerim, At(2003, 2, 25), 50, ReservationStatus.Completed);   // previous period
 
-        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2037-03-01&to=2037-03-10"))!;
+        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2003-03-01&to=2003-03-10"))!;
 
         d.ServicesRevenue.Value.Should().Be(65m);
         d.ProductsRevenue.Value.Should().Be(20m);
@@ -149,16 +174,16 @@ public class ReportTests(ApiFixture api)
     {
         var (clientId, _) = await NewClient();
         var kerim = await KerimId();
-        await Reservation(clientId, kerim, At(2037, 4, 2), 25, ReservationStatus.Completed);
-        await Reservation(clientId, kerim, At(2037, 4, 2, 14), 15, ReservationStatus.Completed);
-        await Order(clientId, At(2037, 4, 9), 12, OrderStatus.Fulfilled);
+        await Reservation(clientId, kerim, At(2003, 4, 2), 25, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 4, 2, 14), 15, ReservationStatus.Completed);
+        await Order(clientId, At(2003, 4, 9), 12, OrderStatus.Fulfilled);
 
-        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2037-04-01&to=2037-04-14"))!;
+        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2003-04-01&to=2003-04-14"))!;
 
         d.Granularity.Should().Be(Ottoman.Domain.Reports.Granularity.Day);
         d.Series.Should().HaveCount(14, "empty days are included so the chart has no gaps");
-        d.Series.Single(s => s.Start == new DateOnly(2037, 4, 2)).Services.Should().Be(40m);
-        d.Series.Single(s => s.Start == new DateOnly(2037, 4, 9)).Products.Should().Be(12m);
+        d.Series.Single(s => s.Start == new DateOnly(2003, 4, 2)).Services.Should().Be(40m);
+        d.Series.Single(s => s.Start == new DateOnly(2003, 4, 9)).Products.Should().Be(12m);
         d.Series.Sum(s => s.Total).Should().Be(d.Revenue.Value);
     }
 
@@ -168,23 +193,23 @@ public class ReportTests(ApiFixture api)
         var (clientId, _) = await NewClient();
         var kerim = await KerimId();
         // 22:30 UTC on 15 June = 00:30 on 16 June in Sarajevo (UTC+2)
-        await Reservation(clientId, kerim, new DateTime(2037, 6, 15, 22, 30, 0, DateTimeKind.Utc), 33, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, new DateTime(2003, 6, 15, 22, 30, 0, DateTimeKind.Utc), 33, ReservationStatus.Completed);
 
-        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2037-06-14&to=2037-06-17"))!;
+        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2003-06-14&to=2003-06-17"))!;
 
-        d.Series.Single(s => s.Start == new DateOnly(2037, 6, 16)).Services.Should().Be(33m);
-        d.Series.Single(s => s.Start == new DateOnly(2037, 6, 15)).Services.Should().Be(0m);
+        d.Series.Single(s => s.Start == new DateOnly(2003, 6, 16)).Services.Should().Be(33m);
+        d.Series.Single(s => s.Start == new DateOnly(2003, 6, 15)).Services.Should().Be(0m);
     }
 
     [Fact]
     public async Task A_long_period_is_grouped_by_week_and_a_very_long_one_by_month()
     {
         var admin = await Admin();
-        var weekly = (await admin.GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2037-07-01&to=2037-10-31"))!;
+        var weekly = (await admin.GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2003-07-01&to=2003-10-31"))!;
         weekly.Granularity.Should().Be(Ottoman.Domain.Reports.Granularity.Week);
         weekly.Series.Should().OnlyContain(s => s.Start.DayOfWeek == DayOfWeek.Monday);
 
-        var monthly = (await admin.GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2037-01-01&to=2037-12-31"))!;
+        var monthly = (await admin.GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2003-01-01&to=2003-12-31"))!;
         monthly.Granularity.Should().Be(Ottoman.Domain.Reports.Granularity.Month);
         monthly.Series.Should().HaveCount(12);
     }
@@ -195,14 +220,14 @@ public class ReportTests(ApiFixture api)
         var (clientId, _) = await NewClient();
         var kerim = await KerimId();
         var tarik = await TarikId();
-        await Reservation(clientId, kerim, At(2037, 8, 3), 25, ReservationStatus.Completed, "Šišanje");
-        await Reservation(clientId, kerim, At(2037, 8, 4), 25, ReservationStatus.Completed, "Šišanje");
-        await Reservation(clientId, kerim, At(2037, 8, 5), 40, ReservationStatus.Completed, "Šišanje & brada");
-        await Reservation(clientId, tarik, At(2037, 8, 6), 15, ReservationStatus.Completed, "Uređivanje brade");
-        await Reservation(clientId, tarik, At(2037, 8, 7), 15, ReservationStatus.NoShow, "Uređivanje brade");
-        await Order(clientId, At(2037, 8, 8), 30, OrderStatus.Fulfilled, "Vosak", qty: 3);
+        await Reservation(clientId, kerim, At(2003, 8, 3), 25, ReservationStatus.Completed, "Šišanje");
+        await Reservation(clientId, kerim, At(2003, 8, 4), 25, ReservationStatus.Completed, "Šišanje");
+        await Reservation(clientId, kerim, At(2003, 8, 5), 40, ReservationStatus.Completed, "Šišanje & brada");
+        await Reservation(clientId, tarik, At(2003, 8, 6), 15, ReservationStatus.Completed, "Uređivanje brade");
+        await Reservation(clientId, tarik, At(2003, 8, 7), 15, ReservationStatus.NoShow, "Uređivanje brade");
+        await Order(clientId, At(2003, 8, 8), 30, OrderStatus.Fulfilled, "Vosak", qty: 3);
 
-        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2037-08-01&to=2037-08-31"))!;
+        var d = (await (await Admin()).GetFromJsonAsync<DashboardDto>("/api/v1/reports/dashboard?from=2003-08-01&to=2003-08-31"))!;
 
         var k = d.Employees.Single(e => e.EmployeeId == kerim);
         (k.Completed, k.Revenue).Should().Be((3, 90m));
@@ -220,19 +245,19 @@ public class ReportTests(ApiFixture api)
     {
         var (clientId, _) = await NewClient();
         var kerim = await KerimId();
-        await Reservation(clientId, kerim, At(2037, 9, 2), 25, ReservationStatus.Completed);
-        await Reservation(clientId, kerim, At(2037, 9, 3), 35, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 9, 2), 25, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 9, 3), 35, ReservationStatus.Completed);
         var admin = await Admin();
 
         foreach (var report in new[] { "revenue", "employees", "services" })
         {
-            var t = (await admin.GetFromJsonAsync<TableDto>($"/api/v1/reports/{report}?from=2037-09-01&to=2037-09-30"))!;
+            var t = (await admin.GetFromJsonAsync<TableDto>($"/api/v1/reports/{report}?from=2003-09-01&to=2003-09-30"))!;
             t.Columns.Should().NotBeEmpty();
             t.Rows.Should().OnlyContain(r => r.Count == t.Columns.Count, report);
             t.Totals.Should().NotBeNull().And.HaveCount(t.Columns.Count);
         }
 
-        var revenue = (await admin.GetFromJsonAsync<TableDto>("/api/v1/reports/revenue?from=2037-09-01&to=2037-09-30"))!;
+        var revenue = (await admin.GetFromJsonAsync<TableDto>("/api/v1/reports/revenue?from=2003-09-01&to=2003-09-30"))!;
         var moneyCol = revenue.Columns.ToList().FindIndex(c => c.Key == "total");
         revenue.Rows.Sum(r => ((System.Text.Json.JsonElement)r[moneyCol]!).GetDecimal()).Should().Be(60m);
         ((System.Text.Json.JsonElement)revenue.Totals![moneyCol]!).GetDecimal().Should().Be(60m);
@@ -246,12 +271,12 @@ public class ReportTests(ApiFixture api)
         var (clientId, _) = await NewClient();
         var kerim = await KerimId();
         var tarik = await TarikId();
-        await Reservation(clientId, kerim, At(2037, 10, 2), 25, ReservationStatus.Completed);
-        await Reservation(clientId, kerim, At(2037, 10, 3), 99, ReservationStatus.Cancelled);
-        await Reservation(clientId, tarik, At(2037, 10, 4), 15, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 10, 2), 25, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 10, 3), 99, ReservationStatus.Cancelled);
+        await Reservation(clientId, tarik, At(2003, 10, 4), 15, ReservationStatus.Completed);
         var admin = await Admin();
-        var from = new DateOnly(2037, 10, 1);
-        var to = new DateOnly(2037, 10, 31);
+        var from = new DateOnly(2003, 10, 1);
+        var to = new DateOnly(2003, 10, 31);
 
         var res = await admin.PostAsJsonAsync("/api/v1/reports/custom", new CustomReportRequest("Reservations", ["date", "employee", "price"], from, to, "Completed", kerim));
         res.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -259,7 +284,7 @@ public class ReportTests(ApiFixture api)
 
         t.Columns.Select(c => c.Key).Should().Equal("date", "employee", "price");
         t.Rows.Should().ContainSingle();
-        ((System.Text.Json.JsonElement)t.Rows[0][0]!).GetString().Should().Be("2037-10-02");
+        ((System.Text.Json.JsonElement)t.Rows[0][0]!).GetString().Should().Be("2003-10-02");
         ((System.Text.Json.JsonElement)t.Rows[0][1]!).GetString().Should().Be("Kerim Begić");
         ((System.Text.Json.JsonElement)t.Totals![2]!).GetDecimal().Should().Be(25m);
     }
@@ -268,7 +293,7 @@ public class ReportTests(ApiFixture api)
     public async Task The_builder_rejects_anything_that_is_not_on_its_menu()
     {
         var admin = await Admin();
-        var from = new DateOnly(2037, 11, 1);
+        var from = new DateOnly(2003, 11, 1);
         foreach (var bad in new[]
                  {
                      new CustomReportRequest("AspNetUsers", ["date"], from, from),
@@ -280,7 +305,7 @@ public class ReportTests(ApiFixture api)
             (await admin.PostAsJsonAsync("/api/v1/reports/custom", bad)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         // and the data is still there
-        (await admin.GetFromJsonAsync<TableDto>("/api/v1/reports/reservations?from=2037-01-01&to=2037-01-31")).Should().NotBeNull();
+        (await admin.GetFromJsonAsync<TableDto>("/api/v1/reports/reservations?from=2003-01-01&to=2003-01-31")).Should().NotBeNull();
     }
 
     [Fact]
@@ -295,8 +320,8 @@ public class ReportTests(ApiFixture api)
     public async Task Order_reports_list_items_and_payment()
     {
         var (clientId, _) = await NewClient();
-        await Order(clientId, At(2037, 12, 5), 24, OrderStatus.Fulfilled, "Dandy Pomade", qty: 2);
-        var t = (await (await Admin()).GetFromJsonAsync<TableDto>("/api/v1/reports/orders?from=2037-12-01&to=2037-12-31"))!;
+        await Order(clientId, At(2003, 12, 5), 24, OrderStatus.Fulfilled, "Dandy Pomade", qty: 2);
+        var t = (await (await Admin()).GetFromJsonAsync<TableDto>("/api/v1/reports/orders?from=2003-12-01&to=2003-12-31"))!;
 
         t.Rows.Should().ContainSingle();
         var items = t.Columns.ToList().FindIndex(c => c.Key == "items");
@@ -315,9 +340,9 @@ public class ReportTests(ApiFixture api)
             var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
             await db.Users.Where(u => u.Id == clientId).ExecuteUpdateAsync(s => s.SetProperty(u => u.FirstName, "=HYPERLINK(\"http://evil\")"));
         }
-        await Reservation(clientId, kerim, At(2037, 1, 6), 25, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 1, 6), 25, ReservationStatus.Completed);
 
-        var res = await (await Admin()).GetAsync("/api/v1/reports/reservations/export?from=2037-01-01&to=2037-01-31&format=csv");
+        var res = await (await Admin()).GetAsync("/api/v1/reports/reservations/export?from=2003-01-01&to=2003-01-31&format=csv");
 
         res.StatusCode.Should().Be(HttpStatusCode.OK);
         res.Content.Headers.ContentType!.MediaType.Should().Be("text/csv");
@@ -340,9 +365,9 @@ public class ReportTests(ApiFixture api)
             var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
             await db.Users.Where(u => u.Id == clientId).ExecuteUpdateAsync(s => s.SetProperty(u => u.FirstName, "=1+1"));
         }
-        await Reservation(clientId, kerim, At(2037, 2, 6), 25, ReservationStatus.Completed);
+        await Reservation(clientId, kerim, At(2003, 2, 6), 25, ReservationStatus.Completed);
 
-        var res = await (await Admin()).GetAsync("/api/v1/reports/reservations/export?from=2037-02-01&to=2037-02-28&format=xlsx");
+        var res = await (await Admin()).GetAsync("/api/v1/reports/reservations/export?from=2003-02-01&to=2003-02-28&format=xlsx");
 
         res.StatusCode.Should().Be(HttpStatusCode.OK);
         res.Content.Headers.ContentType!.MediaType.Should().Be("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -359,11 +384,11 @@ public class ReportTests(ApiFixture api)
     [Fact]
     public async Task Pdf_export_is_a_pdf_with_the_right_name()
     {
-        var res = await (await Admin()).GetAsync("/api/v1/reports/revenue/export?from=2037-03-01&to=2037-03-31&format=pdf");
+        var res = await (await Admin()).GetAsync("/api/v1/reports/revenue/export?from=2003-03-01&to=2003-03-31&format=pdf");
 
         res.StatusCode.Should().Be(HttpStatusCode.OK);
         res.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
-        res.Content.Headers.ContentDisposition!.FileName.Should().Be("prihod-01-03-2037-31-03-2037.pdf");
+        res.Content.Headers.ContentDisposition!.FileName.Should().Be("prihod-01-03-2003-31-03-2003.pdf");
         var bytes = await res.Content.ReadAsByteArrayAsync();
         Encoding.ASCII.GetString(bytes.Take(5).ToArray()).Should().Be("%PDF-");
         bytes.Length.Should().BeGreaterThan(1000);
@@ -373,7 +398,7 @@ public class ReportTests(ApiFixture api)
     public async Task A_custom_report_can_be_exported_too_and_bad_requests_still_fail_cleanly()
     {
         var admin = await Admin();
-        var from = new DateOnly(2037, 5, 1);
+        var from = new DateOnly(2003, 5, 1);
         var ok = await admin.PostAsJsonAsync("/api/v1/reports/custom/export?format=csv", new CustomReportRequest("Orders", ["date", "total"], from, from.AddDays(30)));
         ok.StatusCode.Should().Be(HttpStatusCode.OK);
 

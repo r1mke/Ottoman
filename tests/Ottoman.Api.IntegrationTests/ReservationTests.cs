@@ -34,6 +34,20 @@ internal static class Days
             return day;
         }
     }
+
+    /// <summary>The Monday of a whole Monday-to-Sunday week (not a DST change week) that no other caller gets.</summary>
+    public static DateOnly Week()
+    {
+        lock (Gate)
+        {
+            while (_next.DayOfWeek != DayOfWeek.Monday ||
+                   Enumerable.Range(0, 7).Select(i => _next.AddDays(i)).Any(d => d.Month is 3 or 10 && d.Day >= 24))
+                _next = _next.AddDays(1);
+            var monday = _next;
+            _next = _next.AddDays(7);
+            return monday;
+        }
+    }
 }
 
 [Collection("api")]
@@ -146,18 +160,37 @@ public class ReservationTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task The_month_view_is_empty_far_in_the_past_or_future_and_needs_a_service()
+    public async Task Availability_outside_the_booking_window_is_a_400_and_a_service_is_needed()
     {
         var (_, client, _) = await NewClient();
         var kerim = await KerimId();
         var sisanje = await ServiceId("Šišanje");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.MonthAvailabilityDto>(
-            $"/api/v1/employees/{kerim}/availability/month?month=2020-01-01&serviceIds={sisanje}"))!.AvailableDays.Should().BeEmpty();
-        (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.MonthAvailabilityDto>(
-            $"/api/v1/employees/{kerim}/availability/month?month=2099-01-01&serviceIds={sisanje}"))!.AvailableDays.Should().BeEmpty();
-        (await client.GetAsync($"/api/v1/employees/{kerim}/availability/month?month=2026-11-01"))
-            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        foreach (var month in new[] { "2020-01-01", "2099-01-01", "0001-01-01", "9999-12-01" })
+        {
+            var res = await client.GetAsync($"/api/v1/employees/{kerim}/availability/month?month={month}&serviceIds={sisanje}");
+            res.StatusCode.Should().Be(HttpStatusCode.BadRequest, month);
+            (await res.Content.ReadAsStringAsync()).Should().Contain("dana unaprijed");
+        }
+        (await client.GetAsync($"/api/v1/employees/{kerim}/availability/month?serviceIds={sisanje}"))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest, "no month given");
+        foreach (var day in new[] { today.AddDays(-3), today.AddDays(Ottoman.Domain.Reservations.BookingPolicy.MaxAdvanceDays + 5), DateOnly.MinValue, DateOnly.MaxValue })
+            (await client.GetAsync($"/api/v1/employees/{kerim}/availability?date={day:yyyy-MM-dd}&serviceIds={sisanje}"))
+                .StatusCode.Should().Be(HttpStatusCode.BadRequest, day.ToString("yyyy-MM-dd"));
+
+        (await client.GetAsync($"/api/v1/employees/{kerim}/availability/month?month={today:yyyy-MM-01}&serviceIds={sisanje}"))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        (await client.GetAsync($"/api/v1/employees/{kerim}/availability/month?month={today:yyyy-MM-01}"))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest, "no service chosen");
+    }
+
+    [Fact]
+    public async Task Absurd_date_filters_on_the_reservation_list_are_harmless()
+    {
+        var admin = await Admin();
+        (await admin.GetAsync("/api/v1/reservations?fromDate=0001-01-01&toDate=9999-12-31")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await admin.GetAsync("/api/v1/reservations/summary?fromDate=0001-01-01&toDate=9999-12-31")).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     // ------------------------------------------------- the race the DB must win

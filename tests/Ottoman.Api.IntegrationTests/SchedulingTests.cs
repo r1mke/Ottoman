@@ -18,13 +18,17 @@ namespace Ottoman.Api.IntegrationTests;
 [Collection("api")]
 public class SchedulingTests(ApiFixture api)
 {
-    // 2030-01-07 is a Monday, 2030-01-08 a Tuesday, 2030-01-06 a Sunday. Winter: Sarajevo = UTC+1.
-    private static readonly DateOnly Monday = new(2030, 1, 7);
-    private static readonly DateOnly Tuesday = new(2030, 1, 8);
-    private static readonly DateOnly Sunday = new(2030, 1, 6);
+    // A whole week inside the booking window that no other test books into (availability is only answered there).
+    private static readonly DateOnly Monday = Days.Week();
+    private static readonly DateOnly Tuesday = Monday.AddDays(1);
+    private static readonly DateOnly Wednesday = Monday.AddDays(2);
+    private static readonly DateOnly Thursday = Monday.AddDays(3);
+    private static readonly DateOnly Sunday = Monday.AddDays(6);
+
+    private static readonly TimeZoneInfo Zone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Sarajevo");
 
     private static DateTime Utc(DateOnly d, int localHour, int minute = 0) =>
-        new(d.Year, d.Month, d.Day, localHour - 1, minute, 0, DateTimeKind.Utc);
+        Ottoman.Domain.Scheduling.LocalTime.ToUtc(d, new TimeOnly(localHour, minute), Zone);
 
     private async Task<HttpClient> Admin() =>
         api.CreateClient().As(await api.CreateClient().LoginOk(ApiFixture.AdminEmail, ApiFixture.AdminPassword));
@@ -374,7 +378,7 @@ public class SchedulingTests(ApiFixture api)
         var admin = await Admin();
         var tarik = await Employee(admin, "Tarik");
         var sisanje = await ServiceId(admin, "Šišanje");
-        var date = new DateOnly(2030, 1, 9); // Wednesday
+        var date = Wednesday;
 
         var add = await admin.PostAsJsonAsync($"/api/v1/employees/{tarik.Id}/time-off",
             new CreateTimeOffRequest(Utc(date, 9), Utc(date, 13), "Godišnji"));
@@ -395,7 +399,7 @@ public class SchedulingTests(ApiFixture api)
         var admin = await Admin();
         var tarik = await Employee(admin, "Tarik");
         var kerim = await Employee(admin, "Kerim");
-        var date = new DateOnly(2030, 1, 10);
+        var date = Thursday;
         var timeOff = (await (await admin.PostAsJsonAsync($"/api/v1/employees/{tarik.Id}/time-off",
             new CreateTimeOffRequest(Utc(date, 9), Utc(date, 10), null))).Content.ReadFromJsonAsync<TimeOffDto>())!;
 

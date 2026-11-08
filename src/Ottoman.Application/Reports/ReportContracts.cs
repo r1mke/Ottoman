@@ -98,11 +98,12 @@ public record CustomReportRequest(
 /// <summary>The same rules the report runner applies (CustomReportCatalog.Validate), at the HTTP edge.</summary>
 public class CustomReportRequestValidator : AbstractValidator<CustomReportRequest>
 {
-    public CustomReportRequestValidator()
+    public CustomReportRequestValidator(TimeProvider clock)
     {
         RuleFor(x => x).Custom((r, ctx) =>
         {
-            var error = r.Columns is null ? "Odaberite kolone izvještaja." : CustomReportCatalog.Validate(r);
+            var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+            var error = r.Columns is null ? "Odaberite kolone izvještaja." : CustomReportCatalog.Validate(r, today);
             if (error is not null) ctx.AddFailure("Izvještaj", error);
         });
     }
@@ -138,7 +139,7 @@ public static class CustomReportCatalog
         Sources.FirstOrDefault(s => string.Equals(s.Source, source, StringComparison.Ordinal));
 
     /// <summary>Why the request cannot be run, or null if it can.</summary>
-    public static string? Validate(CustomReportRequest r)
+    public static string? Validate(CustomReportRequest r, DateOnly today)
     {
         var source = Find(r.Source);
         if (source is null) return "Nepoznat izvor podataka.";
@@ -149,7 +150,7 @@ public static class CustomReportCatalog
         if (r.Status is not null && !source.Statuses.Contains(r.Status)) return "Nepoznat status.";
         if (r.EmployeeId is not null && source.Source != CustomReportSources.Reservations)
             return "Filter po uposleniku važi samo za termine.";
-        return ReportMath.ValidateRange(r.From, r.To);
+        return ReportMath.ValidateRange(r.From, r.To, today);
     }
 }
 

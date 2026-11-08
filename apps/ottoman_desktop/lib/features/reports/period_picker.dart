@@ -43,7 +43,8 @@ class _PeriodPickerState extends State<PeriodPicker> {
       final picked = await showDateRangePicker(
         context: context,
         firstDate: DateTime(2020),
-        lastDate: DateTime(_now.year + 1, 12, 31),
+        // The server accepts report dates up to a year from today.
+        lastDate: DateTime(_now.year + 1, _now.month, _now.day),
         initialDateRange: DateTimeRange(start: _range.from, end: _range.to),
       );
       if (picked == null) return;
