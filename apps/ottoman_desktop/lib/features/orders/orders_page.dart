@@ -26,7 +26,10 @@ class _OrdersPageState extends State<OrdersPage> {
     final ok = await confirmAction(
       context,
       title: t.markFulfilled,
-      message: t.fulfilOrderQuestion(o.id),
+      message: t.fulfilOrderQuestion(
+        formatDay(o.createdAtUtc),
+        o.clientName ?? '-',
+      ),
       confirmLabel: t.markFulfilled,
     );
     if (!ok || !mounted) return;
@@ -112,7 +115,7 @@ class _OrdersPageState extends State<OrdersPage> {
                       ),
                       dataRowMaxHeight: 72,
                       columns: [
-                        const DataColumn(label: Text('#')),
+                        DataColumn(label: Text(t.date)),
                         DataColumn(label: Text(t.client)),
                         DataColumn(label: Text(t.products)),
                         DataColumn(label: Text(t.total), numeric: true),
@@ -125,7 +128,7 @@ class _OrdersPageState extends State<OrdersPage> {
                           DataRow(
                             key: ValueKey('order_row_${o.id}'),
                             cells: [
-                              DataCell(Text('${o.id}')),
+                              DataCell(Text(formatWhen(o.createdAtUtc))),
                               DataCell(Text(o.clientName ?? '-')),
                               DataCell(
                                 ConstrainedBox(

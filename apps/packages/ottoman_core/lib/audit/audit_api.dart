@@ -13,6 +13,7 @@ class AuditEntry {
     required this.target,
     required this.statusCode,
     this.ip,
+    this.targetLabel,
   });
 
   final int id;
@@ -30,6 +31,9 @@ class AuditEntry {
   final int statusCode;
   final String? ip;
 
+  /// What the target is called in words ("Proizvod: Vosak"); null when the server cannot name it.
+  final String? targetLabel;
+
   String get controller => action.split('.').first;
   String get verb => action.contains('.') ? action.split('.').last : action;
 
@@ -44,6 +48,7 @@ class AuditEntry {
     target: j['target'] as String,
     statusCode: j['statusCode'] as int,
     ip: j['ip'] as String?,
+    targetLabel: j['targetLabel'] as String?,
   );
 }
 

@@ -151,7 +151,7 @@ class OrderCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    t.orderNumber(o.id),
+                    t.orderFrom(formatDay(o.createdAtUtc)),
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),

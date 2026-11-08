@@ -8,7 +8,8 @@ public record Party(string UserId, string Name, string? Email);
 
 public record ReservationFacts(int Id, Party Client, Party Employee, string LocalStart, string Services, decimal TotalPrice);
 
-public record OrderFacts(int Id, Party Client, decimal Total, string Items);
+/// <param name="Date">The day the order was made, in salon time ("08.11.2026."): how people name an order.</param>
+public record OrderFacts(int Id, Party Client, decimal Total, string Items, string Date);
 
 /// <summary>
 /// One message for one recipient. Exactly one of <see cref="UserId"/>, <see cref="Email"/> or <see cref="ToAdmins"/>
@@ -141,21 +142,21 @@ public static class MessageComposer
     [
         new("Narudžba zaprimljena",
             method == "Card"
-                ? $"Narudžba #{f.Id} ({f.Items}) čeka plaćanje. Ukupno {Money(f.Total)}."
-                : $"Narudžba #{f.Id} ({f.Items}) je zaprimljena. Plaćate pri preuzimanju u salonu: {Money(f.Total)}.",
+                ? $"Narudžba od {f.Date} ({f.Items}) čeka plaćanje. Ukupno {Money(f.Total)}."
+                : $"Narudžba od {f.Date} ({f.Items}) je zaprimljena. Plaćate pri preuzimanju u salonu: {Money(f.Total)}.",
             "OrderPlaced", UserId: f.Client.UserId, SendEmail: method != "Card"),
         new("Nova narudžba",
-            $"Narudžba #{f.Id} od {f.Client.Name}: {f.Items}. {Money(f.Total)}.",
+            $"Narudžba klijenta {f.Client.Name} ({f.Date}): {f.Items}. {Money(f.Total)}.",
             "OrderPlaced", ToAdmins: true, SendEmail: false),
     ];
 
     public static IReadOnlyList<Message> OrderPaid(OrderFacts f) =>
     [
         new("Plaćanje primljeno",
-            $"Plaćanje za narudžbu #{f.Id} je primljeno ({Money(f.Total)}). Proizvode preuzimate u salonu.",
+            $"Plaćanje za narudžbu od {f.Date} ({f.Items}) je primljeno ({Money(f.Total)}). Proizvode preuzimate u salonu.",
             "OrderPaid", UserId: f.Client.UserId),
         new("Narudžba plaćena",
-            $"Narudžba #{f.Id} od {f.Client.Name} je plaćena karticom: {f.Items}.",
+            $"Narudžba klijenta {f.Client.Name} ({f.Date}) je plaćena karticom: {f.Items}.",
             "OrderPaid", ToAdmins: true, SendEmail: false),
     ];
 
@@ -166,8 +167,8 @@ public static class MessageComposer
         [
             new(cancelledBy == "System" ? "Narudžba istekla" : "Narudžba otkazana",
                 cancelledBy == "System"
-                    ? $"Narudžba #{f.Id} nije plaćena na vrijeme pa je poništena."
-                    : $"Narudžba #{f.Id} je otkazana.{why} Ako je plaćena karticom, novac se vraća.",
+                    ? $"Narudžba od {f.Date} ({f.Items}) nije plaćena na vrijeme pa je poništena."
+                    : $"Narudžba od {f.Date} ({f.Items}) je otkazana.{why} Ako je plaćena karticom, novac se vraća.",
                 "OrderCancelled", UserId: f.Client.UserId, SendEmail: cancelledBy != "System"),
         ];
     }

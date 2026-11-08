@@ -25,7 +25,9 @@ public record AuditEntryDto(
     string Route,
     string Target,
     int StatusCode,
-    string? Ip);
+    string? Ip,
+    /// <summary>What the target is called in words (a product's name, a client, an order's date); null when unknown.</summary>
+    string? TargetLabel = null);
 
 public record AuditQuery(string? Search, string? UserId, DateTime? FromUtc, DateTime? ToUtc);
 
@@ -43,6 +45,31 @@ public interface IAuditLog
 public interface IAuditQueries
 {
     Task<PagedResult<AuditEntryDto>> ListAsync(AuditQuery query, PageQuery page, CancellationToken ct);
+}
+
+/// <summary>Reads the parts of an audit entry's action and target. Pure.</summary>
+public static class AuditTargets
+{
+    /// <summary>Shown when the record the entry points at no longer exists.</summary>
+    public const string Removed = "(obrisano)";
+
+    /// <summary>"Products.Create" -> "Products".</summary>
+    public static string Controller(string action)
+    {
+        var dot = action.IndexOf('.');
+        return dot < 0 ? action : action[..dot];
+    }
+
+    /// <summary>The record the request was about: the <c>id</c> of "id=7, timeOffId=3" -> "7"; null when there is none.</summary>
+    public static string? PrimaryId(string target)
+    {
+        foreach (var part in target.Split(','))
+        {
+            var pair = part.Trim();
+            if (pair.StartsWith("id=", StringComparison.Ordinal) && pair.Length > 3) return pair[3..];
+        }
+        return null;
+    }
 }
 
 /// <summary>Decides which requests are worth a line in the audit log. Pure.</summary>

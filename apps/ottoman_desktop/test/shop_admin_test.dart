@@ -310,6 +310,19 @@ void main() {
       final api = await _open(tester, 'Narudžbe');
 
       expect(find.byKey(const Key('pay_status_11')), findsOneWidget);
+      // An order is named by its date and client, never by its database number.
+      expect(find.text('11'), findsNothing);
+      expect(find.textContaining('07.01.2030.'), findsWidgets);
+
+      await tester.tap(find.byKey(const Key('fulfil_11')));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('narudžbu od 07.01.2030. (Elmir Mujkić)'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('#'), findsNothing);
+      await tester.tap(find.byKey(const Key('confirm_action_cancel')));
+      await tester.pumpAndSettle();
       expect(find.text('Elmir Mujkić'), findsWidgets);
       expect(find.text('2× Vosak'), findsWidgets);
       expect(find.byKey(const Key('fulfil_11')), findsOneWidget);

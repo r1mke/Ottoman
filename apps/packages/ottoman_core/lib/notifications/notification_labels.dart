@@ -33,6 +33,13 @@ IconData notificationIcon(String kind) => switch (kind) {
   _ => Icons.notifications_outlined,
 };
 
+/// "07.01.2030." in the device time zone: how an order is named instead of by its database number.
+String formatDay(DateTime utc) {
+  final l = utc.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(l.day)}.${two(l.month)}.${l.year}.';
+}
+
 /// "07.01.2030. 10:00" in the device time zone.
 String formatWhen(DateTime utc) {
   final l = utc.toLocal();

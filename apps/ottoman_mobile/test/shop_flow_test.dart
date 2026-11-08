@@ -731,6 +731,9 @@ void main() {
 
       expect(find.byKey(const Key('order_7')), findsOneWidget);
       expect(find.text('Zaprimljena'), findsOneWidget);
+      // The order is named by its date, not by its database number.
+      expect(find.text('Narudžba od 07.01.2030.'), findsOneWidget);
+      expect(find.textContaining('#'), findsNothing);
       expect(find.text('2× Vosak'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('cancel_order_7')));

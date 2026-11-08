@@ -193,4 +193,41 @@ public class AuditTests(ApiFixture api)
         var left = await db.AuditEntries.AsNoTracking().Where(a => a.Action.StartsWith(marker)).Select(a => a.Action).ToListAsync();
         left.Should().Equal($"{marker}.new");
     }
+
+    [Fact]
+    public async Task A_line_names_its_target_in_words_and_never_shows_only_an_id()
+    {
+        var (admin, _) = await Admin();
+        var name = $"Audit naziv {Guid.NewGuid():N}";
+        var product = (await (await admin.PostAsJsonAsync("/api/v1/products", Product(name))).Content.ReadFromJsonAsync<ProductDto>())!;
+        (await admin.PostAsJsonAsync($"/api/v1/products/{product.Id}/stock", new { delta = 1 })).EnsureSuccessStatusCode();
+
+        var (_, client) = await api.CreateClient().NewClient();
+        (await admin.PostAsJsonAsync($"/api/v1/users/{client.User.Id}/password",
+            new Ottoman.Application.Accounts.AdminSetPasswordRequest("Brand_New_Pass1!"))).EnsureSuccessStatusCode();
+
+        (await Entries(admin, $"id={product.Id}")).Should().Contain(e => e.Action == "Products.AdjustStock" && e.TargetLabel == $"Proizvod: {name}");
+        (await Entries(admin, client.User.Id)).Should().Contain(e => e.Action == "Users.SetPassword" && e.TargetLabel == $"{client.User.FirstName} {client.User.LastName}".Trim());
+
+        // An entry whose record no longer exists says so instead of showing a number.
+        var gone = $"id=9{Random.Shared.Next(100000, 999999)}";
+        await using (var scope = api.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
+            db.AuditEntries.Add(new AuditEntry
+            {
+                AtUtc = DateTime.UtcNow,
+                UserId = null,
+                UserName = "Sistem",
+                Role = "System",
+                Method = "PUT",
+                Action = "Products.Update",
+                Route = "api/v1/products/{id}",
+                Target = gone,
+                StatusCode = 200,
+            });
+            await db.SaveChangesAsync();
+        }
+        (await Entries(admin, gone)).Should().Contain(e => e.Target == gone && e.TargetLabel == "(obrisano)");
+    }
 }

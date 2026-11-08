@@ -178,11 +178,11 @@
   "myOrders": "Moje narudžbe",
   "noOrders": "Nema narudžbi",
   "orders": "Narudžbe",
-  "orderNumber": "Narudžba #{id}",
-  "@orderNumber": {
+  "orderFrom": "Narudžba od {date}",
+  "@orderFrom": {
     "placeholders": {
-      "id": {
-        "type": "int"
+      "date": {
+        "type": "String"
       }
     }
   },
@@ -628,8 +628,8 @@
   "confirmDeleteNamed": "Obrisati „{name}“? Ovo se ne može poništiti.",
   "@confirmDeleteNamed": {"placeholders": {"name": {"type": "String"}}},
   "removePictureQuestion": "Ukloniti ovu sliku?",
-  "fulfilOrderQuestion": "Označiti narudžbu #{id} kao preuzetu? Ovo se ne može poništiti.",
-  "@fulfilOrderQuestion": {"placeholders": {"id": {"type": "int"}}},
+  "fulfilOrderQuestion": "Označiti narudžbu od {date} ({client}) kao preuzetu? Ovo se ne može poništiti.",
+  "@fulfilOrderQuestion": {"placeholders": {"date": {"type": "String"}, "client": {"type": "String"}}},
   "announceQuestion": "Poslati ovu poruku: {audience}? Primaoci je odmah vide u aplikaciji.",
   "@announceQuestion": {"placeholders": {"audience": {"type": "String"}}},
   "announceEmailQuestion": "Poslati ovu poruku: {audience}, i e-mailom? Poslani mailovi se ne mogu povući.",

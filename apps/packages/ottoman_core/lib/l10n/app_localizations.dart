@@ -980,11 +980,11 @@ abstract class AppLocalizations {
   /// **'Narudžbe'**
   String get orders;
 
-  /// No description provided for @orderNumber.
+  /// No description provided for @orderFrom.
   ///
   /// In bs, this message translates to:
-  /// **'Narudžba #{id}'**
-  String orderNumber(int id);
+  /// **'Narudžba od {date}'**
+  String orderFrom(String date);
 
   /// No description provided for @setPasswordTitle.
   ///
@@ -3221,8 +3221,8 @@ abstract class AppLocalizations {
   /// No description provided for @fulfilOrderQuestion.
   ///
   /// In bs, this message translates to:
-  /// **'Označiti narudžbu #{id} kao preuzetu? Ovo se ne može poništiti.'**
-  String fulfilOrderQuestion(int id);
+  /// **'Označiti narudžbu od {date} ({client}) kao preuzetu? Ovo se ne može poništiti.'**
+  String fulfilOrderQuestion(String date, String client);
 
   /// No description provided for @announceQuestion.
   ///

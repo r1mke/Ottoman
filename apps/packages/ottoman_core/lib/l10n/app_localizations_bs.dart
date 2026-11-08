@@ -466,8 +466,8 @@ class AppLocalizationsBs extends AppLocalizations {
   String get orders => 'Narudžbe';
 
   @override
-  String orderNumber(int id) {
-    return 'Narudžba #$id';
+  String orderFrom(String date) {
+    return 'Narudžba od $date';
   }
 
   @override
@@ -1657,8 +1657,8 @@ class AppLocalizationsBs extends AppLocalizations {
   String get removePictureQuestion => 'Ukloniti ovu sliku?';
 
   @override
-  String fulfilOrderQuestion(int id) {
-    return 'Označiti narudžbu #$id kao preuzetu? Ovo se ne može poništiti.';
+  String fulfilOrderQuestion(String date, String client) {
+    return 'Označiti narudžbu od $date ($client) kao preuzetu? Ovo se ne može poništiti.';
   }
 
   @override

@@ -467,8 +467,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orders => 'Orders';
 
   @override
-  String orderNumber(int id) {
-    return 'Order #$id';
+  String orderFrom(String date) {
+    return 'Order of $date';
   }
 
   @override
@@ -1659,8 +1659,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removePictureQuestion => 'Remove this picture?';
 
   @override
-  String fulfilOrderQuestion(int id) {
-    return 'Mark order #$id as handed over? This cannot be undone.';
+  String fulfilOrderQuestion(String date, String client) {
+    return 'Mark the order of $date ($client) as handed over? This cannot be undone.';
   }
 
   @override

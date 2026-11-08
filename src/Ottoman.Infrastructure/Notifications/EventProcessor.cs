@@ -194,8 +194,11 @@ public class EventProcessor(
     {
         var items = await db.OrderItems.AsNoTracking().Where(i => i.OrderId == orderId)
             .Select(i => new { i.Quantity, i.ProductName }).ToListAsync(ct);
+        var created = await db.Orders.AsNoTracking().Where(o => o.Id == orderId).Select(o => o.CreatedAtUtc).FirstOrDefaultAsync(ct);
+        var zoneId = await db.SalonSettings.AsNoTracking().Select(s => s.TimeZoneId).FirstAsync(ct);
+        var date = LocalTime.ToLocal(created, TimeZoneInfo.FindSystemTimeZoneById(zoneId)).ToString("dd.MM.yyyy.", Bs);
         return new OrderFacts(orderId, await PartyAsync(clientId, ct), total,
-            string.Join(", ", items.Select(i => $"{i.Quantity}× {i.ProductName}")));
+            string.Join(", ", items.Select(i => $"{i.Quantity}× {i.ProductName}")), date);
     }
 
     // ---------------------------------------------------------------- recipients

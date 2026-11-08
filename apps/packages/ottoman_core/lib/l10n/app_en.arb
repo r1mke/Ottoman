@@ -178,14 +178,7 @@
   "myOrders": "My orders",
   "noOrders": "No orders",
   "orders": "Orders",
-  "orderNumber": "Order #{id}",
-  "@orderNumber": {
-    "placeholders": {
-      "id": {
-        "type": "int"
-      }
-    }
-  },
+  "orderFrom": "Order of {date}",
   "setPasswordTitle": "Change password",
   "setPasswordHint": "New password for {name}. The old password is not needed; the user is signed out everywhere.",
   "@setPasswordHint": {
@@ -627,7 +620,7 @@
   "removePin": "Remove pin",
   "confirmDeleteNamed": "Delete “{name}”? This cannot be undone.",
   "removePictureQuestion": "Remove this picture?",
-  "fulfilOrderQuestion": "Mark order #{id} as handed over? This cannot be undone.",
+  "fulfilOrderQuestion": "Mark the order of {date} ({client}) as handed over? This cannot be undone.",
   "announceQuestion": "Send this message to: {audience}? Recipients see it in the app right away.",
   "announceEmailQuestion": "Send this message to: {audience}, also by e-mail? Sent e-mails cannot be recalled.",
   "completeQuestion": "Mark the appointment as completed?",

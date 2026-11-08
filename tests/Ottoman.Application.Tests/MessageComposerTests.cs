@@ -10,7 +10,7 @@ public class MessageComposerTests
     private static readonly Party Client = new("c1", "Ana Anić", "ana@x.ba");
     private static readonly Party Barber = new("e1", "Kerim Begić", "kerim@x.ba");
     private static readonly ReservationFacts Res = new(7, Client, Barber, "07.01.2030. u 10:00", "Šišanje, Brada", 40m);
-    private static readonly OrderFacts Order = new(9, Client, 22.5m, "2× Vosak");
+    private static readonly OrderFacts Order = new(9, Client, 22.5m, "2× Vosak", "08.11.2026.");
 
     [Fact]
     public void A_new_reservation_tells_both_the_client_and_the_barber()
@@ -102,6 +102,22 @@ public class MessageComposerTests
             .Should().Contain("Razlog: Proizvod je oštećen.");
         MessageComposer.OrderCancelled(Order, "Admin", null).Single().Body.Should().NotContain("Razlog");
         MessageComposer.OrderCancelled(Order, "Client").Single().Body.Should().NotContain("Razlog");
+    }
+
+    [Fact]
+    public void No_order_message_shows_the_database_id()
+    {
+        var all = MessageComposer.OrderPlaced(Order, "Card")
+            .Concat(MessageComposer.OrderPlaced(Order, "OnReceipt"))
+            .Concat(MessageComposer.OrderPaid(Order))
+            .Concat(MessageComposer.OrderCancelled(Order, "Admin", "Razlog"))
+            .Concat(MessageComposer.OrderCancelled(Order, "System"));
+
+        foreach (var m in all)
+        {
+            m.Body.Should().NotContain("#").And.NotContain(" 9 ");
+            m.Body.Should().Contain("08.11.2026.");
+        }
     }
 
     [Fact]

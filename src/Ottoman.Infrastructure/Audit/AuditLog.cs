@@ -66,8 +66,14 @@ public class AuditQueries(OttomanDbContext db) : IAuditQueries
         var items = await query.OrderByDescending(e => e.AtUtc).ThenByDescending(e => e.Id)
             .Skip(page.Skip).Take(page.SafePageSize)
             .Select(e => new AuditEntryDto(
-                e.Id, e.AtUtc, e.UserId ?? "", e.UserName, e.Role, e.Method, e.Action, e.Route, e.Target, e.StatusCode, e.Ip))
+                e.Id, e.AtUtc, e.UserId ?? "", e.UserName, e.Role, e.Method, e.Action, e.Route, e.Target, e.StatusCode, e.Ip, null))
             .ToListAsync(ct);
+
+        var labels = await new AuditTargetLabels(db).ResolveAsync(items.Select(i => (i.Action, i.Target)), ct);
+        items = [.. items.Select(i => i with
+        {
+            TargetLabel = labels.GetValueOrDefault((AuditTargets.Controller(i.Action), AuditTargets.PrimaryId(i.Target) ?? "")),
+        })];
         return new PagedResult<AuditEntryDto>(items, total);
     }
 }

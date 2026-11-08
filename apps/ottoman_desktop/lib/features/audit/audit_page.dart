@@ -119,7 +119,10 @@ class _AuditPageState extends State<AuditPage> {
                                         ),
                                       ),
                                       DataCell(
-                                        Text(e.target.isEmpty ? '-' : e.target),
+                                        Text(
+                                          e.targetLabel ?? '-',
+                                          key: Key('audit_target_${e.id}'),
+                                        ),
                                       ),
                                     ],
                                   ),
