@@ -316,6 +316,8 @@
   "exportCsv": "CSV",
   "exportExcel": "Excel",
   "exportPdf": "PDF",
+  "printReport": "Print",
+  "printFailed": "Printing failed. Check the printer, or export the PDF and open it yourself.",
   "savedTo": "Saved: {path}",
   "@savedTo": {
     "placeholders": {

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:ottoman_core/ottoman_core.dart';
+import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Where an exported report goes. A seam so screens can be tested without touching the disk.
@@ -10,6 +11,10 @@ abstract class FileSaver {
 
   /// Shows the saved file in the system file manager.
   Future<void> reveal(String path);
+
+  /// Sends a PDF to a printer through the system print dialog. False when the person closed the dialog without
+  /// printing; throws when printing could not be started at all.
+  Future<bool> printPdf(DownloadedFile file);
 }
 
 /// Saves into the user's Downloads folder and never overwrites: "izvjestaj (1).csv" if the name is taken.
@@ -34,6 +39,12 @@ class DownloadsFileSaver implements FileSaver {
     }
     return candidate;
   }
+
+  @override
+  Future<bool> printPdf(DownloadedFile file) => Printing.layoutPdf(
+    name: file.fileName,
+    onLayout: (_) async => file.bytes,
+  );
 
   @override
   Future<void> reveal(String path) async {

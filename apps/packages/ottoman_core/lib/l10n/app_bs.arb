@@ -323,6 +323,8 @@
   "exportCsv": "CSV",
   "exportExcel": "Excel",
   "exportPdf": "PDF",
+  "printReport": "Štampaj",
+  "printFailed": "Štampanje nije uspjelo. Provjerite štampač ili izvezite PDF i otvorite ga ručno.",
   "savedTo": "Spremljeno: {path}",
   "@savedTo": {
     "placeholders": {

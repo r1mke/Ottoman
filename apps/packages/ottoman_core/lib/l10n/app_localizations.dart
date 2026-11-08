@@ -1640,6 +1640,18 @@ abstract class AppLocalizations {
   /// **'PDF'**
   String get exportPdf;
 
+  /// No description provided for @printReport.
+  ///
+  /// In bs, this message translates to:
+  /// **'Štampaj'**
+  String get printReport;
+
+  /// No description provided for @printFailed.
+  ///
+  /// In bs, this message translates to:
+  /// **'Štampanje nije uspjelo. Provjerite štampač ili izvezite PDF i otvorite ga ručno.'**
+  String get printFailed;
+
   /// No description provided for @savedTo.
   ///
   /// In bs, this message translates to:

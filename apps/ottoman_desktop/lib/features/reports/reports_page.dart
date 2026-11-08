@@ -70,7 +70,7 @@ class ReportTableView extends StatelessWidget {
   }
 }
 
-/// "Izvezi" menu: fetches the file from the server and saves it to Downloads.
+/// "Štampaj" and the "Izvezi" menu: fetch the file from the server, then print it or save it to Downloads.
 class ExportMenu extends StatelessWidget {
   const ExportMenu({super.key, required this.fetch, required this.saver});
 
@@ -98,9 +98,38 @@ class ExportMenu extends StatelessWidget {
     }
   }
 
+  /// Fetches the PDF and hands it to the system print dialog. A printer problem is a message, not a crash.
+  Future<void> _print(BuildContext context) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await saver.printPdf(await fetch(ExportKind.pdf));
+    } on AppException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } on Object {
+      messenger.showSnackBar(SnackBar(content: Text(t.printFailed)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        OutlinedButton.icon(
+          key: const Key('print_report'),
+          onPressed: () => _print(context),
+          icon: const Icon(Icons.print_outlined),
+          label: Text(t.printReport),
+        ),
+        const SizedBox(width: 8),
+        _exportMenu(context, t),
+      ],
+    );
+  }
+
+  Widget _exportMenu(BuildContext context, AppLocalizations t) {
     return MenuAnchor(
       menuChildren: [
         MenuItemButton(

@@ -816,6 +816,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportPdf => 'PDF';
 
   @override
+  String get printReport => 'Print';
+
+  @override
+  String get printFailed =>
+      'Printing failed. Check the printer, or export the PDF and open it yourself.';
+
+  @override
   String savedTo(String path) {
     return 'Saved: $path';
   }

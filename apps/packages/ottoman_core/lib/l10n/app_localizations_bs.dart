@@ -816,6 +816,13 @@ class AppLocalizationsBs extends AppLocalizations {
   String get exportPdf => 'PDF';
 
   @override
+  String get printReport => 'Štampaj';
+
+  @override
+  String get printFailed =>
+      'Štampanje nije uspjelo. Provjerite štampač ili izvezite PDF i otvorite ga ručno.';
+
+  @override
   String savedTo(String path) {
     return 'Spremljeno: $path';
   }

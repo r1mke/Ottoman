@@ -172,6 +172,8 @@ class _Api implements HttpClientAdapter {
 class _Saver implements FileSaver {
   final saved = <DownloadedFile>[];
   final revealed = <String>[];
+  final printed = <DownloadedFile>[];
+  Object? printError;
 
   @override
   Future<String> save(DownloadedFile file) async {
@@ -181,6 +183,13 @@ class _Saver implements FileSaver {
 
   @override
   Future<void> reveal(String path) async => revealed.add(path);
+
+  @override
+  Future<bool> printPdf(DownloadedFile file) async {
+    if (printError != null) throw printError!;
+    printed.add(file);
+    return true;
+  }
 }
 
 Future<(_Api, _Saver)> _pump(
@@ -360,6 +369,36 @@ void main() {
       await tester.tap(find.text('Prikaži'));
       await tester.pump();
       expect(saver.revealed.single, r'C:\Downloads\izvjestaj.csv');
+    });
+
+    testWidgets('Štampaj fetches the PDF and sends it to the printer', (
+      tester,
+    ) async {
+      final (api, saver) = await _pump(
+        tester,
+        (api, saver) => EarningsPage(api: api, saver: saver, now: _now),
+      );
+
+      await tester.tap(find.byKey(const Key('print_report')));
+      await tester.pumpAndSettle();
+
+      expect(api.where('/export').single.queryParameters['format'], 'Pdf');
+      expect(saver.printed, hasLength(1));
+      expect(saver.saved, isEmpty, reason: 'printing does not save a copy');
+    });
+
+    testWidgets('a printer problem is a message, not a crash', (tester) async {
+      final (_, saver) = await _pump(
+        tester,
+        (api, saver) => EarningsPage(api: api, saver: saver, now: _now),
+      );
+      saver.printError = StateError('no printer');
+
+      await tester.tap(find.byKey(const Key('print_report')));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Štampanje nije uspjelo'), findsOneWidget);
     });
 
     testWidgets('the reports page switches between ready-made reports', (
