@@ -267,14 +267,32 @@ public class OttomanDbContext(DbContextOptions<OttomanDbContext> options)
         b.Entity<Review>(e =>
         {
             e.Property(x => x.TargetType).HasConversion<string>().HasMaxLength(20);
-            e.Property(x => x.TargetKey).HasMaxLength(450);
+            e.Ignore(x => x.TargetKey);
+            e.Property(x => x.EmployeeProfileId).HasMaxLength(450);
             e.Property(x => x.Comment).HasMaxLength(1000);
             e.Property(x => x.ReplyText).HasMaxLength(1000);
             e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.ClientId).OnDelete(DeleteBehavior.Cascade);
-            e.ToTable(t => t.HasCheckConstraint("CK_Review_Rating", "[Rating] BETWEEN 1 AND 5"));
+            // Restrict: products and services are deactivated, never deleted, and a barber is removed by deactivating
+            // the profile; a review is never silently lost with its target.
+            e.HasOne<Product>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<Service>().WithMany().HasForeignKey(x => x.ServiceId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<EmployeeProfile>().WithMany().HasForeignKey(x => x.EmployeeProfileId).OnDelete(DeleteBehavior.Restrict);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Review_Rating", "[Rating] BETWEEN 1 AND 5");
+                // Exactly one target, and the one the type says.
+                t.HasCheckConstraint("CK_Review_OneTarget",
+                    "([TargetType] = 'Product' AND [ProductId] IS NOT NULL AND [ServiceId] IS NULL AND [EmployeeProfileId] IS NULL) " +
+                    "OR ([TargetType] = 'Service' AND [ServiceId] IS NOT NULL AND [ProductId] IS NULL AND [EmployeeProfileId] IS NULL) " +
+                    "OR ([TargetType] = 'Employee' AND [EmployeeProfileId] IS NOT NULL AND [ProductId] IS NULL AND [ServiceId] IS NULL)");
+            });
             // One review per client and target: the database enforces it, edits go through PUT.
-            e.HasIndex(x => new { x.ClientId, x.TargetType, x.TargetKey }).IsUnique();
-            e.HasIndex(x => new { x.TargetType, x.TargetKey, x.IsHidden });
+            e.HasIndex(x => new { x.ClientId, x.ProductId }).IsUnique().HasFilter("[ProductId] IS NOT NULL");
+            e.HasIndex(x => new { x.ClientId, x.ServiceId }).IsUnique().HasFilter("[ServiceId] IS NOT NULL");
+            e.HasIndex(x => new { x.ClientId, x.EmployeeProfileId }).IsUnique().HasFilter("[EmployeeProfileId] IS NOT NULL");
+            e.HasIndex(x => new { x.ProductId, x.IsHidden });
+            e.HasIndex(x => new { x.ServiceId, x.IsHidden });
+            e.HasIndex(x => new { x.EmployeeProfileId, x.IsHidden });
         });
 
         b.Entity<IdempotencyRecord>(e =>

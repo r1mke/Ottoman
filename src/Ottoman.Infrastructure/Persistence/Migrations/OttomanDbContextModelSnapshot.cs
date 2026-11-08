@@ -1121,8 +1121,15 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("EmployeeProfileId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("IsHidden")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Rating")
                         .HasColumnType("int");
@@ -1134,10 +1141,8 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<string>("TargetKey")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int?>("ServiceId")
+                        .HasColumnType("int");
 
                     b.Property<string>("TargetType")
                         .IsRequired()
@@ -1149,13 +1154,28 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId", "TargetType", "TargetKey")
-                        .IsUnique();
+                    b.HasIndex("ClientId", "EmployeeProfileId")
+                        .IsUnique()
+                        .HasFilter("[EmployeeProfileId] IS NOT NULL");
 
-                    b.HasIndex("TargetType", "TargetKey", "IsHidden");
+                    b.HasIndex("ClientId", "ProductId")
+                        .IsUnique()
+                        .HasFilter("[ProductId] IS NOT NULL");
+
+                    b.HasIndex("ClientId", "ServiceId")
+                        .IsUnique()
+                        .HasFilter("[ServiceId] IS NOT NULL");
+
+                    b.HasIndex("EmployeeProfileId", "IsHidden");
+
+                    b.HasIndex("ProductId", "IsHidden");
+
+                    b.HasIndex("ServiceId", "IsHidden");
 
                     b.ToTable("Reviews", t =>
                         {
+                            t.HasCheckConstraint("CK_Review_OneTarget", "([TargetType] = 'Product' AND [ProductId] IS NOT NULL AND [ServiceId] IS NULL AND [EmployeeProfileId] IS NULL) OR ([TargetType] = 'Service' AND [ServiceId] IS NOT NULL AND [ProductId] IS NULL AND [EmployeeProfileId] IS NULL) OR ([TargetType] = 'Employee' AND [EmployeeProfileId] IS NOT NULL AND [ProductId] IS NULL AND [ServiceId] IS NULL)");
+
                             t.HasCheckConstraint("CK_Review_Rating", "[Rating] BETWEEN 1 AND 5");
                         });
                 });
@@ -1891,6 +1911,21 @@ namespace Ottoman.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Ottoman.Domain.Entities.EmployeeProfile", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeProfileId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Ottoman.Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Ottoman.Domain.Entities.Service", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Ottoman.Domain.Entities.ShopSection", b =>

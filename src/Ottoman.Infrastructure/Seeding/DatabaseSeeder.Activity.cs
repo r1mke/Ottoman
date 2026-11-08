@@ -275,12 +275,11 @@ public partial class DatabaseSeeder
             var review = new Review
             {
                 ClientId = clientId,
-                TargetType = type,
-                TargetKey = key,
                 Rating = rating,
                 Comment = rnd.NextDouble() < 0.75 ? comments[rnd.Next(comments.Length)] : null,
                 CreatedAtUtc = at.AddDays(1),
             };
+            review.SetTarget(type, key);
             if (review.Comment is not null && rating >= 4 && rnd.NextDouble() < 0.25)
             {
                 review.ReplyText = "Hvala na povjerenju, vidimo se opet!";

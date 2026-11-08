@@ -5,6 +5,7 @@ using Ottoman.Domain;
 using Ottoman.Domain.Reports;
 using Ottoman.Domain.Scheduling;
 using Ottoman.Infrastructure.Persistence;
+using Ottoman.Infrastructure.Reviews;
 
 namespace Ottoman.Infrastructure.Reports;
 
@@ -171,7 +172,7 @@ public class ReportService(OttomanDbContext db, TimeProvider clock) : IReportSer
 
         var ratings = await db.Reviews.AsNoTracking()
             .Where(r => r.TargetType == ReviewTargetType.Employee && !r.IsHidden)
-            .GroupBy(r => r.TargetKey).Select(g => new { g.Key, Avg = g.Average(r => (double)r.Rating), N = g.Count() })
+            .GroupBy(ReviewQueries.TargetKey).Select(g => new { g.Key, Avg = g.Average(r => (double)r.Rating), N = g.Count() })
             .ToDictionaryAsync(x => x.Key, ct);
 
         return employees

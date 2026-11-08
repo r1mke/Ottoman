@@ -8,6 +8,7 @@ using Ottoman.Domain;
 using Ottoman.Domain.Entities;
 using Ottoman.Domain.Recommendations;
 using Ottoman.Infrastructure.Persistence;
+using Ottoman.Infrastructure.Reviews;
 
 namespace Ottoman.Infrastructure.Recommendations;
 
@@ -206,21 +207,22 @@ public class RecommendationService(
     {
         var mine = await db.Reviews.AsNoTracking()
             .Where(r => r.ClientId == userId && r.TargetType == type && !r.IsHidden)
-            .Select(r => new { r.TargetKey, r.Rating, r.CreatedAtUtc }).ToListAsync(ct);
+            .Select(r => new { r.ProductId, r.ServiceId, r.EmployeeProfileId, r.Rating, r.CreatedAtUtc }).ToListAsync(ct);
         var result = new List<Interaction>();
         foreach (var r in mine)
         {
             var weight = Recommender.ReviewWeight(r.Rating);
             if (weight == 0) continue;
-            if (idByKey is not null) { if (idByKey.TryGetValue(r.TargetKey, out var id)) result.Add(new Interaction(id, weight, r.CreatedAtUtc)); }
-            else if (int.TryParse(r.TargetKey, out var numeric)) result.Add(new Interaction(numeric, weight, r.CreatedAtUtc));
+            var key = Review.KeyOf(type, r.ProductId, r.ServiceId, r.EmployeeProfileId);
+            if (idByKey is not null) { if (idByKey.TryGetValue(key, out var id)) result.Add(new Interaction(id, weight, r.CreatedAtUtc)); }
+            else if (int.TryParse(key, out var numeric)) result.Add(new Interaction(numeric, weight, r.CreatedAtUtc));
         }
         return result;
     }
 
     private async Task<Dictionary<string, double>> RatingsAsync(ReviewTargetType type, CancellationToken ct) =>
         await db.Reviews.AsNoTracking().Where(r => r.TargetType == type && !r.IsHidden)
-            .GroupBy(r => r.TargetKey).Select(g => new { g.Key, Avg = g.Average(r => (double)r.Rating) })
+            .GroupBy(ReviewQueries.TargetKey).Select(g => new { g.Key, Avg = g.Average(r => (double)r.Rating) })
             .ToDictionaryAsync(x => x.Key, x => x.Avg, ct);
 
     private static double Rating(Dictionary<string, double> ratings, string key) => ratings.GetValueOrDefault(key);

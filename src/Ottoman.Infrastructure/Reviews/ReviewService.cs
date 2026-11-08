@@ -15,11 +15,11 @@ public class ReviewService(OttomanDbContext db, TimeProvider clock) : IReviewSer
     public async Task<ReviewListDto> ListAsync(Actor viewer, ReviewTargetType type, string key, bool includeHidden, PageQuery page, CancellationToken ct)
     {
         var showHidden = includeHidden && viewer.IsAdmin;
-        var visible = db.Reviews.AsNoTracking().Where(r => r.TargetType == type && r.TargetKey == key && !r.IsHidden);
+        var visible = db.Reviews.AsNoTracking().OfTarget(type, key).Where(r => !r.IsHidden);
         var count = await visible.CountAsync(ct);
         var average = count == 0 ? 0 : await visible.AverageAsync(r => (double)r.Rating, ct);
 
-        var query = db.Reviews.AsNoTracking().Where(r => r.TargetType == type && r.TargetKey == key);
+        var query = db.Reviews.AsNoTracking().OfTarget(type, key);
         if (!showHidden) query = query.Where(r => !r.IsHidden);
         var total = await query.CountAsync(ct);
         var rows = await query.OrderByDescending(r => r.CreatedAtUtc).ThenByDescending(r => r.Id)
@@ -30,8 +30,8 @@ public class ReviewService(OttomanDbContext db, TimeProvider clock) : IReviewSer
 
     public async Task<IReadOnlyList<ReviewSummaryDto>> SummaryAsync(ReviewTargetType type, CancellationToken ct)
     {
-        var rows = await db.Reviews.AsNoTracking().Where(r => r.TargetType == type && !r.IsHidden)
-            .GroupBy(r => r.TargetKey)
+        var rows = await db.Reviews.AsNoTracking().OfType(type).Where(r => !r.IsHidden)
+            .GroupBy(ReviewQueries.TargetKey)
             .Select(g => new { Key = g.Key, Average = g.Average(r => (double)r.Rating), Count = g.Count() })
             .ToListAsync(ct);
         return rows.Select(r => new ReviewSummaryDto(r.Key, Math.Round(r.Average, 2), r.Count)).ToList();
@@ -39,8 +39,8 @@ public class ReviewService(OttomanDbContext db, TimeProvider clock) : IReviewSer
 
     public async Task<PagedResult<ReviewSummaryDto>> SummaryPageAsync(ReviewTargetType type, PageQuery page, CancellationToken ct)
     {
-        var groups = db.Reviews.AsNoTracking().Where(r => r.TargetType == type && !r.IsHidden)
-            .GroupBy(r => r.TargetKey)
+        var groups = db.Reviews.AsNoTracking().OfType(type).Where(r => !r.IsHidden)
+            .GroupBy(ReviewQueries.TargetKey)
             .Select(g => new { Key = g.Key, Average = g.Average(r => (double)r.Rating), Count = g.Count() });
         var total = await groups.CountAsync(ct);
         var rows = await groups.OrderBy(g => g.Key).Skip(page.Skip).Take(page.SafePageSize).ToListAsync(ct);
@@ -66,7 +66,7 @@ public class ReviewService(OttomanDbContext db, TimeProvider clock) : IReviewSer
         if (ReviewTargetKey.Canonical(type, key) is null) return new EligibilityDto(false, "Stavka nije pronađena.", null);
 
         var existing = await db.Reviews.AsNoTracking()
-            .Where(r => r.ClientId == client.UserId && r.TargetType == type && r.TargetKey == key)
+            .Where(r => r.ClientId == client.UserId).OfTarget(type, key)
             .Select(r => (int?)r.Id).FirstOrDefaultAsync(ct);
         if (existing is not null) return new EligibilityDto(false, "Već ste ostavili recenziju.", existing);
 
@@ -111,12 +111,11 @@ public class ReviewService(OttomanDbContext db, TimeProvider clock) : IReviewSer
         var review = new Review
         {
             ClientId = client.UserId,
-            TargetType = r.TargetType,
-            TargetKey = r.TargetKey,
             Rating = r.Rating,
             Comment = string.IsNullOrWhiteSpace(r.Comment) ? null : r.Comment.Trim(),
             CreatedAtUtc = clock.GetUtcNow().UtcDateTime,
         };
+        review.SetTarget(r.TargetType, r.TargetKey); // the key was checked to be canonical by the eligibility check above
         db.Reviews.Add(review);
         try
         {
