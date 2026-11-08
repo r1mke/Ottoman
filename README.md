@@ -85,15 +85,15 @@ cd apps/ottoman_desktop && flutter build windows --release   # -> build/windows/
 
 ### Paket za predaju (release)
 
-`tools/package-release.ps1` napravi release verziju oba klijenta i spakuje ih u `dist/` (zip datoteke, mapa je u `.gitignore`):
+`tools/package-release.ps1` radi `flutter clean` i release build oba klijenta i pakuje ih u **jednu** zip datoteku `dist/fit-build-GGGG-MM-DD.zip` (mapa `dist/` je u `.gitignore`), u rasporedu koji traže upute fakulteta:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\package-release.ps1                      # emulator: API na http://10.0.2.2:5080
 powershell -ExecutionPolicy Bypass -File tools\package-release.ps1 -ApiBaseUrl http://<IP računara>:5080   # pravi telefon
 ```
 
-- `-ApiBaseUrl` (podrazumijevano `http://10.0.2.2:5080`, adresa računara iz Android emulatora) ugrađuje se u APK (`--dart-define=API_BASE_URL`); u skripti nema nijedne ugrađene IP adrese lokalne mreže. `-DesktopApiBaseUrl` je adresa za Windows aplikaciju (podrazumijevano `http://localhost:5080`). `-SkipWindows` / `-SkipAndroid` preskaču jednu od izgradnji.
-- Rezultat: `dist/ottoman_desktop_windows.zip` (exe sa DLL-ovima; `msvcp140.dll`, `vcruntime140.dll` i `vcruntime140_1.dll` se kopiraju iz sistema pored exe-a kad postoje, pa aplikacija radi i na računaru bez Visual C++ paketa) i `dist/ottoman_mobile_android.zip` (APK).
+- `-ApiBaseUrl` (podrazumijevano `http://10.0.2.2:5080`, adresa računara iz Android emulatora) ugrađuje se u APK, a `-DesktopApiBaseUrl` (podrazumijevano `http://localhost:5080`) u Windows aplikaciju (`--dart-define=API_BASE_URL`); u skripti nema nijedne ugrađene IP adrese lokalne mreže. `-PackageOnly` samo pakuje već izgrađene verzije.
+- Sadržaj zipa: `ottoman_mobile/build/app/outputs/flutter-apk/app-release.apk` i `ottoman_desktop/build/windows/x64/runner/Release/` (exe sa DLL-ovima; `msvcp140.dll`, `vcruntime140.dll` i `vcruntime140_1.dll` se kopiraju iz sistema pored exe-a kad postoje, pa aplikacija radi i na računaru bez Visual C++ paketa). U zip ne ulazi nikakav `.env`. Taj zip se šalje kao jedini asset GitHub Releasea.
 - Release APK je potpisan debug ključem (dovoljno za predaju i probu, ne za objavu u prodavnici) i dopušta `http://` saobraćaj (`usesCleartextTraffic` u `AndroidManifest.xml`), jer demo API radi bez TLS-a na lokalnoj mreži; iza HTTPS-a treba ukloniti taj atribut.
 - `flutter build apk --release` pokreće "vital" lint release varijante, koji bez interneta (ili iza restriktivnog proxyja) pada na Stripe SDK-u. Zato je u `apps/ottoman_mobile/android/app/build.gradle.kts` za release izgradnje isključeno `lint { checkReleaseBuilds = false }`; ako i dalje pada, pokrenite izgradnju jednom s internetom ili koristite debug APK (`flutter build apk --debug`).
 
