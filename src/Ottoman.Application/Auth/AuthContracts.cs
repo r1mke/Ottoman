@@ -42,6 +42,22 @@ public enum AuthFailure
     InvalidCredentials,
     InvalidToken,
     ValidationFailed,
+
+    /// <summary>The password reset code is wrong, used or expired (or the account cannot reset): a 400, not a login failure.</summary>
+    ResetFailed,
+}
+
+/// <summary>The words the reset flow uses everywhere (mail, app, API): the user pastes a code from the mail.</summary>
+public static class PasswordResetTexts
+{
+    public const string FailedTitle = "Reset lozinke nije uspio.";
+    public const string InvalidCode = "Kod za reset lozinke nije važeći ili je istekao.";
+}
+
+/// <summary>E-mail addresses are stored trimmed and in lower case; lookups go through Identity's normalised (upper) form.</summary>
+public static class EmailAddresses
+{
+    public static string Normalize(string email) => email.Trim().ToLowerInvariant();
 }
 
 /// <summary>Outcome of an auth operation. Failures carry only a generic, non-revealing reason.</summary>

@@ -640,7 +640,11 @@ public class ShopTests(ApiFixture api)
         var (_, client) = await NewClient();
         var o = await Dto(await Order(client, p, 1, PaymentMethod.OnReceipt));
         o.IsPaid.Should().BeFalse();
-        (await client.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var confirm = await client.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null);
+        confirm.StatusCode.Should().Be(HttpStatusCode.Conflict, "the owner learns why, not 'not found'");
+        (await confirm.Content.ReadAsStringAsync()).Should().Contain("Narudžba se ne plaća karticom.");
+        var (_, stranger) = await NewClient();
+        (await stranger.PostAsync($"/api/v1/orders/{o.Id}/confirm-payment", null)).StatusCode.Should().Be(HttpStatusCode.NotFound);
 
         (await (await Admin()).PostAsync($"/api/v1/orders/{o.Id}/fulfil", null)).StatusCode.Should().Be(HttpStatusCode.OK);
         (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.IsPaid.Should().BeTrue();

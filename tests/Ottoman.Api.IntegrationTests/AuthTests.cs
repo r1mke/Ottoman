@@ -281,7 +281,10 @@ public class AuthTests(ApiFixture api)
 
         // Single use.
         var again = await c.PostAsJsonAsync("/api/v1/auth/reset-password", new ResetPasswordRequest(email, token, "Another_Pass1!"));
-        again.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        again.StatusCode.Should().Be(HttpStatusCode.BadRequest, "a used code is a failed reset, not a failed login");
+        var problem = await again.Content.ReadAsStringAsync();
+        problem.Should().Contain("Reset lozinke nije uspio.").And.Contain("Kod za reset lozinke nije važeći ili je istekao.")
+            .And.NotContain("Neuspješna prijava").And.NotContain("Link");
     }
 
     [Fact]

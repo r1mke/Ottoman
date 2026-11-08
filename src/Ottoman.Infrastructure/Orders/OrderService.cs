@@ -285,8 +285,13 @@ public class OrderService(
     {
         // Only the owner, only their card order with a payment; anyone else sees "not found".
         var order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, ct);
-        if (order is null || !actor.IsClient || order.ClientId != actor.UserId || order.PaymentMethod != PaymentMethod.Card || order.PaymentId is null)
+        if (order is null || !actor.IsClient || order.ClientId != actor.UserId)
             return Result<OrderDto>.NotFound("Narudžba nije pronađena.");
+        // The owner's own order, but nothing to confirm: say why instead of "not found".
+        if (order.PaymentMethod != PaymentMethod.Card)
+            return Result<OrderDto>.Conflict("Narudžba se ne plaća karticom.");
+        if (order.PaymentId is null)
+            return Result<OrderDto>.Conflict("Plaćanje karticom za ovu narudžbu nije započeto.");
         var payment = await db.Payments.AsNoTracking().FirstAsync(p => p.Id == order.PaymentId, ct);
 
         // Already settled (webhook first, or a second tap): nothing to do, the answer is the same.

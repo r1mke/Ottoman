@@ -73,7 +73,8 @@ public static class DependencyInjection
         services.AddSingleton<CatalogChangeInterceptor>();
         services.AddDbContext<OttomanDbContext>((sp, o) => o
             .UseSqlServer(cs, sql => sql.EnableRetryOnFailure())
-            .AddInterceptors(sp.GetRequiredService<CatalogChangeInterceptor>()));
+            .AddInterceptors(sp.GetRequiredService<CatalogChangeInterceptor>())
+            .ConfigureWarnings(w => w.Log(DatabaseLogLevels.FailedCommands)));
 
         services.AddIdentityCore<AppUser>(o =>
             {

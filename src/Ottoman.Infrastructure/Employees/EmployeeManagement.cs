@@ -98,7 +98,7 @@ public class EmployeeManagement(
 
     public async Task<Result<EmployeeDto>> CreateAsync(CreateEmployeeRequest r, CancellationToken ct)
     {
-        var email = r.Email.Trim();
+        var email = Ottoman.Application.Auth.EmailAddresses.Normalize(r.Email);
         if (await users.FindByEmailAsync(email) is not null)
             return Result<EmployeeDto>.Conflict("Račun s tom email adresom već postoji.");
 

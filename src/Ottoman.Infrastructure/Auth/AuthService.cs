@@ -33,7 +33,7 @@ public class AuthService(
 
     public async Task<AuthResult<bool>> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
-        var email = request.Email.Trim();
+        var email = EmailAddresses.Normalize(request.Email);
         var fullName = $"{request.FirstName} {request.LastName}".Trim();
 
         var existing = await users.FindByEmailAsync(email);
@@ -195,12 +195,12 @@ public class AuthService(
     {
         var user = await users.FindByEmailAsync(request.Email.Trim());
         if (user is null || user.IsBlocked)
-            return AuthResult<bool>.Fail(AuthFailure.InvalidToken, "Link za reset lozinke nije važeći ili je istekao.");
+            return AuthResult<bool>.Fail(AuthFailure.ResetFailed, PasswordResetTexts.InvalidCode);
 
         // Identity binds the token to the security stamp, which this call rotates: the token is single-use.
         var result = await users.ResetPasswordAsync(user, request.Token, request.NewPassword);
         if (!result.Succeeded)
-            return AuthResult<bool>.Fail(AuthFailure.InvalidToken, "Link za reset lozinke nije važeći ili je istekao.");
+            return AuthResult<bool>.Fail(AuthFailure.ResetFailed, PasswordResetTexts.InvalidCode);
 
         await users.ResetAccessFailedCountAsync(user);
         await RevokeAllAsync(user.Id, ct);

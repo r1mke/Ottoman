@@ -71,6 +71,12 @@ public class AuthController(IAuthService auth) : ControllerBase
         var detail = result.Errors.FirstOrDefault() ?? "Zahtjev nije uspio.";
         return result.Failure switch
         {
+            AuthFailure.ResetFailed => new BadRequestObjectResult(new ProblemDetails
+            {
+                Title = PasswordResetTexts.FailedTitle,
+                Detail = detail,
+                Status = StatusCodes.Status400BadRequest,
+            }),
             AuthFailure.ValidationFailed => new BadRequestObjectResult(new ValidationProblemDetails(
                 new Dictionary<string, string[]> { ["request"] = result.Errors.ToArray() })
             {

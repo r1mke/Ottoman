@@ -55,6 +55,7 @@ try
     builder.Services.AddOttomanAuth(builder.Configuration);
     builder.Services.AddControllers(o =>
     {
+        o.Filters.Add<TextSafetyFilter>();
         o.Filters.Add<ValidationFilter>();
         o.Filters.Add<AuditFilter>();
     }).ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = InvalidModelState.Respond);
