@@ -77,7 +77,7 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
     [HttpGet("{id}/working-hours")]
     [Authorize(Policy = Policies.Staff)]
     public async Task<ActionResult<IReadOnlyList<WorkingHoursDto>>> GetWorkingHours(string id, CancellationToken ct) =>
-        IsAdminOrSelf(id) ? this.ToActionResult(await employees.GetWorkingHoursAsync(id, ct)) : Forbid();
+        IsAdminOrSelf(id) ? this.ToActionResult(await employees.GetWorkingHoursAsync(id, ct)) : throw new ForbiddenException();
 
     [HttpPut("{id}/working-hours")]
     [Authorize(Policy = Policies.AdminOnly)]
@@ -90,7 +90,7 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
     public async Task<ActionResult<IReadOnlyList<TimeOffDto>>> ListTimeOff(
         string id, [FromQuery] int page = 1, [FromQuery] int pageSize = PageQuery.MaxPageSize, CancellationToken ct = default)
     {
-        if (!IsAdminOrSelf(id)) return Forbid();
+        if (!IsAdminOrSelf(id)) throw new ForbiddenException();
         var result = await employees.PageTimeOffAsync(id, new PageQuery(page, pageSize), ct);
         return result.Succeeded ? Ok(this.Page(result.Value!)) : this.ToActionResult(result).Result!;
     }

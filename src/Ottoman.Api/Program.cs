@@ -61,6 +61,7 @@ try
     }).ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = InvalidModelState.Respond);
     builder.Services.AddOpenApi();
     builder.Services.AddExceptionHandler<HttpExceptionHandler>();
+    builder.Services.AddExceptionHandler<ApplicationExceptionHandler>();
     builder.Services.AddProblemDetails();
 
     // Browsers are not a client of this API (the apps are native), so CORS is off unless exact origins are listed.

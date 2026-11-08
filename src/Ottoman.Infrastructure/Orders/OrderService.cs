@@ -194,7 +194,7 @@ public class OrderService(
         if (attached == 0)
         {
             await db.Payments.Where(p => p.Id == payment.Id).ExecuteDeleteAsync(ct);
-            throw new InvalidOperationException($"Order {order.Id} already has a payment.");
+            throw new ConflictException("Za ovu narudžbu već postoji plaćanje.");
         }
         return intent.ClientSecret;
     }

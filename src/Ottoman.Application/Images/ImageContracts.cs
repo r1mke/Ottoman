@@ -277,4 +277,4 @@ public static class ImageRules
 }
 
 /// <summary>The image host refused the file as not a picture (it could not decode it).</summary>
-public sealed class ImageRejectedException(string message) : Exception(message);
+public sealed class ImageRejectedException(string message) : InvalidRequestException(message);
