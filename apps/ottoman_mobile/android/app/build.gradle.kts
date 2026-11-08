@@ -31,6 +31,13 @@ android {
         versionName = flutter.versionName
     }
 
+    // `flutter build apk --release` runs the "vital" lint of the release variant, which downloads lint artifacts and
+    // trips over the Stripe SDK when the machine is offline (or behind a restrictive proxy). The check is switched
+    // off for release builds only; analysis in the IDE and `gradlew lint` are not affected.
+    lint {
+        checkReleaseBuilds = false
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

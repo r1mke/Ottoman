@@ -66,6 +66,20 @@ cd apps/ottoman_mobile  && flutter build apk --release --dart-define=API_BASE_UR
 cd apps/ottoman_desktop && flutter build windows --release   # -> build/windows/x64/runner/Release/
 ```
 
+### Paket za predaju (release)
+
+`tools/package-release.ps1` napravi release verziju oba klijenta i spakuje ih u `dist/` (zip datoteke, mapa je u `.gitignore`):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\package-release.ps1                      # emulator: API na http://10.0.2.2:5080
+powershell -ExecutionPolicy Bypass -File tools\package-release.ps1 -ApiBaseUrl http://<IP računara>:5080   # pravi telefon
+```
+
+- `-ApiBaseUrl` (podrazumijevano `http://10.0.2.2:5080`, adresa računara iz Android emulatora) ugrađuje se u APK (`--dart-define=API_BASE_URL`); u skripti nema nijedne ugrađene IP adrese lokalne mreže. `-DesktopApiBaseUrl` je adresa za Windows aplikaciju (podrazumijevano `http://localhost:5080`). `-SkipWindows` / `-SkipAndroid` preskaču jednu od izgradnji.
+- Rezultat: `dist/ottoman_desktop_windows.zip` (exe sa DLL-ovima; `msvcp140.dll`, `vcruntime140.dll` i `vcruntime140_1.dll` se kopiraju iz sistema pored exe-a kad postoje, pa aplikacija radi i na računaru bez Visual C++ paketa) i `dist/ottoman_mobile_android.zip` (APK).
+- Release APK je potpisan debug ključem (dovoljno za predaju i probu, ne za objavu u prodavnici) i dopušta `http://` saobraćaj (`usesCleartextTraffic` u `AndroidManifest.xml`), jer demo API radi bez TLS-a na lokalnoj mreži; iza HTTPS-a treba ukloniti taj atribut.
+- `flutter build apk --release` pokreće "vital" lint release varijante, koji bez interneta (ili iza restriktivnog proxyja) pada na Stripe SDK-u. Zato je u `apps/ottoman_mobile/android/app/build.gradle.kts` za release izgradnje isključeno `lint { checkReleaseBuilds = false }`; ako i dalje pada, pokrenite izgradnju jednom s internetom ili koristite debug APK (`flutter build apk --debug`).
+
 ### Slike (Cloudinary)
 
 Slike (proizvodi, usluge, frizeri, galerija, logo, novosti) čuvaju se na Cloudinaryju. U `deploy/.env` postavite `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` i `CLOUDINARY_API_SECRET`. Bez njih API provjerava upload (vrsta i veličina), ali sliku nigdje ne sprema, pa demo podaci i nove stavke ostaju bez slika (aplikacije tada prikazuju ikonu ili inicijale). Demo podaci (`Seed__DemoData=true`) dolaze sa stvarnim katalogom salona (7 kategorija, 18 brendova, oko 330 proizvoda sa slikama, usluge, galerija, početna stranica shopa i profil salona; datoteka `src/Ottoman.Infrastructure/Seeding/SeedData/catalog.json`, ugrađena u `Ottoman.Infrastructure`) te sa izmišljenim klijentima i njihovom historijom (termini, narudžbe, recenzije), tako da izvještaji, preporuke i recenzije imaju šta prikazati na svježoj bazi. Seed ne šalje nijednu sliku: sprema samo ključeve slika koji pokazuju na autorov Cloudinary račun, pa se slike pojave čim se postave Cloudinary postavke iz `.env` datoteke u priloženom ZIP-u; bez njih aplikacije rade i prikazuju prazne zamjenske slike. Seed je idempotentan (drugo pokretanje ne dodaje ništa) i ne prepisuje ono što je admin izmijenio.

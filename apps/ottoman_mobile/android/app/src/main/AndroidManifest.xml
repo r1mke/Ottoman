@@ -2,6 +2,9 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Android 13+ asks before showing notifications. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Cleartext (http://) stays allowed in the release build on purpose: the demo API of the project is served over
+         plain HTTP on the local network (http://<PC>:5080) and has no TLS certificate. A deployment behind HTTPS
+         should remove android:usesCleartextTraffic here (debug builds keep it through src/debug/AndroidManifest.xml). -->
     <application
         android:label="Ottoman"
         android:usesCleartextTraffic="true"
