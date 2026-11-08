@@ -129,7 +129,8 @@ class _Api implements HttpClientAdapter {
       body = {
         'title': 'Sukob',
         'status': 409,
-        'detail': 'Brend se koristi kod 3 proizvoda. Prvo im promijenite brend.',
+        'detail':
+            'Brend se koristi kod 3 proizvoda. Prvo im promijenite brend.',
       };
     } else if (o.path.endsWith('/manage')) {
       body = rules;

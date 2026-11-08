@@ -38,7 +38,11 @@ public class NotificationService(
             .Skip(page.Skip).Take(page.SafePageSize)
             .Select(n => new
             {
-                n.Id, n.Title, n.Body, n.Kind, n.CreatedAtUtc,
+                n.Id,
+                n.Title,
+                n.Body,
+                n.Kind,
+                n.CreatedAtUtc,
                 IsRead = n.ReadAtUtc != null,
                 // A news item shows its current text, picture and category (the admin may have edited it since).
                 Announcement = db.Announcements.Where(a => a.Id == n.AnnouncementId)

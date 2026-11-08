@@ -5,10 +5,10 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Ottoman.Application.Catalog;
+using Ottoman.Application.Employees;
 using Ottoman.Application.Gallery;
 using Ottoman.Application.Images;
 using Ottoman.Application.Shop;
-using Ottoman.Application.Employees;
 using Ottoman.Domain.Entities;
 using Ottoman.Infrastructure.Images;
 

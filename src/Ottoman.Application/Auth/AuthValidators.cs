@@ -1,6 +1,5 @@
-using FluentValidation;
-
 using System.Text.RegularExpressions;
+using FluentValidation;
 
 namespace Ottoman.Application.Auth;
 

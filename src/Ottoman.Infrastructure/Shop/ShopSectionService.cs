@@ -51,27 +51,27 @@ public class ShopSectionService(
             {
                 case ShopSectionKind.CategoryTiles:
                 case ShopSectionKind.BrandTiles:
-                {
-                    var tiles = PickTiles(s, s.Kind == ShopSectionKind.CategoryTiles ? categoryTiles : brandTiles);
-                    if (tiles.Count > 0)
-                        blocks.Add(new ShopBlockDto(s.Id, s.Kind, s.Title, s.Eyebrow, ShopSectionLayout.Row, null, null, tiles, StyleOf(s)));
-                    break;
-                }
+                    {
+                        var tiles = PickTiles(s, s.Kind == ShopSectionKind.CategoryTiles ? categoryTiles : brandTiles);
+                        if (tiles.Count > 0)
+                            blocks.Add(new ShopBlockDto(s.Id, s.Kind, s.Title, s.Eyebrow, ShopSectionLayout.Row, null, null, tiles, StyleOf(s)));
+                        break;
+                    }
                 case ShopSectionKind.Recommended:
                     blocks.Add(new ShopBlockDto(s.Id, s.Kind, s.Title, s.Eyebrow, ShopSectionLayout.Row, null, null, null, StyleOf(s)));
                     break;
                 default:
-                {
-                    var own = idsBySection[s.Id].Where(products.ContainsKey).Select(id => products[id]).ToList();
-                    if (own.Count == 0) break; // nothing to show: customers do not see the section
-                    // Only a banner shows a picture of its own: the admin's, or else the first product photo.
-                    var banner = s.Layout == ShopSectionLayout.Banner
-                        ? images.Url(s.ImageKey) ?? pickedUrls.GetValueOrDefault(s.Id)
-                          ?? own.Select(p => p.ImageUrl).FirstOrDefault(u => u is not null)
-                        : null;
-                    blocks.Add(new ShopBlockDto(s.Id, s.Kind, s.Title, s.Eyebrow, s.Layout, banner, own, null, StyleOf(s)));
-                    break;
-                }
+                    {
+                        var own = idsBySection[s.Id].Where(products.ContainsKey).Select(id => products[id]).ToList();
+                        if (own.Count == 0) break; // nothing to show: customers do not see the section
+                                                   // Only a banner shows a picture of its own: the admin's, or else the first product photo.
+                        var banner = s.Layout == ShopSectionLayout.Banner
+                            ? images.Url(s.ImageKey) ?? pickedUrls.GetValueOrDefault(s.Id)
+                              ?? own.Select(p => p.ImageUrl).FirstOrDefault(u => u is not null)
+                            : null;
+                        blocks.Add(new ShopBlockDto(s.Id, s.Kind, s.Title, s.Eyebrow, s.Layout, banner, own, null, StyleOf(s)));
+                        break;
+                    }
             }
         }
         return blocks;

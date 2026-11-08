@@ -90,7 +90,9 @@ class _ListState extends State<_List> {
   Future<void> _review(Reservation r) async {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final services = <int, String>{for (final i in r.items) i.serviceId: i.name};
+    final services = <int, String>{
+      for (final i in r.items) i.serviceId: i.name,
+    };
     final pick = await showModalBottomSheet<(String, String, String)>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -102,9 +104,8 @@ class _ListState extends State<_List> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
               child: Text(
                 t.reviewWhat,
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(ctx).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             ListTile(

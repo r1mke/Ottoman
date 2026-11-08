@@ -432,7 +432,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('review_pick_service_1')));
     await tester.pumpAndSettle();
-    expect(find.text('Šišanje'), findsWidgets); // the dialog is about the service
+    expect(
+      find.text('Šišanje'),
+      findsWidgets,
+    ); // the dialog is about the service
     await tester.tap(
       find.descendant(
         of: find.byKey(const Key('review_stars')),

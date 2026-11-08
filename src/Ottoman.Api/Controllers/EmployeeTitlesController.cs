@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
-using Ottoman.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using Ottoman.Api.Auth;
+using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
 
 namespace Ottoman.Api.Controllers;
