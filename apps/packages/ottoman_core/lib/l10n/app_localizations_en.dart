@@ -472,6 +472,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String orderCancelReason(String reason) {
+    return 'Reason for cancelling: $reason';
+  }
+
+  @override
   String get orderStatusPendingPayment => 'Awaiting payment';
 
   @override

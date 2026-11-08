@@ -47,8 +47,8 @@ public class OrdersController(IOrderService orders) : ControllerBase
         this.ToActionResult(await orders.GetAsync(User.ToActor(), id, ct));
 
     [HttpPost("{id:int}/cancel")]
-    public async Task<ActionResult<OrderDto>> Cancel(int id, CancellationToken ct) =>
-        this.ToActionResult(await orders.CancelAsync(User.ToActor(), id, ct));
+    public async Task<ActionResult<OrderDto>> Cancel(int id, CancelOrderRequest? request, CancellationToken ct) =>
+        this.ToActionResult(await orders.CancelAsync(User.ToActor(), id, request?.Reason, ct));
 
     /// <summary>After the card sheet: the server verifies the payment with the processor and finalises the order.</summary>
     [HttpPost("{id:int}/confirm-payment")]

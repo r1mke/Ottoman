@@ -328,9 +328,23 @@ void main() {
 
       await tester.tap(find.byKey(const Key('cancel_11')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('confirm_cancel_order')));
+      await tester.tap(find.byKey(const Key('confirm_cancel')));
       await tester.pumpAndSettle();
-      expect(api.where('POST', '/orders/11/cancel'), hasLength(1));
+      expect(
+        api.where('POST', '/orders/11/cancel'),
+        isEmpty,
+        reason: 'the salon must give a reason first',
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('cancel_reason')),
+        'Proizvod je oštećen.',
+      );
+      await tester.tap(find.byKey(const Key('confirm_cancel')));
+      await tester.pumpAndSettle();
+      final cancels = api.where('POST', '/orders/11/cancel');
+      expect(cancels, hasLength(1));
+      expect((cancels.single.data as Map)['reason'], 'Proizvod je oštećen.');
     },
   );
 

@@ -40,28 +40,16 @@ class _OrdersPageState extends State<OrdersPage> {
 
   Future<void> _cancel(ShopOrder o) async {
     final t = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: DialogHeader(t.cancelOrder),
-        content: Text(t.cancelOrderQuestion),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(t.no),
-          ),
-          FilledButton(
-            key: const Key('confirm_cancel_order'),
-            style: FilledButton.styleFrom(minimumSize: const Size(96, 44)),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.yes),
-          ),
-        ],
-      ),
+    final reason = await showCancelReasonDialog(
+      context,
+      summary: '${o.clientName ?? ''} · ${o.itemSummary}',
+      reasonRequired: true,
+      title: t.cancelOrder,
+      question: t.cancelOrderQuestion,
     );
-    if (ok != true) return;
+    if (reason == null) return;
     try {
-      await widget.shop.cancelOrder(o.id);
+      await widget.shop.cancelOrder(o.id, reason: reason);
     } on AppException catch (e) {
       _say(e.message);
     }

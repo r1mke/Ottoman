@@ -186,6 +186,14 @@
       }
     }
   },
+  "orderCancelReason": "Reason for cancelling: {reason}",
+  "@orderCancelReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "orderStatusPendingPayment": "Awaiting payment",
   "orderStatusPlaced": "Received",
   "orderStatusFulfilled": "Picked up",

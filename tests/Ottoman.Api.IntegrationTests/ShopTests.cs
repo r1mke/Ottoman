@@ -444,7 +444,7 @@ public class ShopTests(ApiFixture api)
         var admin = await Admin();
 
         var results = await Task.WhenAll(Enumerable.Range(0, 6).Select(i =>
-            (i % 2 == 0 ? client : admin).PostAsync($"/api/v1/orders/{o.Id}/cancel", null)));
+            (i % 2 == 0 ? client : admin).PostAsJsonAsync($"/api/v1/orders/{o.Id}/cancel", new CancelOrderRequest("Greška u zalihi."))));
 
         results.Count(r => r.StatusCode == HttpStatusCode.OK).Should().Be(1);
         (await StockOf(p)).Should().Be(5);
@@ -482,11 +482,52 @@ public class ShopTests(ApiFixture api)
         (await client.PostAsync($"/api/v1/orders/{o.Id}/cancel", null)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var admin = await Admin();
-        var res = await admin.PostAsync($"/api/v1/orders/{o.Id}/cancel", null);
+        var res = await admin.PostAsJsonAsync($"/api/v1/orders/{o.Id}/cancel", new CancelOrderRequest("Proizvod je oštećen."));
         res.StatusCode.Should().Be(HttpStatusCode.OK);
         (await Dto(res)).PaymentStatus.Should().Be(PaymentStatus.Refunded);
         api.Services.GetRequiredService<OfflinePaymentGateway>().Refunds.Should().Contain(intent);
         (await StockOf(p)).Should().Be(5);
+    }
+
+    [Fact]
+    public async Task The_admin_must_give_a_reason_which_is_stored_shown_to_the_client_and_sent_in_the_notification()
+    {
+        var p = await NewProduct(stock: 5);
+        var (_, client) = await NewClient();
+        var admin = await Admin();
+        var o = await Dto(await Order(client, p, 1, PaymentMethod.OnReceipt));
+        var url = $"/api/v1/orders/{o.Id}/cancel";
+
+        (await admin.PostAsync(url, null)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.PostAsJsonAsync(url, new CancelOrderRequest("  "))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await admin.PostAsJsonAsync(url, new CancelOrderRequest(new string('x', 301)))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await StockOf(p)).Should().Be(4, "a refused cancel changes nothing");
+
+        var done = await admin.PostAsJsonAsync(url, new CancelOrderRequest("  Proizvod je oštećen.  "));
+        done.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await Dto(done)).CancelReason.Should().Be("Proizvod je oštećen.");
+        (await client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{o.Id}"))!.CancelReason.Should().Be("Proizvod je oštećen.");
+
+        await using var scope = api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<OttomanDbContext>();
+        var evt = await db.OutboxMessages.AsNoTracking().SingleAsync(m => m.Type == "OrderCancelled" && m.PayloadJson.Contains($"\"OrderId\":{o.Id},"));
+        await scope.ServiceProvider.GetRequiredService<Ottoman.Infrastructure.Notifications.EventProcessor>()
+            .ProcessAsync(evt.Id, evt.Type, evt.PayloadJson, default);
+        var inbox = await client.GetFromJsonAsync<PagedResult<Ottoman.Application.Notifications.NotificationDto>>("/api/v1/notifications");
+        inbox!.Items.Should().Contain(n => n.Kind == "OrderCancelled" && n.Body.Contains("Razlog: Proizvod je oštećen."));
+    }
+
+    [Fact]
+    public async Task A_client_may_cancel_without_a_reason_and_nothing_is_stored()
+    {
+        var p = await NewProduct(stock: 5);
+        var (_, client) = await NewClient();
+        var o = await Dto(await Order(client, p, 1, PaymentMethod.OnReceipt));
+
+        var res = await client.PostAsync($"/api/v1/orders/{o.Id}/cancel", null);
+
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await Dto(res)).CancelReason.Should().BeNull();
     }
 
     // ------------------------------------------------------------------ webhook

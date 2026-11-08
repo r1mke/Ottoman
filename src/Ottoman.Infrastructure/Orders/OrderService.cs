@@ -152,7 +152,7 @@ public class OrderService(
             catch (Exception ex)
             {
                 log.LogError(ex, "Could not create a payment for order {OrderId}; closing it", order.Id);
-                await CloseAsync(order.Id, OrderStatus.PendingPayment, OrderStatus.Cancelled, "System", ct);
+                await CloseAsync(order.Id, OrderStatus.PendingPayment, OrderStatus.Cancelled, "System", null, ct);
                 return Result<OrderDto>.Invalid("Plaćanje karticom trenutno nije dostupno. Pokušajte ponovo kasnije.");
             }
         }
@@ -257,13 +257,14 @@ public class OrderService(
                 o.CreatedAtUtc, o.ExpiresUtc, o.PaidAtUtc, o.FulfilledAtUtc, o.CancelledAtUtc, o.CancelledBy,
                 o.Items.OrderBy(i => i.Id).Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice, i.Quantity, i.UnitPrice * i.Quantity)).ToList(),
                 secret,
-                IsPaid: OrderStateMachine.IsPaid(o.Status, o.PaymentMethod, pay?.Status));
+                IsPaid: OrderStateMachine.IsPaid(o.Status, o.PaymentMethod, pay?.Status),
+                CancelReason: o.CancelReason);
         }).ToList();
     }
 
     // ---------------------------------------------------------------- change
 
-    public async Task<Result<OrderDto>> CancelAsync(Actor actor, int id, CancellationToken ct)
+    public async Task<Result<OrderDto>> CancelAsync(Actor actor, int id, string? reason, CancellationToken ct)
     {
         if (actor.IsEmployee) return Result<OrderDto>.NotFound("Narudžba nije pronađena.");
         var order = await db.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, ct);
@@ -273,8 +274,11 @@ public class OrderService(
         var verdict = OrderStateMachine.CanCancel(order.Status, actor.Kind, order.PaymentMethod);
         if (!verdict.Allowed) return Result<OrderDto>.Invalid(verdict.Reason!);
 
+        // The salon owes the client an explanation; a client may cancel without one.
+        if (CancellationRules.ReasonProblem(actor.Kind, reason) is { } problem) return Result<OrderDto>.Invalid(problem);
+
         var by = actor.IsAdmin ? "Admin" : "Client";
-        if (!await CloseAsync(id, order.Status, OrderStatus.Cancelled, by, ct))
+        if (!await CloseAsync(id, order.Status, OrderStatus.Cancelled, by, reason?.Trim(), ct))
             return Result<OrderDto>.Conflict("Narudžba je u međuvremenu promijenjena. Osvježite prikaz.");
 
         return Result<OrderDto>.Ok((await LoadDtoAsync(actor, id, ct))!);
@@ -344,7 +348,7 @@ public class OrderService(
 
         var closed = 0;
         foreach (var id in due)
-            if (await CloseAsync(id, OrderStatus.PendingPayment, OrderStatus.Expired, "System", ct)) closed++;
+            if (await CloseAsync(id, OrderStatus.PendingPayment, OrderStatus.Expired, "System", null, ct)) closed++;
         return closed;
     }
 
@@ -353,7 +357,7 @@ public class OrderService(
     /// one transaction. The status change is conditional, so two concurrent closers cannot both return the stock.
     /// Money is handled afterwards, outside the transaction.
     /// </summary>
-    private async Task<bool> CloseAsync(int orderId, OrderStatus expected, OrderStatus closed, string by, CancellationToken ct)
+    private async Task<bool> CloseAsync(int orderId, OrderStatus expected, OrderStatus closed, string by, string? reason, CancellationToken ct)
     {
         var now = Now;
         var done = false;
@@ -369,7 +373,8 @@ public class OrderService(
                     .ExecuteUpdateAsync(s => s
                         .SetProperty(o => o.Status, closed)
                         .SetProperty(o => o.CancelledAtUtc, now)
-                        .SetProperty(o => o.CancelledBy, by), ct);
+                        .SetProperty(o => o.CancelledBy, by)
+                        .SetProperty(o => o.CancelReason, string.IsNullOrWhiteSpace(reason) ? null : reason), ct);
                 if (rows == 0)
                 {
                     await tx.RollbackAsync(ct);
@@ -391,7 +396,7 @@ public class OrderService(
                 if (closedOrder.PaymentId is { } paymentId)
                     await db.Payments.Where(p => p.Id == paymentId && p.Status == PaymentStatus.Succeeded)
                         .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, PaymentStatus.RefundPending), ct);
-                outbox.Enqueue(new OrderCancelled(orderId, closedOrder.ClientId, by));
+                outbox.Enqueue(new OrderCancelled(orderId, closedOrder.ClientId, by, string.IsNullOrWhiteSpace(reason) ? null : reason));
                 await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
                 done = true;

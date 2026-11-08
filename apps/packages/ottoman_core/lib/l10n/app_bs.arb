@@ -186,6 +186,14 @@
       }
     }
   },
+  "orderCancelReason": "Razlog otkazivanja: {reason}",
+  "@orderCancelReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "orderStatusPendingPayment": "Čeka plaćanje",
   "orderStatusPlaced": "Zaprimljena",
   "orderStatusFulfilled": "Preuzeta",

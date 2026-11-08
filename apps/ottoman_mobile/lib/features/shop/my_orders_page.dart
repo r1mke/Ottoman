@@ -176,6 +176,15 @@ class OrderCard extends StatelessWidget {
               ],
             ),
             Text(o.itemSummary),
+            if (o.cancelReason != null && o.cancelReason!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  t.orderCancelReason(o.cancelReason!),
+                  key: Key('cancel_reason_${o.id}'),
+                  style: TextStyle(color: scheme.error),
+                ),
+              ),
             const SizedBox(height: 4),
             Text(
               '${paymentMethodLabel(t, o.paymentMethod)} · ${fulfilmentLabel(t, o.fulfilment)}',

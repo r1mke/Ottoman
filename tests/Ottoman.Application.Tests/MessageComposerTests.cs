@@ -96,6 +96,15 @@ public class MessageComposerTests
     }
 
     [Fact]
+    public void A_cancelled_order_gives_the_reason_when_the_salon_cancels()
+    {
+        MessageComposer.OrderCancelled(Order, "Admin", " Proizvod je oštećen. ").Single().Body
+            .Should().Contain("Razlog: Proizvod je oštećen.");
+        MessageComposer.OrderCancelled(Order, "Admin", null).Single().Body.Should().NotContain("Razlog");
+        MessageComposer.OrderCancelled(Order, "Client").Single().Body.Should().NotContain("Razlog");
+    }
+
+    [Fact]
     public void New_orders_alert_the_admins_in_app_only()
     {
         var admin = MessageComposer.OrderPlaced(Order, "OnReceipt").Single(x => x.ToAdmins);

@@ -155,6 +155,7 @@ class ShopOrder {
     this.expiresUtc,
     this.paymentClientSecret,
     this.isPaid = false,
+    this.cancelReason,
   });
 
   final int id;
@@ -175,6 +176,9 @@ class ShopOrder {
 
   /// The money is in, as decided by the server (card payment verified, or paid at pickup).
   final bool isPaid;
+
+  /// Why the salon cancelled the order; the client sees it.
+  final String? cancelReason;
 
   bool get awaitsPayment => status == OrderStatus.pendingPayment && !isPaid;
 
@@ -206,6 +210,7 @@ class ShopOrder {
         .toList(),
     paymentClientSecret: j['paymentClientSecret'] as String?,
     isPaid: (j['isPaid'] as bool?) ?? false,
+    cancelReason: j['cancelReason'] as String?,
   );
 }
 

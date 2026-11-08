@@ -53,7 +53,18 @@ public record OrderDto(
     /// <summary>Present only on the owner's pending card orders: lets the app confirm the payment.</summary>
     string? PaymentClientSecret = null,
     /// <summary>The money is in (decided by the server: card payment succeeded, or paid at pickup).</summary>
-    bool IsPaid = false);
+    bool IsPaid = false,
+    /// <summary>Why the salon cancelled the order; shown to the client.</summary>
+    string? CancelReason = null);
+
+/// <summary>The salon must say why it cancels an order (the client gets it); a client may cancel without a reason.</summary>
+public record CancelOrderRequest(string? Reason);
+
+public class CancelOrderRequestValidator : AbstractValidator<CancelOrderRequest>
+{
+    public CancelOrderRequestValidator() =>
+        RuleFor(x => x.Reason).MaximumLength(Ottoman.Domain.Reservations.CancellationRules.MaxReasonLength).WithName("Razlog");
+}
 
 public record OrderFilter(OrderStatus? Status = null, string? ClientId = null);
 
@@ -62,7 +73,7 @@ public interface IOrderService
     Task<Result<OrderDto>> CreateAsync(Actor actor, CreateOrderRequest request, CancellationToken ct);
     Task<PagedResult<OrderDto>> ListAsync(Actor actor, OrderFilter filter, PageQuery page, CancellationToken ct);
     Task<Result<OrderDto>> GetAsync(Actor actor, int id, CancellationToken ct);
-    Task<Result<OrderDto>> CancelAsync(Actor actor, int id, CancellationToken ct);
+    Task<Result<OrderDto>> CancelAsync(Actor actor, int id, string? reason, CancellationToken ct);
     Task<Result<OrderDto>> FulfilAsync(Actor actor, int id, CancellationToken ct);
 
     /// <summary>

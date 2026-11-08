@@ -986,6 +986,12 @@ abstract class AppLocalizations {
   /// **'Narudžba #{id}'**
   String orderNumber(int id);
 
+  /// No description provided for @orderCancelReason.
+  ///
+  /// In bs, this message translates to:
+  /// **'Razlog otkazivanja: {reason}'**
+  String orderCancelReason(String reason);
+
   /// No description provided for @orderStatusPendingPayment.
   ///
   /// In bs, this message translates to:

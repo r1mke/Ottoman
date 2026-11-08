@@ -326,9 +326,14 @@ class ShopApi {
     }
   }
 
-  Future<ShopOrder> cancelOrder(int id) async => ShopOrder.fromJson(
-    await _api.post<Map<String, dynamic>>('/api/v1/orders/$id/cancel'),
-  );
+  /// The salon (admin) must give a [reason]; a client may cancel without one.
+  Future<ShopOrder> cancelOrder(int id, {String? reason}) async =>
+      ShopOrder.fromJson(
+        await _api.post<Map<String, dynamic>>(
+          '/api/v1/orders/$id/cancel',
+          body: reason == null || reason.isEmpty ? null : {'reason': reason},
+        ),
+      );
 
   Future<ShopOrder> fulfilOrder(int id) async => ShopOrder.fromJson(
     await _api.post<Map<String, dynamic>>('/api/v1/orders/$id/fulfil'),

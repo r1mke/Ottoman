@@ -133,7 +133,7 @@ public class EventProcessor(
                 {
                     var e = Read<OrderCancelled>(json);
                     var total = await db.Orders.AsNoTracking().Where(o => o.Id == e.OrderId).Select(o => o.TotalPrice).FirstOrDefaultAsync(ct);
-                    return MessageComposer.OrderCancelled(await OrderFactsAsync(e.OrderId, e.ClientId, total, ct), e.CancelledBy);
+                    return MessageComposer.OrderCancelled(await OrderFactsAsync(e.OrderId, e.ClientId, total, ct), e.CancelledBy, e.Reason);
                 }
             case nameof(ProductLowStock):
                 return MessageComposer.LowStock(Read<ProductLowStock>(json));

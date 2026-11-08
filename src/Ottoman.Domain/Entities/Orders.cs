@@ -20,6 +20,8 @@ public class Order
     public DateTime? FulfilledAtUtc { get; set; }
     public DateTime? CancelledAtUtc { get; set; }
     public string? CancelledBy { get; set; }
+    /// <summary>Why the salon cancelled (required for an admin); the client sees it. Null for client cancels and expiry.</summary>
+    public string? CancelReason { get; set; }
     public byte[] RowVersion { get; set; } = [];
 
     public List<OrderItem> Items { get; set; } = [];

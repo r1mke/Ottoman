@@ -159,14 +159,18 @@ public static class MessageComposer
             "OrderPaid", ToAdmins: true, SendEmail: false),
     ];
 
-    public static IReadOnlyList<Message> OrderCancelled(OrderFacts f, string cancelledBy) =>
-    [
-        new(cancelledBy == "System" ? "Narudžba istekla" : "Narudžba otkazana",
-            cancelledBy == "System"
-                ? $"Narudžba #{f.Id} nije plaćena na vrijeme pa je poništena."
-                : $"Narudžba #{f.Id} je otkazana. Ako je plaćena karticom, novac se vraća.",
-            "OrderCancelled", UserId: f.Client.UserId, SendEmail: cancelledBy != "System"),
-    ];
+    public static IReadOnlyList<Message> OrderCancelled(OrderFacts f, string cancelledBy, string? reason = null)
+    {
+        var why = string.IsNullOrWhiteSpace(reason) ? "" : $" Razlog: {reason.Trim()}.";
+        return
+        [
+            new(cancelledBy == "System" ? "Narudžba istekla" : "Narudžba otkazana",
+                cancelledBy == "System"
+                    ? $"Narudžba #{f.Id} nije plaćena na vrijeme pa je poništena."
+                    : $"Narudžba #{f.Id} je otkazana.{why} Ako je plaćena karticom, novac se vraća.",
+                "OrderCancelled", UserId: f.Client.UserId, SendEmail: cancelledBy != "System"),
+        ];
+    }
 
     public static IReadOnlyList<Message> LowStock(ProductLowStock e) =>
     [

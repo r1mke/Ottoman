@@ -744,6 +744,25 @@ void main() {
     },
   );
 
+  testWidgets('my orders shows why the salon cancelled an order', (
+    tester,
+  ) async {
+    final api = await _openShop(tester);
+    api.orders = [
+      {..._order(status: 'Cancelled'), 'cancelReason': 'Proizvod je oštećen.'},
+      _order(id: 8, status: 'Cancelled'),
+    ];
+
+    await tester.tap(find.byKey(const Key('open_orders')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Razlog otkazivanja: Proizvod je oštećen.'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('cancel_reason_8')), findsNothing);
+  });
+
   testWidgets('the product page lets the customer choose how many to add', (
     tester,
   ) async {

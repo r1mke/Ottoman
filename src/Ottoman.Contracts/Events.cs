@@ -41,7 +41,7 @@ public record OrderPlaced(int OrderId, string ClientId, decimal TotalPrice, stri
 public record OrderPaid(int OrderId, string ClientId, decimal TotalPrice);
 
 /// <param name="CancelledBy">"Client", "Admin" or "System" (unpaid order expired).</param>
-public record OrderCancelled(int OrderId, string ClientId, string CancelledBy);
+public record OrderCancelled(int OrderId, string ClientId, string CancelledBy, string? Reason = null);
 
 public record ProductLowStock(int ProductId, string Name, int Stock, int Threshold);
 
