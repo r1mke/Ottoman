@@ -86,15 +86,62 @@ class _ListState extends State<_List> {
     }
   }
 
+  /// A finished appointment can be rated twice over: the barber, and each service it included.
   Future<void> _review(Reservation r) async {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final services = <int, String>{for (final i in r.items) i.serviceId: i.name};
+    final pick = await showModalBottomSheet<(String, String, String)>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: Text(
+                t.reviewWhat,
+                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ListTile(
+              key: const Key('review_pick_employee'),
+              leading: const Icon(Icons.person_outline),
+              title: Text(r.employeeName),
+              subtitle: Text(t.reviewTargetEmployee),
+              onTap: () => Navigator.pop(ctx, (
+                ReviewTarget.employee,
+                r.employeeId,
+                r.employeeName,
+              )),
+            ),
+            for (final s in services.entries)
+              ListTile(
+                key: Key('review_pick_service_${s.key}'),
+                leading: const Icon(Icons.content_cut),
+                title: Text(s.value),
+                subtitle: Text(t.reviewTargetService),
+                onTap: () => Navigator.pop(ctx, (
+                  ReviewTarget.service,
+                  '${s.key}',
+                  s.value,
+                )),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (pick == null || !mounted) return;
     final saved = await showReviewDialog(
       context,
       api: widget.reviews,
-      targetType: ReviewTarget.employee,
-      targetKey: r.employeeId,
-      title: r.employeeName,
+      targetType: pick.$1,
+      targetKey: pick.$2,
+      title: pick.$3,
     );
     if (saved) messenger.showSnackBar(SnackBar(content: Text(t.reviewSaved)));
   }

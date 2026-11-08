@@ -30,6 +30,11 @@ class ServicePickerTab extends StatefulWidget {
 class _ServicePickerTabState extends State<ServicePickerTab> {
   final _selected = <int>{};
 
+  // Ratings are decoration: a failure must not break the list, so errors become "nothing to show".
+  late final Future<Map<String, ReviewSummary>> _ratings = widget.reviews
+      .summary(ReviewTarget.service)
+      .catchError((_) => <String, ReviewSummary>{});
+
   void _continue(List<Service> chosen) {
     final t = AppLocalizations.of(context);
     Navigator.of(context).push(
@@ -105,11 +110,31 @@ class _ServicePickerTabState extends State<ServicePickerTab> {
                           s.name,
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
-                        subtitle: Text(
-                          [
-                            if (s.description != null) s.description!,
-                            '${t.minutesShort(s.durationMinutes)} · ${s.price.toStringAsFixed(2)} ${t.currencyShort}',
-                          ].join('\n'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              [
+                                if (s.description != null) s.description!,
+                                '${t.minutesShort(s.durationMinutes)} · ${s.price.toStringAsFixed(2)} ${t.currencyShort}',
+                              ].join('\n'),
+                            ),
+                            FutureBuilder<Map<String, ReviewSummary>>(
+                              future: _ratings,
+                              builder: (context, snap) {
+                                final r = snap.data?['${s.id}'];
+                                if (r == null) return const SizedBox.shrink();
+                                return Padding(
+                                  key: Key('service_rating_${s.id}'),
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: RatingSummary(
+                                    average: r.average,
+                                    count: r.count,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                         isThreeLine: s.description != null,
                       ),

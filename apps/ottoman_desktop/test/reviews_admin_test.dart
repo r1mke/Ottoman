@@ -9,9 +9,9 @@ import 'package:ottoman_desktop/app.dart';
 
 Map<String, dynamic> _review(int id, {bool hidden = false, String? reply}) => {
   'id': id,
-  'targetType': 'Employee',
-  'targetKey': 'e1',
-  'targetName': 'Kerim Begić',
+  'targetType': id == 2 ? 'Service' : 'Employee',
+  'targetKey': id == 2 ? '3' : 'e1',
+  'targetName': id == 2 ? 'Šišanje' : 'Kerim Begić',
   'authorName': 'Ana A.',
   'rating': id == 1 ? 5 : 1,
   'comment': id == 1 ? 'Odlično' : 'Loše iskustvo',
@@ -125,7 +125,9 @@ void main() {
     expect(find.byKey(const Key('review_1')), findsOneWidget);
     expect(find.byKey(const Key('review_2')), findsOneWidget);
     expect(find.text('Loše iskustvo'), findsOneWidget);
-    expect(find.textContaining('Kerim Begić · Employee'), findsNWidgets(2));
+    // The kind of target in Bosnian; service reviews are moderated here too.
+    expect(find.textContaining('Kerim Begić · Frizer'), findsOneWidget);
+    expect(find.textContaining('Šišanje · Usluga'), findsOneWidget);
   });
 
   testWidgets('hiding sends the flag and the "only hidden" filter shows it', (

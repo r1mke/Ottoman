@@ -658,5 +658,9 @@
       }
     }
   },
-  "accountUnlocked": "Račun je otključan."
+  "accountUnlocked": "Račun je otključan.",
+  "reviewWhat": "Šta želite ocijeniti?",
+  "reviewTargetEmployee": "Frizer",
+  "reviewTargetService": "Usluga",
+  "reviewTargetProduct": "Proizvod"
 }

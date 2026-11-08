@@ -152,9 +152,13 @@ class _Api implements HttpClientAdapter {
         },
       ];
     } else if (path.endsWith('/reviews/summary')) {
-      body = [
-        {'targetKey': 'e1', 'average': 4.5, 'count': 2},
-      ];
+      body = o.queryParameters['targetType'] == 'Service'
+          ? [
+              {'targetKey': '1', 'average': 4.0, 'count': 3},
+            ]
+          : [
+              {'targetKey': 'e1', 'average': 4.5, 'count': 2},
+            ];
     } else if (path.endsWith('/reviews/eligibility')) {
       body = {
         'canReview': canReview,
@@ -391,6 +395,11 @@ void main() {
 
       await tester.tap(find.byKey(const Key('review_5')));
       await tester.pumpAndSettle();
+      // The barber or a service of the appointment.
+      expect(find.text('Šta želite ocijeniti?'), findsOneWidget);
+      expect(find.byKey(const Key('review_pick_service_1')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('review_pick_employee')));
+      await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
           of: find.byKey(const Key('review_stars')),
@@ -409,4 +418,40 @@ void main() {
       );
     },
   );
+
+  testWidgets('a service of a finished appointment can be rated', (
+    tester,
+  ) async {
+    final api = await _open(tester);
+    await tester.tap(find.text('Termini').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Prošli'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('review_5')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('review_pick_service_1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Šišanje'), findsWidgets); // the dialog is about the service
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('review_stars')),
+        matching: find.byKey(const Key('star_5')),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('review_save')));
+    await tester.pumpAndSettle();
+
+    final sent = api.last('POST', '/reviews')!.data as Map;
+    expect(sent['targetType'], 'Service');
+    expect(sent['targetKey'], '1');
+    expect(sent['rating'], 5);
+    expect(find.text('Hvala na recenziji!'), findsOneWidget);
+  });
+
+  testWidgets('the service list shows each service rating', (tester) async {
+    await _open(tester, book: true);
+    expect(find.byKey(const Key('service_rating_1')), findsOneWidget);
+    expect(find.text('4.0 (3)'), findsOneWidget);
+  });
 }

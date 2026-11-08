@@ -1750,4 +1750,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountUnlocked => 'The account is unlocked.';
+
+  @override
+  String get reviewWhat => 'What would you like to rate?';
+
+  @override
+  String get reviewTargetEmployee => 'Barber';
+
+  @override
+  String get reviewTargetService => 'Service';
+
+  @override
+  String get reviewTargetProduct => 'Product';
 }

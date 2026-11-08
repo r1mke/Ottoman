@@ -3385,6 +3385,30 @@ abstract class AppLocalizations {
   /// In bs, this message translates to:
   /// **'Račun je otključan.'**
   String get accountUnlocked;
+
+  /// No description provided for @reviewWhat.
+  ///
+  /// In bs, this message translates to:
+  /// **'Šta želite ocijeniti?'**
+  String get reviewWhat;
+
+  /// No description provided for @reviewTargetEmployee.
+  ///
+  /// In bs, this message translates to:
+  /// **'Frizer'**
+  String get reviewTargetEmployee;
+
+  /// No description provided for @reviewTargetService.
+  ///
+  /// In bs, this message translates to:
+  /// **'Usluga'**
+  String get reviewTargetService;
+
+  /// No description provided for @reviewTargetProduct.
+  ///
+  /// In bs, this message translates to:
+  /// **'Proizvod'**
+  String get reviewTargetProduct;
 }
 
 class _AppLocalizationsDelegate

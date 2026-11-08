@@ -654,5 +654,9 @@
       }
     }
   },
-  "accountUnlocked": "The account is unlocked."
+  "accountUnlocked": "The account is unlocked.",
+  "reviewWhat": "What would you like to rate?",
+  "reviewTargetEmployee": "Barber",
+  "reviewTargetService": "Service",
+  "reviewTargetProduct": "Product"
 }

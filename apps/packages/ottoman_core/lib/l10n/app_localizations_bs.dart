@@ -1748,4 +1748,16 @@ class AppLocalizationsBs extends AppLocalizations {
 
   @override
   String get accountUnlocked => 'Račun je otključan.';
+
+  @override
+  String get reviewWhat => 'Šta želite ocijeniti?';
+
+  @override
+  String get reviewTargetEmployee => 'Frizer';
+
+  @override
+  String get reviewTargetService => 'Usluga';
+
+  @override
+  String get reviewTargetProduct => 'Proizvod';
 }

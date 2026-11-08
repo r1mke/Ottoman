@@ -1,4 +1,5 @@
 import '../catalog/catalog_models.dart';
+import '../l10n/app_localizations.dart';
 import '../network/api_client.dart';
 import '../reservations/reservation_models.dart';
 import '../shop/shop_models.dart';
@@ -9,6 +10,14 @@ abstract final class ReviewTarget {
   static const service = 'Service';
   static const product = 'Product';
 }
+
+/// "Frizer", "Usluga" or "Proizvod" for a target type (the API name for anything else).
+String reviewTargetLabel(AppLocalizations t, String type) => switch (type) {
+  ReviewTarget.employee => t.reviewTargetEmployee,
+  ReviewTarget.service => t.reviewTargetService,
+  ReviewTarget.product => t.reviewTargetProduct,
+  _ => type,
+};
 
 class Review {
   const Review({

@@ -115,7 +115,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
                         Padding(
                           padding: const EdgeInsets.only(left: 4, top: 8),
                           child: Text(
-                            '${r.targetName} · ${r.targetType}',
+                            '${r.targetName} · ${reviewTargetLabel(t, r.targetType)}',
                             style: TextStyle(
                               color: scheme.outline,
                               fontSize: 12,
