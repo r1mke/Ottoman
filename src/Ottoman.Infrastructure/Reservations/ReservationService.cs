@@ -352,6 +352,8 @@ public class ReservationService(
         // Keep the booked duration (snapshot) even if the catalogue changed since, and allow short notice for staff.
         var query = loaded.Value!.Query with { DurationMinutes = res.TotalDurationMinutes, MinLeadMinutes = 0 };
         if (r.StartUtc < now) return Result<ReservationDto>.Invalid("Termin ne može biti u prošlosti.");
+        if (r.StartUtc > now.AddDays(BookingPolicy.MaxAdvanceDays))
+            return Result<ReservationDto>.Invalid($"Termin se može rezervisati najviše {BookingPolicy.MaxAdvanceDays} dana unaprijed.");
         if (!SlotCalculator.AllStarts(query).Contains(r.StartUtc))
             return Result<ReservationDto>.Conflict("Odabrani termin nije dostupan.");
 

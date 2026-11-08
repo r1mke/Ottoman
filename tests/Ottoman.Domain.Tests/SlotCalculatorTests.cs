@@ -32,10 +32,26 @@ public class SlotCalculatorTests
             StepMinutes: 5,
             OfferGridMinutes: 15,
             MinLeadMinutes: lead,
-            NowUtc: now ?? new DateTime(2029, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            NowUtc: now ?? new DateTime(2029, 12, 31, 0, 0, 0, DateTimeKind.Utc), // a week before Monday
             ShortestServiceMinutes: shortest);
 
     // ---------------------------------------------------------------- basics
+
+    [Fact]
+    public void Nothing_is_offered_beyond_the_booking_limit()
+    {
+        // Now is Monday 12:00 local minus 90 days: the day is exactly at the limit, so only starts up to 12:00 count.
+        var now = At(12).AddDays(-Reservations.BookingPolicy.MaxAdvanceDays);
+        var all = SlotCalculator.AllStarts(Query(now: now));
+        all.Should().NotBeEmpty();
+        all.Max().Should().Be(At(12));
+        SlotCalculator.OfferedStarts(Query(now: now)).Should().OnlyContain(s => s <= At(12));
+
+        // A day after the limit: nothing at all.
+        SlotCalculator.AllStarts(Query(now: now.AddDays(-1))).Should().BeEmpty();
+        // Well inside the limit the whole day is open again.
+        SlotCalculator.AllStarts(Query(now: now.AddDays(1))).Max().Should().Be(At(16, 30));
+    }
 
     [Fact]
     public void No_working_day_means_no_slots()
@@ -201,7 +217,7 @@ public class SlotCalculatorTests
 
         range.Duration.Should().Be(TimeSpan.FromHours(23));
 
-        var q = Query(duration: 30, date: date);
+        var q = Query(duration: 30, date: date, now: new DateTime(2030, 3, 1, 0, 0, 0, DateTimeKind.Utc));
         SlotCalculator.AllStarts(q).First().Should().Be(new DateTime(2030, 3, 31, 7, 0, 0, DateTimeKind.Utc)); // 09:00 CEST = 07:00Z
     }
 

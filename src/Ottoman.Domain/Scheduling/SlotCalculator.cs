@@ -82,6 +82,8 @@ public static class SlotCalculator
         var duration = TimeSpan.FromMinutes(q.DurationMinutes);
         var step = TimeSpan.FromMinutes(q.StepMinutes);
         var earliest = q.NowUtc.AddMinutes(q.MinLeadMinutes);
+        // The same limit booking enforces (BookingPolicy.Validate): nothing is offered that could not be booked.
+        var latest = q.NowUtc.AddDays(Reservations.BookingPolicy.MaxAdvanceDays);
 
         foreach (var window in FreeWindows(q))
         {
@@ -89,6 +91,7 @@ public static class SlotCalculator
             var start = AlignUp(window.Start, q);
             while (start + duration <= window.End)
             {
+                if (start > latest) yield break;
                 if (start >= earliest) yield return new Candidate(start, window);
                 start += step;
             }

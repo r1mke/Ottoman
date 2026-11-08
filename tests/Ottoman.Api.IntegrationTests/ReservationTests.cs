@@ -638,6 +638,40 @@ public class ReservationTests(ApiFixture api)
     // -------------------------------------------------------------- reschedule
 
     [Fact]
+    public async Task Availability_never_offers_a_time_beyond_the_booking_limit_and_rescheduling_there_is_refused()
+    {
+        var (_, client, _) = await NewClient();
+        var kerim = await KerimId();
+        var sisanje = await ServiceId("Šišanje");
+        var limit = DateTime.UtcNow.AddDays(Ottoman.Domain.Reservations.BookingPolicy.MaxAdvanceDays);
+        var lastDay = DateOnly.FromDateTime(limit).AddDays(1); // the last day the date window still answers
+
+        foreach (var day in new[] { lastDay.AddDays(-2), lastDay.AddDays(-1), lastDay })
+        {
+            var res = (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.AvailabilityDto>(
+                $"/api/v1/employees/{kerim}/availability?date={day:yyyy-MM-dd}&serviceIds={sisanje}&allTimes=true"))!;
+            res.Starts.Where(s => s > limit.AddMinutes(1)).Should().BeEmpty(day.ToString("yyyy-MM-dd"));
+        }
+        (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.AvailabilityDto>(
+            $"/api/v1/employees/{kerim}/availability?date={lastDay:yyyy-MM-dd}&serviceIds={sisanje}&allTimes=true"))!
+            .Starts.Should().BeEmpty("the whole day lies after the limit");
+
+        foreach (var month in new[] { lastDay.AddDays(-2), lastDay }.Select(d => new DateOnly(d.Year, d.Month, 1)).Distinct())
+        {
+            var days = (await client.GetFromJsonAsync<Ottoman.Application.Scheduling.MonthAvailabilityDto>(
+                $"/api/v1/employees/{kerim}/availability/month?month={month:yyyy-MM-dd}&serviceIds={sisanje}"))!.AvailableDays;
+            days.Where(d => d >= lastDay).Should().BeEmpty("a day after the limit is never marked free");
+        }
+
+        var admin = await Admin();
+        var booked = await Dto(await Book(client, kerim, At(Days.Next(), 10), [sisanje]));
+        var tooFar = await admin.PutAsJsonAsync($"/api/v1/reservations/{booked.Id}/reschedule",
+            new RescheduleReservationRequest(limit.AddDays(2)));
+        tooFar.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await tooFar.Content.ReadAsStringAsync()).Should().Contain("dana unaprijed");
+    }
+
+    [Fact]
     public async Task Admin_reschedules_to_a_free_slot_and_the_old_time_is_released()
     {
         var admin = await Admin();
