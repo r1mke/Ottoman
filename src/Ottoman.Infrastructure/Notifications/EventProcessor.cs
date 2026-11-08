@@ -106,6 +106,12 @@ public class EventProcessor(
                     var f = await ReservationFactsAsync(e.ReservationId, e.ClientId, e.EmployeeId, e.NewStartUtc, null, ct);
                     return MessageComposer.ReservationRescheduled(f, await LocalAsync(e.OldStartUtc, ct));
                 }
+            case nameof(ReservationAffectedByTimeOff):
+                {
+                    var e = Read<ReservationAffectedByTimeOff>(json);
+                    var f = await ReservationFactsAsync(e.ReservationId, e.ClientId, e.EmployeeId, e.StartUtc, null, ct);
+                    return MessageComposer.ReservationAffectedByTimeOff(f);
+                }
             case nameof(ReservationReminderDue):
                 {
                     var e = Read<ReservationReminderDue>(json);

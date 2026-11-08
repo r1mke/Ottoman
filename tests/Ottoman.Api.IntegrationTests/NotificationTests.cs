@@ -276,6 +276,54 @@ public class NotificationTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task Time_off_over_bookings_is_refused_with_the_list_and_forcing_it_tells_the_clients()
+    {
+        var admin = await Admin();
+        var (clientId, clientEmail, client) = await NewClient();
+        var (kerimId, _, _) = await Kerim();
+        var service = (await client.GetFromJsonAsync<List<ServiceDto>>("/api/v1/services"))!.Single(s => s.Name == "Šišanje").Id;
+        var day = Days.Next();
+        var start = LocalTime.ToUtc(day, new TimeOnly(11, 0), Zone);
+        var booking = (await (await client.PostAsJsonAsync("/api/v1/reservations", new CreateReservationRequest(kerimId, [service], start, null, null)))
+            .Content.ReadFromJsonAsync<ReservationDto>())!;
+        var cancelled = (await (await client.PostAsJsonAsync("/api/v1/reservations",
+            new CreateReservationRequest(kerimId, [service], LocalTime.ToUtc(day, new TimeOnly(14, 0), Zone), null, null)))
+            .Content.ReadFromJsonAsync<ReservationDto>())!;
+        (await client.PostAsJsonAsync($"/api/v1/reservations/{cancelled.Id}/cancel", new CancelReservationRequest("Promjena planova"))).EnsureSuccessStatusCode();
+
+        var from = LocalTime.ToUtc(day, new TimeOnly(9, 0), Zone);
+        var to = LocalTime.ToUtc(day, new TimeOnly(17, 0), Zone);
+        var url = $"/api/v1/employees/{kerimId}/time-off";
+
+        // Refused: 409 with the clashing booking (the cancelled one does not count), nothing stored.
+        var refused = await admin.PostAsJsonAsync(url, new Ottoman.Application.Employees.CreateTimeOffRequest(from, to, "Bolovanje"));
+        refused.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = JsonDocument.Parse(await refused.Content.ReadAsStringAsync()).RootElement;
+        problem.GetProperty("detail").GetString().Should().Contain("aktivnim rezervacijama (1)").And.Contain("11:00");
+        var clashes = problem.GetProperty("clashes");
+        clashes.GetArrayLength().Should().Be(1);
+        clashes[0].GetProperty("reservationId").GetInt32().Should().Be(booking.Id);
+        clashes[0].GetProperty("clientName").GetString().Should().NotBeNullOrWhiteSpace();
+        (await admin.GetFromJsonAsync<List<Ottoman.Application.Employees.TimeOffDto>>(url))!
+            .Should().NotContain(t => t.StartUtc == from);
+
+        // Forced: stored, the booking stays as it was, and its client is told.
+        var forced = await admin.PostAsJsonAsync(url, new Ottoman.Application.Employees.CreateTimeOffRequest(from, to, "Bolovanje", Force: true));
+        forced.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await admin.GetFromJsonAsync<ReservationDto>($"/api/v1/reservations/{booking.Id}"))!.Status.Should().Be(booking.Status);
+
+        var evt = await OutboxOf(nameof(ReservationAffectedByTimeOff), p => p.Contains($"\"ReservationId\":{booking.Id},"));
+        await Process(evt);
+        (await Inbox(client)).Should().ContainSingle(n => n.Kind == "ReservationAffected");
+        Mail.Sent.Should().Contain(m => m.To == clientEmail && m.Subject == "Promjena kod vašeg termina");
+
+        // Time off that touches no booking is simply added.
+        var free = await admin.PostAsJsonAsync(url, new Ottoman.Application.Employees.CreateTimeOffRequest(
+            LocalTime.ToUtc(day, new TimeOnly(18, 0), Zone), LocalTime.ToUtc(day, new TimeOnly(19, 0), Zone), null));
+        free.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task A_failed_mail_leaves_no_trace_so_the_retry_does_everything()
     {
         var (clientId, clientEmail, client) = await NewClient();

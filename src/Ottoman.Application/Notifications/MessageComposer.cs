@@ -120,6 +120,14 @@ public static class MessageComposer
             "ReservationRescheduled", UserId: f.Employee.UserId),
     ];
 
+    public static IReadOnlyList<Message> ReservationAffectedByTimeOff(ReservationFacts f) =>
+    [
+        new("Promjena kod vašeg termina",
+            $"{f.Employee.Name} neće biti u salonu u vrijeme vašeg termina ({f.LocalStart}). Salon će vas kontaktirati " +
+            "da dogovorite novo vrijeme; termin možete i otkazati u aplikaciji.",
+            "ReservationAffected", UserId: f.Client.UserId),
+    ];
+
     public static IReadOnlyList<Message> Reminder(ReservationFacts f, ReminderKind kind) =>
     [
         new(kind == ReminderKind.Day ? "Podsjetnik: termin sutra" : "Podsjetnik: termin uskoro",

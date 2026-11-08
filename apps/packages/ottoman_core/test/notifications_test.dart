@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ottoman_core/ottoman_core.dart';
 
@@ -38,6 +39,11 @@ ApiClient _client(_Adapter a) => ApiClient(
 );
 
 void main() {
+  test('a booking hit by time off has its own icon', () {
+    expect(notificationIcon('ReservationAffected'), Icons.event_note_outlined);
+    expect(notificationIcon('Unknown'), Icons.notifications_outlined);
+  });
+
   test('list parses the page and asks for unread only when told to', () async {
     final adapter = _Adapter({
       'items': [

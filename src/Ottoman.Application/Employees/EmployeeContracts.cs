@@ -81,7 +81,30 @@ public record SetWorkingHoursRequest(IReadOnlyList<WorkingHoursDto> Days);
 
 public record TimeOffDto(int Id, DateTime StartUtc, DateTime EndUtc, string? Reason);
 
-public record CreateTimeOffRequest(DateTime StartUtc, DateTime EndUtc, string? Reason);
+/// <param name="Force">
+/// Add the time off even though it overlaps active bookings. Without it such a request is refused with the list of
+/// those bookings, so the admin decides knowingly; with it the bookings stay as they are and their clients are told.
+/// </param>
+public record CreateTimeOffRequest(DateTime StartUtc, DateTime EndUtc, string? Reason, bool Force = false);
+
+/// <summary>An active booking (pending or confirmed) that falls into a requested time off.</summary>
+public record TimeOffClashDto(int ReservationId, string ClientName, DateTime StartUtc, DateTime EndUtc, string LocalStart);
+
+/// <summary>The created time off, or why not; <see cref="Clashes"/> lists the bookings it overlaps (refused or forced).</summary>
+public record TimeOffOutcome(Result<TimeOffDto> Result, IReadOnlyList<TimeOffClashDto> Clashes);
+
+public static class TimeOffClashes
+{
+    /// <summary>The refusal shown to the admin: how many bookings, who and when, and what to do.</summary>
+    public static string Message(IReadOnlyList<TimeOffClashDto> clashes)
+    {
+        const int shown = 5;
+        var list = string.Join("; ", clashes.Take(shown).Select(c => $"{c.ClientName}, {c.LocalStart}"));
+        var more = clashes.Count > shown ? $" i još {clashes.Count - shown}" : "";
+        return $"Odsustvo se preklapa s aktivnim rezervacijama ({clashes.Count}): {list}{more}. " +
+               "Pomjerite ili otkažite te termine, ili potvrdite da se odsustvo ipak doda (klijenti će biti obaviješteni).";
+    }
+}
 
 public static class HhMm
 {
@@ -189,6 +212,6 @@ public interface IEmployeeService
     Task<Result<IReadOnlyList<WorkingHoursDto>>> SetWorkingHoursAsync(string id, SetWorkingHoursRequest request, CancellationToken ct);
 
     Task<Result<PagedResult<TimeOffDto>>> PageTimeOffAsync(string id, PageQuery page, CancellationToken ct);
-    Task<Result<TimeOffDto>> AddTimeOffAsync(string id, CreateTimeOffRequest request, CancellationToken ct);
+    Task<TimeOffOutcome> AddTimeOffAsync(string id, CreateTimeOffRequest request, CancellationToken ct);
     Task<Result<bool>> RemoveTimeOffAsync(string id, int timeOffId, CancellationToken ct);
 }

@@ -69,6 +69,15 @@ public class MessageComposerTests
         m.Should().OnlyContain(x => x.Body.Contains("06.01.2030. u 09:00") && x.Body.Contains("07.01.2030. u 10:00"));
     }
 
+    [Fact]
+    public void Time_off_over_a_booking_tells_only_the_client_when_and_who()
+    {
+        var m = MessageComposer.ReservationAffectedByTimeOff(Res).Single();
+        m.UserId.Should().Be("c1");
+        m.Kind.Should().Be("ReservationAffected");
+        m.Body.Should().Contain("07.01.2030. u 10:00").And.Contain(Barber.Name);
+    }
+
     [Theory]
     [InlineData(ReminderKind.Day, "sutra")]
     [InlineData(ReminderKind.Hours, "uskoro")]

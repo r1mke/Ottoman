@@ -97,8 +97,22 @@ public class EmployeesController(IEmployeeService employees, IAvailabilityServic
 
     [HttpPost("{id}/time-off")]
     [Authorize(Policy = Policies.AdminOnly)]
-    public async Task<ActionResult<TimeOffDto>> AddTimeOff(string id, CreateTimeOffRequest request, CancellationToken ct) =>
-        this.ToActionResult(await employees.AddTimeOffAsync(id, request, ct));
+    public async Task<ActionResult<TimeOffDto>> AddTimeOff(string id, CreateTimeOffRequest request, CancellationToken ct)
+    {
+        var outcome = await employees.AddTimeOffAsync(id, request, ct);
+        if (outcome.Result.Status != ResultStatus.Conflict) return this.ToActionResult(outcome.Result);
+
+        // Refused because it overlaps bookings: the list travels with the message so the app can show it and ask
+        // whether to add the time off anyway (the same request with force=true).
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "Odsustvo se preklapa s rezervacijama.",
+            Detail = outcome.Result.Error,
+        };
+        problem.Extensions["clashes"] = outcome.Clashes;
+        return Conflict(problem);
+    }
 
     [HttpDelete("{id}/time-off/{timeOffId:int}")]
     [Authorize(Policy = Policies.AdminOnly)]

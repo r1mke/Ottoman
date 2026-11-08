@@ -80,3 +80,24 @@ internal sealed class FixedClock(DateTimeOffset now) : TimeProvider
 {
     public override DateTimeOffset GetUtcNow() => now;
 }
+
+public class TimeOffClashesTests
+{
+    private static Ottoman.Application.Employees.TimeOffClashDto Clash(int i) =>
+        new(i, $"Klijent {i}", DateTime.UtcNow, DateTime.UtcNow.AddMinutes(30), $"0{i}.12.2026. 10:00");
+
+    [Fact]
+    public void The_message_names_who_and_when_and_how_many()
+    {
+        var text = Ottoman.Application.Employees.TimeOffClashes.Message([Clash(1), Clash(2)]);
+        text.Should().StartWith("Odsustvo se preklapa s aktivnim rezervacijama (2): Klijent 1, 01.12.2026. 10:00; Klijent 2, 02.12.2026. 10:00.");
+        text.Should().Contain("potvrdite");
+    }
+
+    [Fact]
+    public void A_long_list_is_cut_after_five()
+    {
+        var text = Ottoman.Application.Employees.TimeOffClashes.Message(Enumerable.Range(1, 8).Select(Clash).ToList());
+        text.Should().Contain("(8)").And.Contain("Klijent 5").And.NotContain("Klijent 6").And.Contain("i još 3");
+    }
+}

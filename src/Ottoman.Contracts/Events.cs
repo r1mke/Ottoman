@@ -30,6 +30,9 @@ public record ReservationConfirmed(int ReservationId, string ClientId, string Em
 /// <param name="Declined">The salon turned down a booking it had not confirmed (the reason is always given).</param>
 public record ReservationCancelled(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc, string CancelledBy, string? Reason, bool Declined = false);
 
+/// <summary>The admin added time off for the barber over this booking on purpose; the booking stays, the client is told.</summary>
+public record ReservationAffectedByTimeOff(int ReservationId, string ClientId, string EmployeeId, DateTime StartUtc);
+
 public record ReservationRescheduled(int ReservationId, string ClientId, string EmployeeId, DateTime OldStartUtc, DateTime NewStartUtc);
 
 /// <param name="Method">"Card" or "OnReceipt".</param>

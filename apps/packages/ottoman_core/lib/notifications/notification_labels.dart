@@ -15,6 +15,7 @@ IconData notificationIcon(String kind) => switch (kind) {
   'ReservationCreated' => Icons.event_available_outlined,
   'ReservationCancelled' => Icons.event_busy_outlined,
   'ReservationRescheduled' => Icons.edit_calendar_outlined,
+  'ReservationAffected' => Icons.event_note_outlined,
   'Reminder' => Icons.alarm_outlined,
   'OrderPlaced' ||
   'OrderPaid' ||

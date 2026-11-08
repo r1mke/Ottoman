@@ -4,6 +4,7 @@ using Ottoman.Application.Accounts;
 using Ottoman.Application.Common;
 using Ottoman.Application.Employees;
 using Ottoman.Application.Images;
+using Ottoman.Contracts;
 using Ottoman.Domain;
 using Ottoman.Domain.Entities;
 using Ottoman.Domain.Scheduling;
@@ -14,7 +15,8 @@ using Ottoman.Infrastructure.Persistence;
 namespace Ottoman.Infrastructure.Employees;
 
 public class EmployeeManagement(
-    OttomanDbContext db, UserManager<AppUser> users, TimeProvider clock, ImageUrlBuilder images, IEmployeeTitles titles) : IEmployeeService
+    OttomanDbContext db, UserManager<AppUser> users, TimeProvider clock, ImageUrlBuilder images, IEmployeeTitles titles,
+    IOutbox outbox) : IEmployeeService
 {
     // ------------------------------------------------------------------ read
 
@@ -271,21 +273,53 @@ public class EmployeeManagement(
             new PagedResult<TimeOffDto>(rows.Select(t => new TimeOffDto(t.Id, t.StartUtc, t.EndUtc, t.Reason)).ToList(), total));
     }
 
-    public async Task<Result<TimeOffDto>> AddTimeOffAsync(string id, CreateTimeOffRequest r, CancellationToken ct)
+    public async Task<TimeOffOutcome> AddTimeOffAsync(string id, CreateTimeOffRequest r, CancellationToken ct)
     {
         if (!await db.EmployeeProfiles.AnyAsync(p => p.UserId == id, ct))
-            return Result<TimeOffDto>.NotFound();
+            return new TimeOffOutcome(Result<TimeOffDto>.NotFound(), []);
 
-        var t = new TimeOff
+        var start = DateTime.SpecifyKind(r.StartUtc, DateTimeKind.Utc);
+        var end = DateTime.SpecifyKind(r.EndUtc, DateTimeKind.Utc);
+        var clashes = await ClashesAsync(id, start, end, ct);
+        if (clashes.Count > 0 && !r.Force)
         {
-            EmployeeId = id,
-            StartUtc = DateTime.SpecifyKind(r.StartUtc, DateTimeKind.Utc),
-            EndUtc = DateTime.SpecifyKind(r.EndUtc, DateTimeKind.Utc),
-            Reason = r.Reason?.Trim(),
-        };
+            var listed = clashes.Select(c => c.Dto).ToList();
+            return new TimeOffOutcome(Result<TimeOffDto>.Conflict(TimeOffClashes.Message(listed)), listed);
+        }
+
+        var t = new TimeOff { EmployeeId = id, StartUtc = start, EndUtc = end, Reason = r.Reason?.Trim() };
         db.TimeOff.Add(t);
+        // Forced over bookings: they stay (the admin moves or cancels them), and each client hears about it in the same
+        // transaction as the time off, through the outbox.
+        foreach (var c in clashes)
+            outbox.Enqueue(new ReservationAffectedByTimeOff(c.ReservationId, c.ClientId, id, c.StartUtc));
         await db.SaveChangesAsync(ct);
-        return Result<TimeOffDto>.Ok(new TimeOffDto(t.Id, t.StartUtc, t.EndUtc, t.Reason));
+        return new TimeOffOutcome(
+            Result<TimeOffDto>.Ok(new TimeOffDto(t.Id, t.StartUtc, t.EndUtc, t.Reason)),
+            clashes.Select(c => c.Dto).ToList());
+    }
+
+    private sealed record Clash(int ReservationId, string ClientId, DateTime StartUtc, TimeOffClashDto Dto);
+
+    /// <summary>The barber's pending or confirmed bookings that overlap [start, end).</summary>
+    private async Task<IReadOnlyList<Clash>> ClashesAsync(string employeeId, DateTime start, DateTime end, CancellationToken ct)
+    {
+        var rows = await db.Reservations.AsNoTracking()
+            .Where(x => x.EmployeeId == employeeId
+                        && (x.Status == ReservationStatus.Pending || x.Status == ReservationStatus.Confirmed)
+                        && x.StartUtc < end && x.EndUtc > start)
+            .OrderBy(x => x.StartUtc)
+            .Join(db.Users, x => x.ClientId, u => u.Id,
+                (x, u) => new { x.Id, x.ClientId, x.StartUtc, x.EndUtc, u.FirstName, u.LastName })
+            .ToListAsync(ct);
+        if (rows.Count == 0) return [];
+
+        var zoneId = await db.SalonSettings.AsNoTracking().Select(s => s.TimeZoneId).FirstAsync(ct);
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
+        return rows.Select(x => new Clash(x.Id, x.ClientId, x.StartUtc, new TimeOffClashDto(
+            x.Id, $"{x.FirstName} {x.LastName}".Trim(), x.StartUtc, x.EndUtc,
+            LocalTime.ToLocal(x.StartUtc, zone).ToString("dd.MM.yyyy. HH:mm", System.Globalization.CultureInfo.InvariantCulture))))
+            .ToList();
     }
 
     public async Task<Result<bool>> RemoveTimeOffAsync(string id, int timeOffId, CancellationToken ct)
