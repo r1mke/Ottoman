@@ -77,7 +77,8 @@ services:
       DataProtection__KeyEncryptionSecret: ${DP_KEY_ENCRYPTION_SECRET:-}
       Cors__Origins__0: ${CORS_ORIGIN:-}
       # The API publishes its outbox to RabbitMQ (one connection, publisher confirms).
-      RabbitMq__Host: rabbitmq
+      RabbitMq__Host: ${RABBITMQ_HOST:-rabbitmq}
+      RabbitMq__Port: ${RABBITMQ_PORT:-5672}
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       RabbitMq__ClientName: ottoman-api
@@ -114,7 +115,8 @@ services:
       Firebase__ServiceAccountJson: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
       DataProtection__KeyEncryptionSecret: ${DP_KEY_ENCRYPTION_SECRET:-}
       # The worker consumes the events (e-mail, inbox, push).
-      RabbitMq__Host: rabbitmq
+      RabbitMq__Host: ${RABBITMQ_HOST:-rabbitmq}
+      RabbitMq__Port: ${RABBITMQ_PORT:-5672}
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       RabbitMq__ClientName: ottoman-worker

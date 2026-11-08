@@ -47,6 +47,23 @@ To su razvojne vrijednosti (`SEED_ADMIN_PASSWORD`, `SEED_DEMO_PASSWORD`); u prod
 
 Stvarne vrijednosti `.env` datoteke isporučuju se odvojeno, u arhivi `.env-tajne.zip` (lozinka arhive se šalje zasebno); u repozitoriju je samo `deploy/.env.example`. Probna kartica za Stripe sandbox: `4242 4242 4242 4242`, bilo koji budući datum i CVC.
 
+### Konfiguracija (`deploy/.env`)
+
+Sve postavke su u jednoj datoteci, `deploy/.env` (nije u gitu; uz predaju stiže u `.env-tajne.zip`, predložak je `deploy/.env.example`). Nijedna tajna nije u kodu ni u `appsettings.json`.
+
+| Grupa | Varijable |
+|---|---|
+| Baza | `MSSQL_SA_PASSWORD` (connection string se sastavlja u `docker-compose.yml`) |
+| RabbitMQ | `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD` |
+| SMTP | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_SECURITY` (StartTls ili SslOnConnect), `SMTP_FROM`; zadano je lokalni Mailpit na http://localhost:8025 |
+| JWT | `JWT_SIGNING_KEY` |
+| Stripe (test) | `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| Slike | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` |
+| Push | `FIREBASE_SERVICE_ACCOUNT_JSON` |
+| Ostalo | `DP_KEY_ENCRYPTION_SECRET`, `ASPNETCORE_ENVIRONMENT`, `SEED_*` |
+
+Putanja do API-ja ulazi u aplikacije pri buildu (`--dart-define=API_BASE_URL=...`), vidi `tools/package-release.ps1`.
+
 ### Plaćanje karticom (Stripe)
 
 U `deploy/.env` postavite `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` i `STRIPE_WEBHOOK_SECRET`. Lokalno se webhook secret dobije s `stripe listen --api-key <sk_test_...> --print-secret`, a događaji se proslijede s `stripe listen --forward-to localhost:5080/api/v1/payments/webhook`. Bez ključeva narudžba karticom se ne može platiti (ostaje plaćanje pri preuzimanju). Aplikacije dobijaju publishable ključ od API-ja (`GET /api/v1/payments/config`), nije ugrađen u build. Nakon uspješnog plaćanja mobilna aplikacija poziva `POST /api/v1/orders/{id}/confirm-payment`: server sam pita Stripe za PaymentIntent (status, iznos, valuta, narudžba) i zaključuje narudžbu istim idempotentnim putem kao webhook, pa plaćanje radi i bez `stripe listen`; webhook ostaje kao drugi, nezavisni put (i za povrat novca).
