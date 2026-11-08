@@ -216,9 +216,12 @@ public partial class DatabaseSeeder
         for (var i = 0; i < 40; i++)
         {
             var createdAt = now.AddDays(-rnd.Next(0, HistoryDays)).AddMinutes(-rnd.Next(0, 600));
+            // The first order is always a fresh one waiting for pickup, so every outcome exists whatever the dice say.
+            if (i == 0) createdAt = now.AddHours(-5);
             var recent = createdAt > now.AddDays(-4);
             var roll = rnd.NextDouble();
-            var status = recent && roll < 0.5 ? OrderStatus.Placed : roll < 0.88 ? OrderStatus.Fulfilled : OrderStatus.Cancelled;
+            var status = i == 0 ? OrderStatus.Placed
+                : recent && roll < 0.5 ? OrderStatus.Placed : roll < 0.88 ? OrderStatus.Fulfilled : OrderStatus.Cancelled;
             var card = rnd.NextDouble() < 0.3;
 
             var lines = products.OrderBy(_ => rnd.Next()).Take(rnd.Next(1, 4))
